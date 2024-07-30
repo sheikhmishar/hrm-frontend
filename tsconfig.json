@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "typeRoots": [
+      "./src/@types",
+      "./node_modules/@types",
+      "./node_modules/**/types"
+    ],
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "incremental": true,
+    "target": "ESNext",
+    "module": "esnext",
+    "checkJs": true,
+    "allowJs": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["vite/client", "vite-plugin-svgr/client"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": { "backend/*": ["../skylane-hrm-backend/src/*"] }
+  },
+  "typeAcquisition": {
+    "enable": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"],
+}
