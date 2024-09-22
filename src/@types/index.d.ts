@@ -7,7 +7,7 @@ declare global {
     readonly REACT_APP_BASE_URL?: string
   }
   namespace React {
-    interface HTMLAttributes<T> {
+    interface HTMLAttributes {
       page_id?: string
       attribution?: string
     }

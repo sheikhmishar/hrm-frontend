@@ -21,7 +21,7 @@ type Props = JSX.IntrinsicElements['select'] & {
   autoComplete?: 'true'
 }
 
-const FloatingSelect: React.FC<Props> = ({
+const Select: React.FC<Props> = ({
   label,
   options,
   containerClass = '',
@@ -68,45 +68,33 @@ const FloatingSelect: React.FC<Props> = ({
   )
 
   if (!props.autoComplete) {
-    if (label)
-      return (
-        <div className='form-floating'>
-          <select
-            {...props}
-            aria-label={'Select ' + label}
-            name={props.id}
-            className={`form-control form-select my-2 shadow-sm ${className}`}
-          >
-            <option value={undefined}></option>
-            {options.map((option, i) => (
-              <option key={i} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <label htmlFor={props.id}>{label}</label>
-        </div>
-      )
-
     return (
-      <select
-        {...props}
-        name={props.id}
-        className={`form-control form-select my-2 shadow-sm ${className}`}
-      >
-        <option value={undefined}></option>
-        {options.map((option, i) => (
-          <option key={i} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <>
+        {label && <label htmlFor={props.id}>{label}</label>}
+        <select
+          {...props}
+          aria-label={'Select ' + label}
+          name={props.id}
+          className={`form-select ${className}`}
+        >
+          <option value={undefined}></option>
+          {options.map((option, i) => (
+            <option key={i} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </>
     )
   }
 
   return (
-    <div className={`my-3 ${containerClass}`}>
-      <div className='form-floating position-relative'>
+    <div className={containerClass}>
+      <div className='position-relative'>
+        <label htmlFor={`${props.id}_search`} className='text-wrap'>
+          {label} - {selectedLabel}{' '}
+          {props.required && <span className='text-primary'>*</span>}
+        </label>
         <input
           id={`${props.id}_search`}
           name={`${props.id}_search`}
@@ -114,15 +102,10 @@ const FloatingSelect: React.FC<Props> = ({
           value={text}
           disabled={props.disabled}
           onChange={onTextChange}
-          className={`form-control shadow-sm ${
-            focus ? 'rounded-bottom-0' : ''
-          }`}
+          className={`form-control ${focus ? 'rounded-bottom-0' : ''}`}
           onFocus={onTextFocus}
           onBlur={disableFocusTimeout300.start}
         />
-        <label htmlFor={`${props.id}_search`} className='text-wrap'>
-          {label} - {selectedLabel}
-        </label>
 
         <div className='dropdown end-0 position-absolute start-0 top-100 w-100 z-3'>
           <div
@@ -169,4 +152,4 @@ const FloatingSelect: React.FC<Props> = ({
   )
 }
 
-export default FloatingSelect
+export default Select

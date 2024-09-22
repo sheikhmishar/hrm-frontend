@@ -32,13 +32,14 @@ const ModalBase: React.FC<
           className={`fade modal-backdrop ${modalClass}`}
         />
       )}
+      {/* TODO: fix modal backdrop click */}
       <div
-        className={`fade h-auto modal ${modalClass}`}
+        className={`fade modal ${modalClass}`}
         tabIndex={-1}
         role='dialog'
         aria-hidden={!isOpen}
       >
-        <div className='modal-dialog modal-dialog-scrollable modal-dialog-scrollable'>
+        <div className='modal-dialog modal-dialog-scrollable'>
           <div className='modal-content'>{children}</div>
         </div>
       </div>

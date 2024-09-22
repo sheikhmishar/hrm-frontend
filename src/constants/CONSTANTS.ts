@@ -1,7 +1,11 @@
 // import { Satisfies } from '../libs'
 
 const root = '',
-  organizationRoot = `${root}/organization`
+  organizationRoot = `${root}/organization`,
+  employeeRoot = `${root}/employee`,
+  attendanceRoot = `${root}/attendance`,
+  leaveRoot = `${root}/leave`,
+  payrollRoot = `${root}/payroll`
 
 export const ROUTE_PARAMS = { id: ':id' }
 export const LOGIN_ROUTE_QUERY = { prev: 'prev' }
@@ -11,6 +15,28 @@ export const ROUTES = {
   register: `${root}/register`,
   login: `${root}/login`,
   dashboard: `${root}/dashboard`,
+  employee: {
+    _: employeeRoot,
+    list: `${employeeRoot}/list`,
+    details: `${employeeRoot}/details`,
+    assets: `${employeeRoot}/assets`,
+    notices: `${employeeRoot}/notices`
+  },
+  attendance: {
+    _: attendanceRoot,
+    monthly: `${attendanceRoot}/monthly`,
+    import: `${attendanceRoot}/import`
+  },
+  leave: {
+    _: leaveRoot,
+    assigned: `${leaveRoot}/assigned`,
+    calender: `${leaveRoot}/calender`
+  },
+  payroll: {
+    _: payrollRoot,
+    monthly: `${payrollRoot}/monthly`,
+    update: `${payrollRoot}/update`
+  },
   organization: {
     _: organizationRoot,
     company: `${organizationRoot}/company`,
@@ -18,7 +44,8 @@ export const ROUTES = {
     branch: `${organizationRoot}/branch`,
     dutyType: `${organizationRoot}/duty-type`,
     salaryType: `${organizationRoot}/salary-type`,
-    designation: `${organizationRoot}/designation`
+    designation: `${organizationRoot}/designation`,
+    settings: `${organizationRoot}/settings`
   }
 }
 

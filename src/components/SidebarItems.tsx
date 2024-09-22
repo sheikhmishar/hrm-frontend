@@ -4,10 +4,15 @@ import { NavLink, useLocation } from 'react-router-dom'
 
 import { BsPersonVideo2 } from 'react-icons/bs'
 import {
+  FaBorderAll,
+  FaBuildingNgo,
+  FaBusinessTime,
+  FaCalendar,
   FaMapLocationDot,
   FaMoneyBills,
-  FaBusinessTime,
-  FaBuildingNgo
+  FaUserGroup,
+  FaUsers,
+  FaWrench
 } from 'react-icons/fa6'
 import { LuBuilding2 } from 'react-icons/lu'
 import { VscOrganization } from 'react-icons/vsc'
@@ -17,7 +22,7 @@ import AccordionItem from './Accordion'
 import Footer from './Footer'
 
 const BASE_NAVLINK_CLASSES =
-  'nav-link p-3 rounded text-hover-opacity-100 text-light text-opacity-75'
+  'nav-link px-3 py-2 rounded-3 text-hover-opacity-100 text-light text-opacity-75'
 const NavItem: React.FC<NavLinkProps> = ({ children, ...props }) => (
   <li className='nav-item'>
     <NavLink
@@ -41,26 +46,26 @@ const CompanyLogo: React.FC<{ src: string }> = ({ src }) => {
   return (
     <>
       <div
-        style={{ height: 80, width: 80 }}
+        style={{ height: 100, width: 100 }}
         className={
           imageStatus === 'SUCCESS'
             ? 'd-none'
             : imageStatus === 'ERROR'
-            ? 'bg-primary-dark d-inline-block rounded'
-            : 'd-inline-block placeholder-glow placeholder-wave rounded'
+            ? 'bg-primary-dark d-inline-block rounded-3'
+            : 'd-inline-block placeholder-glow placeholder-wave rounded-3'
         }
       >
-        <div className='h-100 placeholder rounded w-100' />
+        <div className='h-100 placeholder rounded-3 w-100' />
       </div>
       <img
         src={src}
         className={
           imageStatus === 'SUCCESS'
-            ? 'bg-light bg-opacity-10 object-fit-contain rounded'
+            ? 'bg-light bg-opacity-10 object-fit-contain rounded-3'
             : 'd-none'
         }
-        height={80}
-        width={80}
+        height={100}
+        width={100}
         alt='skylane logo'
         onLoad={() => setImageStatus('SUCCESS')}
         onError={() => setImageStatus('ERROR')}
@@ -78,36 +83,122 @@ const SidebarItems: React.FC = () => {
         <CompanyLogo src='/favicon.png' />
       </NavLink>
 
-      <NavItem to={ROUTES.dashboard}>Dashboard</NavItem>
+      <NavItem to={ROUTES.dashboard}>
+        <FaBorderAll className='me-2' /> Dashboard
+      </NavItem>
+
+      <div className='accordion mt-1'>
+        <AccordionItem
+          active={location.pathname.startsWith(ROUTES.employee._)}
+          className='pe-0'
+          contentJSX={
+            <>
+              <FaUserGroup className='me-2' />
+              &nbsp;Employee
+            </>
+          }
+        >
+          <NavItem to={ROUTES.employee.list}>
+            <FaUsers className='me-2' /> Employee List
+          </NavItem>
+          <NavItem to={ROUTES.employee.assets}>
+            <FaUsers className='me-2' /> Allocated Assets
+          </NavItem>
+          <NavItem to={ROUTES.employee.notices}>
+            <FaUsers className='me-2' /> Notice Periods
+          </NavItem>
+        </AccordionItem>
+      </div>
+      <div className='accordion mt-1'>
+        <AccordionItem
+          active={location.pathname.startsWith(ROUTES.leave._)}
+          className='pe-0'
+          contentJSX={
+            <>
+              <FaUserGroup className='me-2' />
+              &nbsp;Leave
+            </>
+          }
+        >
+          <NavItem to={ROUTES.leave.assigned}>
+            <FaUsers className='me-2' /> Leave Assigned
+          </NavItem>
+          <NavItem to={ROUTES.leave.calender}>
+            <FaCalendar className='me-2' /> Calender
+          </NavItem>
+        </AccordionItem>
+      </div>
+      <div className='accordion mt-1'>
+        <AccordionItem
+          active={location.pathname.startsWith(ROUTES.attendance._)}
+          className='pe-0'
+          contentJSX={
+            <>
+              <FaUserGroup className='me-2' />
+              &nbsp;Attendance
+            </>
+          }
+        >
+          <NavItem to={ROUTES.attendance.monthly}>
+            <FaUsers className='me-2' /> Monthly Attendance
+          </NavItem>
+          <NavItem to={ROUTES.attendance.import}>
+            <FaUsers className='me-2' /> Import
+          </NavItem>
+        </AccordionItem>
+      </div>
+      <div className='accordion mt-1'>
+        <AccordionItem
+          active={location.pathname.startsWith(ROUTES.payroll._)}
+          className='pe-0'
+          contentJSX={
+            <>
+              <FaUserGroup className='me-2' />
+              &nbsp;Payroll
+            </>
+          }
+        >
+          <NavItem to={ROUTES.payroll.monthly}>
+            <FaUsers className='me-2' /> Monthly payroll
+          </NavItem>
+          <NavItem to={ROUTES.payroll.update}>
+            <FaUsers className='me-2' /> Update
+          </NavItem>
+        </AccordionItem>
+      </div>
 
       <div className='accordion mt-1'>
         <AccordionItem
           active={location.pathname.startsWith(ROUTES.organization._)}
           className='pe-0'
-          content={
+          contentJSX={
             <>
-              <FaBuildingNgo />{' '}Organization
+              <FaBuildingNgo className='me-2' />
+              &nbsp;Organization
             </>
           }
         >
           <NavItem to={ROUTES.organization.branch}>
-            <FaMapLocationDot color='98B4BF' /> Branch
+            <FaMapLocationDot className='me-2' /> Branch
           </NavItem>
           <NavItem to={ROUTES.organization.company}>
-            <VscOrganization color='98B4BF' size={18} /> Company
+            <VscOrganization className='me-2' /> Company
           </NavItem>
           <NavItem to={ROUTES.organization.department}>
-            <LuBuilding2 color='98B4BF' size={18} /> Department
+            <LuBuilding2 className='me-2' /> Department
           </NavItem>
           <NavItem to={ROUTES.organization.designation}>
-            <BsPersonVideo2 color='98B4BF' size={18} /> Designation
+            <BsPersonVideo2 className='me-2' /> Designation
           </NavItem>
           <NavItem to={ROUTES.organization.dutyType}>
-            <FaBusinessTime color='98B4BF' size={18} />
-            Duty Type
+            <FaBusinessTime className='me-2' />
+            &nbsp;Duty Type
           </NavItem>
           <NavItem to={ROUTES.organization.salaryType}>
-            <FaMoneyBills color='98B4BF' size={18} /> Salary Type
+            <FaMoneyBills className='me-2' /> Salary Type
+          </NavItem>
+          <NavItem to={ROUTES.organization.settings}>
+            <FaWrench className='me-2' /> Settings
           </NavItem>
         </AccordionItem>
       </div>

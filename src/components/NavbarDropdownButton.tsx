@@ -21,7 +21,7 @@ const NavDropdownButton: React.FC<JSX.IntrinsicElements['li'] & Props> = p => {
       >
         <span className='align-items-center d-flex justify-content-center'>
           <div className='me-3 text-start'>
-            <strong>{label}</strong>
+            <strong className='text-muted'>{label}</strong>
             <br />
             <span className='text-muted'>{sublabel}</span>
           </div>

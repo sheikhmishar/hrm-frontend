@@ -5,7 +5,9 @@ const NotFound: React.FC = () => {
   return (
     <h2 className='text-center'>
       404 Not Found{' '}
-      <span className='px-1 rounded text-bg-danger'>{location.pathname}</span>
+      <span className='px-1 rounded-3 text-bg-danger'>
+        {location.pathname}
+      </span>
     </h2>
   )
 }

@@ -8,7 +8,7 @@ interface Props
     React.HTMLAttributes<HTMLDivElement>,
     HTMLDivElement
   > {
-  content: JSX.Element
+  contentJSX: JSX.Element
   active?: boolean
 }
 
@@ -16,7 +16,7 @@ const TIMEOUT = 250
 
 const AccordionItem: React.FC<Props> = props => {
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const { children, content, active, className, ...restProps } = props
+  const { children, contentJSX, active, className, ...restProps } = props
 
   const [progress, setProgress] = useState<0 | 50 | 100>(active ? 100 : 0)
   const [dropDownStyle, setDropDownStyle] = useState<CSSProperties>({})
@@ -58,19 +58,19 @@ const AccordionItem: React.FC<Props> = props => {
   }, [active, onDropdownClick, progress])
 
   return (
-    <div className='accordion-item border-0'>
+    <div className='accordion-item border-0 mt-3'>
       <h2 className='accordion-header'>
         <button
-          className={`accordion-button p-3 ${
-            !progress ? 'collapsed' : 'border-start border-5'
-          }  `}
+          className={`accordion-button px-3 rounded-3 ${
+            !progress ? 'collapsed' : ''
+          }`}
           type='button'
           data-bs-toggle='collapse'
           data-bs-target='#'
           aria-expanded={!!progress}
           onClick={onDropdownClick}
         >
-          {content}
+          {contentJSX}
         </button>
       </h2>
       <div

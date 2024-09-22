@@ -3,7 +3,7 @@ import { useContext, useState, type ChangeEventHandler } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import Button from '../components/Button'
-import FloatingInput from '../components/FloatingInput'
+import Input from '../components/Input'
 import Footer from '../components/Footer'
 import { ROUTES } from '../constants/CONSTANTS'
 import ServerSITEMAP from '../constants/SERVER_SITEMAP'
@@ -67,7 +67,7 @@ const Register: React.FC = () => {
                 'password'
               ] satisfies KeysOfObjectOfType<typeof registerCreds, string>[]
             ).map(k => (
-              <FloatingInput
+              <Input
                 key={k}
                 disabled={isLoading || fetchingAuth}
                 id={k}

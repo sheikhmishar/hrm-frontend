@@ -9,10 +9,11 @@ import {
 import { FaPen, FaRotateLeft, FaPlus } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
-import FloatingInput from '../../components/FloatingInput'
-import FloatingSelect, {
+import Input from '../../components/Input'
+import Select, {
   type DropDownEventHandler
-} from '../../components/FloatingSelect'
+} from '../../components/Select'
+import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
@@ -27,21 +28,16 @@ import type {
   departmentDetails,
   updateDepartment
 } from 'backend/controllers/departments'
-import Modal from '../../components/Modal'
 
 const defaultDepartment: Department = {
   id: -1,
   name: '',
-  status: 'active',
-  employees: []
+  status: 'active'
 }
 
 const visibleKeys = (
   Object.keys(defaultDepartment) as (keyof Department)[]
-).filter(k => k !== 'id' && k !== 'employees') as (keyof OmitKey<
-  Department,
-  'id' | 'employees'
->)[]
+).filter(k => k !== 'id') as (keyof OmitKey<Department, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
 const DepartmentPage = () => {
@@ -155,12 +151,12 @@ const DepartmentPage = () => {
           </div>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
-              <span className='sr-only'>Loading...</span>
+              <span className='visually-hidden'>Loading...</span>
             </div>
           )}
           <div className='ms-auto w-25'>
             <input
-              className='border-0 form-control py-2 rounded-5 shadow-sm'
+              className='form-control py-2 rounded-3'
               id='search'
               placeholder='Search here'
               onChange={onSearchInputChange}
@@ -222,7 +218,7 @@ const DepartmentPage = () => {
         <Modal.Body>
           {(['name'] satisfies KeysOfObjectOfType<Department, string>[]).map(
             k => (
-              <FloatingInput
+              <Input
                 key={k}
                 disabled={departmentLoading}
                 id={k}
@@ -236,7 +232,7 @@ const DepartmentPage = () => {
           )}
           {(['status'] satisfies KeysOfObjectOfType<Department, string>[]).map(
             k => (
-              <FloatingSelect
+              <Select
                 key={k}
                 id={k}
                 disabled={departmentLoading}

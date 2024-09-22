@@ -40,7 +40,7 @@ export default function App() {
         </div>
         <div className='col-12 col-lg-10 col-md-9 d-flex flex-column px-0 vh-100'>
           <Navbar />
-          <div className='container-fluid flex-grow-1 overflow-y-auto'>
+          <div className='bg-light container-fluid flex-grow-1 overflow-y-auto'>
             {mainContent}
           </div>
         </div>

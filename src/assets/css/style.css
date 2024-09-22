@@ -16,6 +16,7 @@
 
 * {
   scroll-behavior: smooth;
+  font-family: 'Inter', sans-serif;
 }
 
 .bg-primary-dark {
@@ -34,8 +35,7 @@
   --bs-accordion-btn-color: rgb(var(--bs-white-rgb), 0.75);
   --bs-accordion-border-width: 0;
   --bs-accordion-btn-focus-border-color: rgb(var(--bs-secondary-rgb));
-  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem
-    rgba(var(--bs-secondary-rgb), 0.25);
+  --bs-accordion-btn-focus-box-shadow: unset;
 }
 
 .accordion-button:hover {
@@ -113,12 +113,12 @@
 
 .form-control:focus {
   border-color: rgb(var(--bs-primary-rgb));
-  box-shadow: 0 0 0 0.25rem rgb(var(--bs-primary-rgb), 0.25);
+  box-shadow: unset;
 }
 
 .form-check-input:focus {
   border-color: rgb(var(--bs-primary-rgb));
-  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+  box-shadow: unset;
 }
 .form-check-input:checked {
   background-color: rgb(var(--bs-primary-rgb));
@@ -159,8 +159,7 @@
 }
 
 .pagination {
-  --bs-pagination-focus-box-shadow: 0 0 0 0.25rem
-    rgba(var(--bs-primary-rgb), 0.25);
+  --bs-pagination-focus-box-shadow: unset;
   --bs-pagination-active-color: #fff;
   --bs-pagination-active-bg: rgb(var(--bs-primary-rgb));
   --bs-pagination-active-border-color: rgb(var(--bs-primary-rgb));
@@ -182,16 +181,16 @@
 
 *::-webkit-scrollbar {
   width: 7px;
-  height: 5px;
-  border-radius: 5px;
+  height: 7px;
 }
 
 *::-webkit-scrollbar-track {
-  background: #c1c1c1;
+  background: #e0e0e0;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #8d8d8d;
+  background: #c2c2c2;
+  border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {

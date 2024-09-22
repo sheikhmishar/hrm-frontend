@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 
 import { FaAngleLeft, FaAngleRight } from 'react-icons/fa6'
 
-import FloatingSelect from './FloatingSelect'
+import Select from './Select'
 
 const ITEMS_PER_PAGE = new Array<number>(5)
   .fill(0)
@@ -119,12 +119,15 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
     [pageCount, pageIndex]
   )
 
-  if (!rows.length) return <div className='bg-body p-3 rounded'>No Data</div>
+  if (!rows.length)
+    return <div className='bg-body p-3 rounded-3'>No Data</div>
 
   return (
     <>
       <div
-        className={contCls || 'bg-body p-3 rounded shadow-sm table-responsive'}
+        className={
+          contCls || 'bg-body p-3 rounded-3 shadow-sm table-responsive'
+        }
       >
         <table className='table table-hover' {...props}>
           <thead>
@@ -159,7 +162,7 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
       {rows.length > ITEMS_PER_PAGE[0] && (
         <div className='mt-3 row'>
           <div className='col-12 col-md-3'>
-            <FloatingSelect
+            <Select
               id='itemsPerPage'
               value={elementsPerPage}
               onChange={e => setElementsPerPage(parseInt(e.target.value) || 5)}
@@ -175,7 +178,7 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
             ref={paginationRef}
           >
             <nav aria-label='Table Navigation'>
-              <ul className='flex-wrap my-3 pagination rounded shadow-sm'>
+              <ul className='flex-wrap my-3 pagination rounded-3 shadow-sm'>
                 <li
                   className={`page-item ${pageIndex === 0 ? 'disabled' : ''}`}
                 >
@@ -213,12 +216,12 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
                       >
                         <input
                           ref={pageNumberInputRef}
-                          className='form-control form-control-sm rounded-end-0 shadow-sm'
+                          className='form-control form-control-sm rounded-3-end-0 shadow-sm'
                           defaultValue={pageIndex + 1}
                           type='number'
                         />
                         <button
-                          className='btn btn-primary rounded-start-0 shadow-sm'
+                          className='btn btn-primary rounded-3-start-0 shadow-sm'
                           onClick={() =>
                             setPageIndex(pageIndex => {
                               const typedPageNumber =

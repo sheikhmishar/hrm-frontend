@@ -21,6 +21,25 @@ const delayedLazy = <T extends ComponentType<any>>(
   )
 
 const DashboardLazy = delayedLazy(() => import('./pages/dashboard'))
+const EmployeeListLazy = delayedLazy(() => import('./pages/employee/list'))
+const EmployeeDetailsLazy = delayedLazy(
+  () => import('./pages/employee/details')
+)
+const EmployeeAssetsLazy = delayedLazy(() => import('./pages/employee/assets'))
+const EmployeeNoticesLazy = delayedLazy(
+  () => import('./pages/employee/notices')
+)
+const LeaveAssignedLazy = delayedLazy(() => import('./pages/leave/assigned'))
+const LeaveCalenderLazy = delayedLazy(() => import('./pages/leave/calender'))
+const AttendanceImportLazy = delayedLazy(
+  () => import('./pages/attendance/import')
+)
+const AttendanceMonthlyLazy = delayedLazy(
+  () => import('./pages/attendance/monthly')
+)
+const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
+const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
+
 const BranchLazy = delayedLazy(() => import('./pages/organization/branch'))
 const CompanyLazy = delayedLazy(() => import('./pages/organization/company'))
 const DepartmentLazy = delayedLazy(
@@ -33,6 +52,7 @@ const DutyTypeLazy = delayedLazy(() => import('./pages/organization/duty-type'))
 const SalaryTypeLazy = delayedLazy(
   () => import('./pages/organization/salary-type')
 )
+const SettingsLazy = delayedLazy(() => import('./pages/organization/settings'))
 
 const placeholder = (
   <div className='placeholder-glow placeholder-wave'>
@@ -41,11 +61,11 @@ const placeholder = (
     <div className='col-12 placeholder' />
     <div className='col-7 placeholder' />
     <div
-      className='col-7 my-2 placeholder rounded'
+      className='col-7 my-2 placeholder rounded-3'
       style={{ height: '40vh' }}
     />
     <br />
-    <div className='col-3 placeholder rounded' style={{ height: 40 }} />
+    <div className='col-3 placeholder rounded-3' style={{ height: 40 }} />
   </div>
 )
 
@@ -74,6 +94,86 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <DashboardLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.employee.list}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <EmployeeListLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.employee.details}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <EmployeeDetailsLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.employee.assets}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <EmployeeAssetsLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.employee.notices}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <EmployeeNoticesLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.attendance.import}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <AttendanceImportLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.attendance.monthly}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <AttendanceMonthlyLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.leave.assigned}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <LeaveAssignedLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.leave.calender}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <LeaveCalenderLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.payroll.update}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <PayrollUpdateLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.payroll.monthly}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <PayrollMonthlyLazy />
           </ProtectedRoute>
         }
       />
@@ -122,6 +222,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <SalaryTypeLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.organization.settings}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <SettingsLazy />
           </ProtectedRoute>
         }
       />

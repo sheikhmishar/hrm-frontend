@@ -30,7 +30,9 @@ const Navbar: React.FC = () => {
           >
             <span className='navbar-toggler-icon' />
           </button>
-
+          <h5 className='text-muted mb-0'>
+            <strong>HR Management</strong>
+          </h5>
           <div className='align-items-center d-flex ms-auto'>
             <NavDropdownButton
               label='Profile'

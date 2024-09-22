@@ -5,7 +5,7 @@ type ButtonProps = JSX.IntrinsicElements['button'] & {
 }
 
 const Button: React.FC<ButtonProps> = ({ className, children, ...props }) => (
-  <button {...props} className={`btn px-3 py-2 shadow-sm ${className || ''}`}>
+  <button {...props} className={`btn px-3 py-2 ${className || ''}`}>
     {children}
   </button>
 )
