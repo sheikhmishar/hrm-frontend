@@ -10,9 +10,7 @@ import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -32,13 +30,12 @@ import type {
 const defaultCompany: Company = {
   id: -1,
   name: '',
-  status: 'active',
-  employees: [] // TODO: omit
+  status: 'active'
 }
 
 const visibleKeys = (Object.keys(defaultCompany) as (keyof Company)[]).filter(
-  k => k !== 'id' && k !== 'employees'
-) as (keyof OmitKey<Company, 'id' | 'employees'>)[]
+  k => k !== 'id'
+) as (keyof OmitKey<Company, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
 const CompanyPage = () => {

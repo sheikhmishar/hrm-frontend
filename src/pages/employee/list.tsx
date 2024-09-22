@@ -53,8 +53,7 @@ const defaultSalaryType: SalaryType = { ...defaultDepartment }
 const defaultCompany: Company = {
   ...defaultDepartment,
   logo: '',
-  status: 'active',
-  employees: []
+  status: 'active'
 }
 
 const defaultEmployee: Employee = {
@@ -88,7 +87,10 @@ const defaultEmployee: Employee = {
   createdDate: new Date(),
   assets: [],
   contacts: [],
-  financials: []
+  financials: [],
+  attendances: [],
+  leaves: [],
+  salaries: []
 }
 
 const visibleKeys = (Object.keys(defaultEmployee) as (keyof Employee)[]).filter(

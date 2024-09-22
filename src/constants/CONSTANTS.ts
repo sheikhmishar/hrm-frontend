@@ -17,8 +17,9 @@ export const ROUTES = {
   dashboard: `${root}/dashboard`,
   employee: {
     _: employeeRoot,
+    _params: ROUTE_PARAMS,
     list: `${employeeRoot}/list`,
-    details: `${employeeRoot}/details`,
+    details: `${employeeRoot}/details/:id`,
     assets: `${employeeRoot}/assets`,
     notices: `${employeeRoot}/notices`
   },

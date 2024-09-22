@@ -119,8 +119,7 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
     [pageCount, pageIndex]
   )
 
-  if (!rows.length)
-    return <div className='bg-body p-3 rounded-3'>No Data</div>
+  if (!rows.length) return <div className='bg-body p-3 rounded-3'>No Data</div>
 
   return (
     <>
@@ -133,7 +132,11 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
           <thead>
             <tr>
               {columns.map((c, i) => (
-                <th key={i} scope='col' className='align-middle text-nowrap'>
+                <th
+                  key={i}
+                  scope='col'
+                  className='align-middle text-muted text-nowrap'
+                >
                   {c}
                 </th>
               ))}
@@ -148,7 +151,7 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
                       {col}
                     </td>
                   ) : (
-                    <th key={i} scope='col' className='align-middle'>
+                    <th key={i} scope='col' className='align-middle text-muted'>
                       {col}
                     </th>
                   )

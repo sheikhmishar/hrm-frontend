@@ -2,6 +2,9 @@ const root = '/api',
   staticRoot = '/static',
   usersRoot = `${root}/users`,
   employeesRoot = `${root}/employees`,
+  attendancesRoot = `${root}/attendances`,
+  leavesRoot = `${root}/leaves`,
+  salariesRoot = `${root}/salaries`,
   companiesRoot = `${root}/companies`,
   departmentsRoot = `${root}/departments`,
   branchesRoot = `${root}/branches`,
@@ -32,11 +35,41 @@ const ServerSITEMAP = {
     _params: rootParams,
     _: employeesRoot,
     post: employeesRoot,
-    postBulk: `${employeesRoot}/bulk`,
+    postBulk: `${employeesRoot}/bulk`, // TODO:
     get: employeesRoot,
+    getAssets: `${employeesRoot}/assets`,
     getById: `${employeesRoot}/:id`,
-    getSalaryById: `${employeesRoot}/salaries/:id`,
     put: `${employeesRoot}/:id`
+  },
+  attendances: {
+    _params: { ...rootParams, employeeId: ':employeeId' },
+    _queries: { from: 'from', to: 'to', date: 'date' },
+    _: attendancesRoot,
+    post: attendancesRoot,
+    get: attendancesRoot,
+    getCompanyWise: `${attendancesRoot}/companywise`,
+    getByEmployeeId: `${attendancesRoot}/:employeeId`,
+    put: `${attendancesRoot}/:id`,
+    delete: `${attendancesRoot}/:id`
+  },
+  leaves: {
+    _params: { ...rootParams, employeeId: ':employeeId' },
+    _queries: { from: 'from', to: 'to' },
+    _: leavesRoot,
+    post: leavesRoot,
+    get: leavesRoot,
+    getByEmployeeId: `${leavesRoot}/:employeeId`,
+    delete: `${leavesRoot}/:id`
+  },
+  salaries: {
+    _params: { ...rootParams, employeeId: ':employeeId' },
+    _queries: { from: 'from', to: 'to' },
+    _: salariesRoot,
+    post: salariesRoot,
+    get: salariesRoot,
+    getByEmployeeId: `${salariesRoot}/:employeeId`,
+    put: `${salariesRoot}/:id`,
+    delete: `${salariesRoot}/:id`
   },
   companies: {
     _params: rootParams,
@@ -87,5 +120,4 @@ const ServerSITEMAP = {
     put: `${designationsRoot}/:id`
   }
 }
-
 export default ServerSITEMAP
