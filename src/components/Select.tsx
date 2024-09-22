@@ -91,7 +91,7 @@ const Select: React.FC<Props> = ({
   return (
     <div className={containerClass}>
       <div className='position-relative'>
-        <label htmlFor={`${props.id}_search`} className='text-wrap'>
+        <label htmlFor={`${props.id}_search`} className='mb-2 text-wrap'>
           {label} - {selectedLabel}{' '}
           {props.required && <span className='text-primary'>*</span>}
         </label>
