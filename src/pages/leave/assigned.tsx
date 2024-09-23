@@ -269,7 +269,7 @@ const Assigned = () => {
                   <Button
                     disabled={isLoading}
                     onClick={() => mutate(leave.id)}
-                    className='btn-link'
+                    className='link-primary text-body'
                   >
                     <FaTrash />
                   </Button>

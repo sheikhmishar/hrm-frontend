@@ -58,7 +58,7 @@ const AccordionItem: React.FC<Props> = props => {
   }, [active, onDropdownClick, progress])
 
   return (
-    <div className='accordion-item border-0 mt-3'>
+    <div className='accordion-item border-0 mt-2'>
       <h2 className='accordion-header'>
         <button
           className={`accordion-button px-3 rounded-3 ${
@@ -80,7 +80,7 @@ const AccordionItem: React.FC<Props> = props => {
         style={dropDownStyle}
       >
         <div
-          className={'accordion-body py-1 ' + className || ''}
+          className={'accordion-body py-0 ' + className || ''}
           {...restProps}
           ref={dropdownRef}
         >

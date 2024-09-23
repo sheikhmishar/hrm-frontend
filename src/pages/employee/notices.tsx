@@ -40,7 +40,11 @@ const Notices = () => {
           'Action'
         ]}
         rows={employees
-          .filter(employee => employee.noticePeriod !== '0NaN-aN-aN')
+          .filter(
+            employee =>
+              employee.noticePeriod && employee.noticePeriod !== '0NaN-aN-aN'
+          )
+          .sort((a, b) => (a.noticePeriod! > b.noticePeriod! ? -1 : 1))
           .map(employee => [
             <>{employee.id}</>,
             <>{employee.eId}</>,
@@ -49,11 +53,13 @@ const Notices = () => {
             <>{employee.department.name}</>,
             <>{employee.noticePeriod}</>,
             <Link
-              to={ROUTES.employee.details.replace(
-                ROUTES.employee._params.id,
-                employee.id.toString()
-              )}
-              className='btn-link'
+              to={
+                ROUTES.employee.details.replace(
+                  ROUTES.employee._params.id,
+                  employee.id.toString()
+                ) + '#noticePeriod'
+              }
+              className='link-primary text-body'
             >
               <FaPen />
             </Link>

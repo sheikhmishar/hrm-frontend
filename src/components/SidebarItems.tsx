@@ -22,7 +22,7 @@ import AccordionItem from './Accordion'
 import Footer from './Footer'
 
 const BASE_NAVLINK_CLASSES =
-  'nav-link px-3 py-2 rounded-3 text-hover-opacity-100 text-light text-opacity-75'
+  'nav-link px-3 py-2 rounded-3 my-1 text-hover-opacity-100 text-light text-opacity-75'
 const NavItem: React.FC<NavLinkProps> = ({ children, ...props }) => (
   <li className='nav-item'>
     <NavLink

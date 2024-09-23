@@ -7,7 +7,7 @@ import {
   type ChangeEventHandler
 } from 'react'
 import { BsArrowLeftShort } from 'react-icons/bs'
-import { FaRotateLeft } from 'react-icons/fa6'
+import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import Button from '../../components/Button'
@@ -15,12 +15,15 @@ import Input from '../../components/Input'
 import Select, { DropDownEventHandler } from '../../components/Select'
 import { ROUTES } from '../../constants/CONSTANTS'
 import {
+  defaultAsset,
   defaultBranch,
   defaultCompany,
+  defaultContact,
   defaultDepartment,
   defaultDesignation,
   defaultDutyType,
   defaultEmployee,
+  defaultFinancial,
   defaultSalaryType
 } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -47,6 +50,7 @@ import {
   updateEmployee
 } from 'backend/controllers/employees'
 import { allSalaryTypes } from 'backend/controllers/salary-types'
+import Table from '../../components/Table'
 
 const ScrollLink: React.FC<
   JSX.IntrinsicElements['a'] & React.PropsWithChildren & { isFirst?: boolean }
@@ -72,6 +76,12 @@ const EmployeeDetails = () => {
   const { id: idFromRoute } =
     useParams<Partial<(typeof ROUTES)['employee']['_params']>>()
   const id = parseInt(idFromRoute)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.hash.endsWith('#noticePeriod'))
+      document.querySelector('#noticePeriod')?.scrollIntoView()
+  }, [location])
 
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
   const navigate = useNavigate()
@@ -82,11 +92,15 @@ const EmployeeDetails = () => {
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value, valueAsNumber }
   }) =>
-    setEmployee(employee => ({
-      ...employee,
-      [id]: (
+    setEmployee(employee => {
+      const isNumeric = (
         [
-          'unitSalary',
+          'basicSalary',
+          'conveyance',
+          'foodCost',
+          'houseRent',
+          'medicalCost',
+          'totalSalary',
           'taskWisePayment',
           'wordLimit'
         ] satisfies KeysOfObjectOfType<
@@ -94,9 +108,20 @@ const EmployeeDetails = () => {
           number | undefined
         >[] as string[]
       ).includes(id)
-        ? valueAsNumber
-        : value
-    }))
+      const updatedEmployee: Employee = {
+        ...employee,
+        [id]: isNumeric ? valueAsNumber : value
+      }
+      if (isNumeric)
+        updatedEmployee.totalSalary =
+          updatedEmployee.basicSalary +
+          updatedEmployee.conveyance +
+          updatedEmployee.foodCost +
+          updatedEmployee.houseRent +
+          updatedEmployee.medicalCost
+
+      return updatedEmployee
+    })
 
   useEffect(() => {
     setEmployee(employee => ({ ...employee, id }))
@@ -323,11 +348,12 @@ const EmployeeDetails = () => {
         <div className='col-6 col-lg-4 overflow-hidden rounded-3'>
           <div className='border-0 card rounded-3'>
             <div className='card-body'>
-              <div className='bg-info-subtle pb-2 rounded-4 text-center w-100'>
+              <div className='bg-primary-subtle mt-5 rounded-3 text-center w-100'>
                 <img
-                  className='border border-2 border-dark-subtle img-fluid rounded-circle'
+                  className='bg-light border border-5 border-white img-fluid rounded-circle'
                   alt='profile-img'
                   src='/favicon.png'
+                  style={{ marginTop: '-3rem' }}
                 />
                 <h4 className='my-2'>{employee.name}</h4>
                 <p className='text-muted'>Designation</p>
@@ -627,14 +653,19 @@ const EmployeeDetails = () => {
                 ))}
                 {(
                   [
-                    'unitSalary',
+                    'basicSalary',
+                    'conveyance',
+                    'foodCost',
+                    'houseRent',
+                    'medicalCost',
+                    'totalSalary',
                     'taskWisePayment',
                     'wordLimit'
                   ] satisfies KeysOfObjectOfType<Employee, number | undefined>[]
                 ).map(k => (
                   <div key={k} className='col-12 col-lg-6'>
                     <Input
-                      disabled={isEmployeeLoading}
+                      disabled={k === 'totalSalary' || isEmployeeLoading}
                       id={k}
                       label={capitalizeDelim(k)}
                       containerClass='my-3'
@@ -711,6 +742,293 @@ const EmployeeDetails = () => {
                     />
                   </div>
                 ))}
+
+                <h5 className='my-4' id='financial-details'>
+                  Financial details
+                </h5>
+                <div className='col-12'>
+                  <Button
+                    className='btn-primary'
+                    onClick={() =>
+                      setEmployee(employee => ({
+                        ...employee,
+                        financials: [
+                          ...employee.financials,
+                          { ...defaultFinancial }
+                        ]
+                      }))
+                    }
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <Table
+                  columns={[
+                    'Sl.No',
+                    'Holder Name',
+                    'Medium',
+                    'Account Number',
+                    'Bank Name',
+                    'Branch',
+                    'Action'
+                  ]}
+                  rows={employee.financials.map((financial, idx) => [
+                    <>{financial.id > 0 ? financial.id : ''}</>,
+                    <input
+                      className='form-control'
+                      value={financial.holderName}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.map((financial, i) =>
+                            i === idx
+                              ? { ...financial, holderName: value }
+                              : financial
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={financial.medium}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.map((financial, i) =>
+                            i === idx
+                              ? { ...financial, medium: value }
+                              : financial
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={financial.accountNumber}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.map((financial, i) =>
+                            i === idx
+                              ? { ...financial, accountNumber: value }
+                              : financial
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={financial.bankName}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.map((financial, i) =>
+                            i === idx
+                              ? { ...financial, bankName: value }
+                              : financial
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={financial.branch}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.map((financial, i) =>
+                            i === idx
+                              ? { ...financial, branch: value }
+                              : financial
+                          )
+                        }))
+                      }
+                    />,
+                    <Button
+                      className='link-primary'
+                      onClick={() =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          financials: employee.financials.filter(
+                            f => f !== financial
+                          )
+                        }))
+                      }
+                    >
+                      <FaTrash />
+                    </Button>
+                  ])}
+                />
+                <h5 className='my-4' id='contacts'>
+                  Contact details
+                </h5>
+                <div className='col-12'>
+                  <Button
+                    className='btn-primary'
+                    onClick={() =>
+                      setEmployee(employee => ({
+                        ...employee,
+                        contacts: [...employee.contacts, { ...defaultContact }]
+                      }))
+                    }
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <Table
+                  columns={[
+                    'Sl.No',
+                    'Name',
+                    'Phone Number',
+                    'Relation',
+                    'Action'
+                  ]}
+                  rows={employee.contacts.map((contact, idx) => [
+                    <>{contact.id > 0 ? contact.id : ''}</>,
+                    <input
+                      className='form-control'
+                      value={contact.name}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          contacts: employee.contacts.map((contact, i) =>
+                            i === idx ? { ...contact, name: value } : contact
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={contact.phoneNo}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          contacts: employee.contacts.map((contact, i) =>
+                            i === idx ? { ...contact, phoneNo: value } : contact
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      // TODO: disable on
+                      className='form-control'
+                      value={contact.relation}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          contacts: employee.contacts.map((contact, i) =>
+                            i === idx
+                              ? { ...contact, relation: value }
+                              : contact
+                          )
+                        }))
+                      }
+                    />,
+                    <Button
+                      className='link-primary'
+                      onClick={() =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          contacts: employee.contacts.filter(f => f !== contact)
+                        }))
+                      }
+                    >
+                      <FaTrash />
+                    </Button>
+                  ])}
+                />
+
+                <h5 className='my-4' id='assets'>
+                  Allocated Assets
+                </h5>
+                <div className='col-12'>
+                  <Button
+                    className='btn-primary'
+                    onClick={() =>
+                      setEmployee(employee => ({
+                        ...employee,
+                        assets: [...employee.assets, { ...defaultAsset }]
+                      }))
+                    }
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <Table
+                  columns={[
+                    'Sl.No',
+                    'Asset Name',
+                    'Asset Description',
+                    'Given',
+                    'Return',
+                    'Action'
+                  ]}
+                  rows={employee.assets.map((asset, idx) => [
+                    <>{asset.id > 0 ? asset.id : ''}</>,
+                    <input
+                      className='form-control'
+                      value={asset.name}
+                      // TODO: required optional
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          assets: employee.assets.map((asset, i) =>
+                            i === idx ? { ...asset, name: value } : asset
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={asset.description}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          assets: employee.assets.map((asset, i) =>
+                            i === idx ? { ...asset, description: value } : asset
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      type='date'
+                      value={asset.givenDate}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          assets: employee.assets.map((asset, i) =>
+                            i === idx ? { ...asset, givenDate: value } : asset
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      className='form-control'
+                      value={asset.returnDate || ''}
+                      type='date'
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          assets: employee.assets.map((asset, i) =>
+                            i === idx ? { ...asset, returnDate: value } : asset
+                          )
+                        }))
+                      }
+                    />,
+                    <Button
+                      className='link-primary'
+                      onClick={() =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          assets: employee.assets.filter(f => f !== asset)
+                        }))
+                      }
+                    >
+                      <FaTrash />
+                    </Button>
+                  ])}
+                />
               </div>
               <div className='d-flex justify-content-end mt-3'>
                 {employee.id === -1 && (

@@ -46,12 +46,6 @@ const EmployeePage = () => {
     <>
       <div className='mb-4 mt-2 row'>
         <div className='align-items-center d-flex'>
-          <div>
-            <h4 className='m-0'>
-              <strong>Employee</strong>
-            </h4>
-            <span className='text-primary'>Details</span>
-          </div>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
