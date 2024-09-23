@@ -11,20 +11,19 @@ import {
 import { useContext, useState } from 'react'
 import { Bar } from 'react-chartjs-2'
 
-import Select, { type DropDownEventHandler } from '../components/Select'
-import ServerSITEMAP from '../constants/SERVER_SITEMAP'
-import { ToastContext } from '../contexts/toast'
-import modifiedFetch from '../libs/modifiedFetch'
-// TODO: iconify
-import iconAbsentEmployee from '../assets/img/dashboard/absent_employees.png'
+import iconAbsentEmployee from '../assets/img/dashboard/absent_employees.png'; // TODO: iconify
 import iconLeaveEmployee from '../assets/img/dashboard/leave_employees.png'
 import iconPresentEmployee from '../assets/img/dashboard/present_employees.png'
 import iconTotalEmployee from '../assets/img/dashboard/total_employees.png'
+import FullCalenderSlider from '../components/CalenderDropdown'
+import Select, { type DropDownEventHandler } from '../components/Select'
+import { BLANK_ARRAY } from '../constants/CONSTANTS'
+import ServerSITEMAP from '../constants/SERVER_SITEMAP'
+import { ToastContext } from '../contexts/toast'
+import modifiedFetch from '../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
 import { allCompanies } from 'backend/controllers/companies'
-import { BLANK_ARRAY } from '../constants/CONSTANTS'
-import FullCalenderSlider from '../components/FullCalenderSlider'
 
 Chart.register(
   CategoryScale,

@@ -1,20 +1,24 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
-  useMemo,
   type ChangeEventHandler
 } from 'react'
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io'
 
-type Prop = {
+import { getNextMonth, getPreviousMonth } from '../libs'
+
+type Prop = JSX.IntrinsicElements['div'] & {
   currentDate: Date
   setCurrentDate: SetState<Date>
-} & JSX.IntrinsicElements['div']
+  monthly?: boolean
+}
 
 const CalenderSlider = ({
   currentDate,
   setCurrentDate,
+  monthly,
   className,
   ...props
 }: Prop) => {
@@ -41,32 +45,15 @@ const CalenderSlider = ({
         ?.removeEventListener('click', onPickerClick)
   }, [showDatePicker])
 
-  const handlePrevMonth = () => {
-    const newDate = new Date(currentDate)
-    newDate.setMonth((newDate.getMonth() + 12 - 1) % 12)
-    newDate.setFullYear(
-      newDate.getMonth() === 11
-        ? newDate.getFullYear() - 1
-        : newDate.getFullYear()
-    )
-    setCurrentDate(newDate)
-  }
+  const handlePrevMonth = () => setCurrentDate(getPreviousMonth(currentDate))
 
   const handleNextMonth = () =>
-    setCurrentDate((prevDate: Date) => {
-      prevDate = new Date(currentDate)
-      prevDate.setMonth((prevDate.getMonth() + 1) % 12)
-      prevDate.setFullYear(
-        prevDate.getMonth() === 0
-          ? prevDate.getFullYear() + 1
-          : prevDate.getFullYear()
-      )
-      return prevDate
-    })
+    setCurrentDate((prevDate: Date) => getNextMonth(prevDate))
 
   const handleDateChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { valueAsDate }
   }) => {
+    if (monthly && valueAsDate) valueAsDate.setDate(15)
     setCurrentDate(valueAsDate || new Date())
     setShowDatePicker(false)
   }
@@ -93,13 +80,14 @@ const CalenderSlider = ({
           className='fw-bold text-nowrap text-primary'
           onClick={handleDatePickerClick}
         >
-          {currentDate.getDate()} {monthName} {currentDate.getFullYear()}
+          {monthly ? '' : currentDate.getDate()} {monthName}{' '}
+          {currentDate.getFullYear()}
         </span>
         <span className='position-absolute start-0 top-50 visually-hidden'>
           <input
             ref={datePickerRef}
-            type='date'
-            value={currentDate.toISOString().split('T')[0]}
+            type={monthly ? 'month' : 'date'}
+            value={currentDate.toISOString().substring(0, monthly ? 7 : 10)}
             onChange={handleDateChange}
             onBlur={handleDatePickerBlur}
           />

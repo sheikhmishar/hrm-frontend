@@ -130,6 +130,10 @@
 .form-switch .form-check-input:focus {
   --bs-form-switch-bg: var(--bs-form-switch-bg-svg);
 }
+.form-select:focus {
+  border-color: rgb(var(--bs-primary-rgb));
+  box-shadow: unset;
+}
 
 .dropdown-menu {
   --bs-dropdown-link-active-bg: rgb(var(--bs-primary-rgb));
