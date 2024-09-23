@@ -1,7 +1,33 @@
+import { useMutation, useQuery } from '@tanstack/react-query'
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ChangeEventHandler
+} from 'react'
 import { BsArrowLeftShort } from 'react-icons/bs'
+import { FaRotateLeft } from 'react-icons/fa6'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { useMutation, useQuery } from '@tanstack/react-query'
+import Button from '../../components/Button'
+import Input from '../../components/Input'
+import Select, { DropDownEventHandler } from '../../components/Select'
+import { ROUTES } from '../../constants/CONSTANTS'
+import {
+  defaultBranch,
+  defaultCompany,
+  defaultDepartment,
+  defaultDesignation,
+  defaultDutyType,
+  defaultEmployee,
+  defaultSalaryType
+} from '../../constants/DEFAULT_MODELS'
+import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { ToastContext } from '../../contexts/toast'
+import { capitalizeDelim } from '../../libs'
+import modifiedFetch from '../../libs/modifiedFetch'
+
 import { GetResponseType } from 'backend/@types/response'
 import Branch from 'backend/Entities/Branch'
 import Company from 'backend/Entities/Company'
@@ -21,22 +47,6 @@ import {
   updateEmployee
 } from 'backend/controllers/employees'
 import { allSalaryTypes } from 'backend/controllers/salary-types'
-import {
-  ChangeEventHandler,
-  useCallback,
-  useContext,
-  useEffect,
-  useState
-} from 'react'
-import { FaRotateLeft } from 'react-icons/fa6'
-import Button from '../../components/Button'
-import Input from '../../components/Input'
-import Select, { DropDownEventHandler } from '../../components/Select'
-import { ROUTES } from '../../constants/CONSTANTS'
-import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
-import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim } from '../../libs'
-import modifiedFetch from '../../libs/modifiedFetch'
 
 const ScrollLink: React.FC<
   JSX.IntrinsicElements['a'] & React.PropsWithChildren & { isFirst?: boolean }
@@ -56,58 +66,6 @@ const ScrollLink: React.FC<
       {children}
     </a>
   )
-}
-
-const defaultDepartment: Department = {
-  id: -1,
-  name: '',
-  status: 'active'
-}
-const defaultBranch: Branch = { ...defaultDepartment }
-const defaultDesignation: Designation = { ...defaultDepartment }
-const defaultDutyType: DutyType = { ...defaultDepartment }
-const defaultSalaryType: SalaryType = { ...defaultDepartment }
-const defaultCompany: Company = {
-  ...defaultDepartment,
-  logo: '',
-  status: 'active'
-}
-
-const defaultEmployee: Employee = {
-  id: -1,
-  photo: '',
-  eId: '',
-  name: '',
-  phoneNumber: '',
-  altPhoneNumber: '',
-  email: '',
-  dateOfBirth: '',
-  fullAddress: '',
-  gender: 'Male',
-  company: defaultCompany,
-  department: defaultDepartment,
-  branch: defaultBranch,
-  designation: defaultDesignation,
-  dutyType: defaultDutyType,
-  salaryType: defaultSalaryType,
-  dateOfJoining: new Date().toISOString().split('T')[0]!,
-  unitSalary: 0,
-  taskWisePayment: undefined,
-  wordLimit: undefined,
-  officeStartTime: '12:00',
-  officeEndTime: '16:00',
-  checkedInLateFee: 'inApplicable',
-  overtime: 'inApplicable',
-  noticePeriod: undefined,
-  extraBonus: 'inApplicable',
-  status: 'active',
-  createdDate: new Date(),
-  assets: [],
-  contacts: [],
-  financials: [],
-  attendances: [],
-  leaves: [],
-  salaries: []
 }
 
 const EmployeeDetails = () => {
