@@ -16,6 +16,7 @@ import Modal from '../../components/Modal'
 import Select, { DropDownEventHandler } from '../../components/Select'
 import Table from '../../components/Table'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { defaultLeave } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import { capitalizeDelim, getDateRange } from '../../libs'
@@ -32,18 +33,6 @@ import {
   deleteEmployeeLeave
 } from 'backend/controllers/leaves'
 
-const defaultLeave: EmployeeLeave = {
-  id: -1,
-  from: '',
-  to: '',
-  duration: 'fullday',
-  reason: '',
-  status: 'approved',
-  type: 'paid',
-  // @ts-ignore // TODO: global
-  employee: { id: -1 }
-}
-
 const Assigned = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
@@ -51,6 +40,21 @@ const Assigned = () => {
 
   const [leave, setLeave] = useState<EmployeeLeave>({ ...defaultLeave })
   const [currentDate, setCurrentDate] = useState(new Date())
+
+  const [fromDate, toDate] = useMemo(
+    () => getDateRange(currentDate),
+    [currentDate]
+  )
+  const [fromDateString, toDateString] = useMemo(
+    () =>
+      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
+        string,
+        string
+      ],
+    [fromDate, toDate]
+  )
+
+  useEffect(() => setCurrentDate(new Date(fromDateString)), [fromDateString])
 
   const onLeaveChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value }
@@ -74,29 +78,14 @@ const Assigned = () => {
     })
   const resetData = () => setLeave({ ...defaultLeave })
 
-  const [fromDate, toDate] = useMemo(
-    () => getDateRange(currentDate),
-    [currentDate]
-  )
-  const [fromDateString, toDateString] = useMemo(
-    () =>
-      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
-        string,
-        string
-      ],
-    [fromDate, toDate]
-  )
-
-  useEffect(() => setCurrentDate(new Date(fromDateString)), [fromDateString])
-
   const {
     data: employeeLeaves = BLANK_ARRAY,
     isFetching: fetchingLeaves,
     refetch
   } = useQuery({
     queryKey: [
-      'employeeAttendances',
-      ServerSITEMAP.attendances.get,
+      'employeeLeaves',
+      ServerSITEMAP.leaves.get,
       fromDateString,
       toDateString
     ],
@@ -168,7 +157,8 @@ const Assigned = () => {
       data?.message && addToast(data.message)
       toggleSidebar()
       refetch()
-    }
+    },
+    retry: false
   })
 
   const isFetching =
@@ -240,8 +230,9 @@ const Assigned = () => {
           .reduce(
             (prev, employee) =>
               prev.concat(
-                employee.leaves.map(leave => [
-                  <td className='align-items-center align-middle d-flex gap-3 p-3'>
+                // FIXME: undefined
+                employee.leaves?.map(leave => [
+                  <div className='align-items-center align-middle d-flex gap-3 p-3'>
                     <img
                       src='/favicon.png'
                       width='50'
@@ -252,7 +243,7 @@ const Assigned = () => {
                       <p className='m-0'>{employee.name}</p>
                       {employee.eId}
                     </div>
-                  </td>,
+                  </div>,
                   <>{employee.company.name}</>,
                   <>{leave.from}</>,
                   <>{leave.to}</>,

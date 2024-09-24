@@ -142,6 +142,9 @@ const SidebarItems: React.FC = () => {
           <NavItem to={ROUTES.attendance.monthly}>
             <FaUsers className='me-2' /> Monthly Attendance
           </NavItem>
+          <NavItem to={ROUTES.attendance.history}>
+            <FaUsers className='me-2' /> Check In/Out History
+          </NavItem>
           <NavItem to={ROUTES.attendance.import}>
             <FaUsers className='me-2' /> Import
           </NavItem>

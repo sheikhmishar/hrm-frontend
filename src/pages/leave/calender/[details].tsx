@@ -1,3 +1,3 @@
-const Calender = () => <>Calender details</>
+const LeaveDetails = () => <>LeaveDetails details</>
 
-export default Calender
+export default LeaveDetails

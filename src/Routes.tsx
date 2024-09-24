@@ -31,11 +31,20 @@ const EmployeeNoticesLazy = delayedLazy(
 )
 const LeaveAssignedLazy = delayedLazy(() => import('./pages/leave/assigned'))
 const LeaveCalenderLazy = delayedLazy(() => import('./pages/leave/calender'))
+const LeaveDetailsLazy = delayedLazy(
+  () => import('./pages/leave/calender/[details]')
+)
 const AttendanceImportLazy = delayedLazy(
   () => import('./pages/attendance/import')
 )
 const AttendanceMonthlyLazy = delayedLazy(
   () => import('./pages/attendance/monthly')
+)
+const AttendanceDetailsLazy = delayedLazy(
+  () => import('./pages/attendance/monthly/[details]')
+)
+const AttendanceHistoryLazy = delayedLazy(
+  () => import('./pages/attendance/monthly/history')
 )
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
@@ -146,10 +155,34 @@ const Routes = () => (
         }
       />
       <Route
+        path={ROUTES.attendance.details}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <AttendanceDetailsLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.attendance.history}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <AttendanceHistoryLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.leave.assigned}
         element={
           <ProtectedRoute authenticatedOnly>
             <LeaveAssignedLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.leave.details}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <LeaveDetailsLazy />
           </ProtectedRoute>
         }
       />

@@ -19,7 +19,7 @@ const CalenderSlider = ({
   currentDate,
   setCurrentDate,
   monthly,
-  className,
+  className = '',
   ...props
 }: Prop) => {
   const [showDatePicker, setShowDatePicker] = useState(false)

@@ -37,11 +37,15 @@ const UpdatePayroll = () => {
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value, valueAsNumber }
   }) =>
-    setEmployee(employee => ({
-      ...employee,
-      [id]: (
+    setEmployee(employee => {
+      const isNumeric = (
         [
-          'unitSalary',
+          'basicSalary',
+          'conveyance',
+          'foodCost',
+          'houseRent',
+          'medicalCost',
+          'totalSalary',
           'taskWisePayment',
           'wordLimit'
         ] satisfies KeysOfObjectOfType<
@@ -49,9 +53,20 @@ const UpdatePayroll = () => {
           number | undefined
         >[] as string[]
       ).includes(id)
-        ? valueAsNumber
-        : value
-    }))
+      const updatedEmployee: Employee = {
+        ...employee,
+        [id]: isNumeric ? valueAsNumber : value
+      }
+      if (isNumeric)
+        updatedEmployee.totalSalary =
+          updatedEmployee.basicSalary +
+          updatedEmployee.conveyance +
+          updatedEmployee.foodCost +
+          updatedEmployee.houseRent +
+          updatedEmployee.medicalCost
+
+      return updatedEmployee
+    })
 
   const {
     refetch: refetchEmployees,
@@ -67,7 +82,7 @@ const UpdatePayroll = () => {
     onSuccess: data => {
       const newEmployee = data?.find(e => e.id === employee.id)
       setEmployee(() => ({ ...(newEmployee || defaultEmployee) }))
-      setPrevSalary(newEmployee?.unitSalary || 0)
+      setPrevSalary(newEmployee?.totalSalary || 0)
       setPrevDesignation(newEmployee?.designation || defaultDesignation)
     }
   })
@@ -129,7 +144,7 @@ const UpdatePayroll = () => {
                 employee => employee.id === parseInt(value)
               )
               setEmployee(employee => ({ ...(newEmployee || employee) }))
-              setPrevSalary(newEmployee?.unitSalary || 0)
+              setPrevSalary(newEmployee?.totalSalary || 0)
               setPrevDesignation(newEmployee?.designation || defaultDesignation)
             }}
           />
@@ -184,13 +199,21 @@ const UpdatePayroll = () => {
               />
             </div>
             {(
-              ['unitSalary'] satisfies KeysOfObjectOfType<Employee, number>[]
+              [
+                'totalSalary',
+                'basicSalary',
+                'conveyance',
+                'foodCost',
+                'houseRent',
+                'medicalCost'
+              ] satisfies KeysOfObjectOfType<Employee, number>[]
             ).map(k => (
               <div key={k} className='col-12 col-lg-6'>
                 <Input
-                  disabled={isFetching}
+                  disabled={isFetching || k === 'totalSalary'}
                   id={k}
-                  label='New Salary'
+                  label={'New ' + capitalizeDelim(k)}
+                  placeholder={'Enter New ' + capitalizeDelim(k)}
                   containerClass='my-3'
                   value={employee[k]}
                   type='number'
@@ -198,10 +221,6 @@ const UpdatePayroll = () => {
                 />
               </div>
             ))}
-            <div className='col-12 col-lg-6'>
-              <Input id='reason' label='Change Reason' containerClass='my-3' />
-            </div>
-
             {(
               ['designation'] satisfies KeysOfObjectOfType<
                 Employee,
@@ -236,7 +255,12 @@ const UpdatePayroll = () => {
                 />
               </div>
             ))}
-            <div className='col d-flex my-2'>
+            <div className='col-12 col-lg-6'>
+              <Input id='reason' label='Change Reason' containerClass='my-3' />
+            </div>
+
+            <hr className='mt-3' />
+            <div className='col-12 d-flex my-2'>
               <Button
                 onClick={() => employeeUpdate()}
                 className='btn-primary ms-auto'
@@ -262,7 +286,7 @@ const UpdatePayroll = () => {
           [
             <>{employee.eId}</>,
             <>{prevSalary}</>,
-            <>{employee.unitSalary}</>,
+            <>{employee.totalSalary}</>,
             <>{prevDesignation.name}</>,
             <>{employee.designation.name}</>,
             <></>,

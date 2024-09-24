@@ -5,9 +5,12 @@ import Designation from 'backend/Entities/Designation'
 import DutyType from 'backend/Entities/DutyType'
 import Employee from 'backend/Entities/Employee'
 import EmployeeAsset from 'backend/Entities/EmployeeAsset'
+import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import EmployeeContact from 'backend/Entities/EmployeeContacts'
 import EmployeeFinancial from 'backend/Entities/EmployeeFinancial'
+import EmployeeLeave from 'backend/Entities/EmployeeLeave'
 import SalaryType from 'backend/Entities/SalaryType'
+import Setting from 'backend/Entities/Setting'
 
 export const defaultDepartment: Department = {
   id: -1,
@@ -90,5 +93,29 @@ export const defaultAsset: EmployeeAsset = {
   description: '',
   givenDate: '',
   returnDate: undefined,
+  employee: defaultEmployee
+}
+
+export const defaultSetting: Setting = {
+  property: '',
+  value: ''
+}
+
+export const defaultLeave: EmployeeLeave = {
+  id: -1,
+  from: '',
+  to: '',
+  duration: 'fullday',
+  reason: '',
+  status: 'approved',
+  type: 'paid',
+  employee: defaultEmployee
+}
+
+export const defaultAttendance: EmployeeAttendance = {
+  id: -1,
+  arrivalTime: '',
+  date: '',
+  leaveTime: '',
   employee: defaultEmployee
 }

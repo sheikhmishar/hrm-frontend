@@ -8,6 +8,7 @@ const root = '/api',
   companiesRoot = `${root}/companies`,
   departmentsRoot = `${root}/departments`,
   branchesRoot = `${root}/branches`,
+  settingsRoot = `${root}/settings`,
   dutyTypesRoot = `${root}/duty-types`,
   salaryTypesRoot = `${root}/salary-types`,
   designationsRoot = `${root}/designations`
@@ -118,6 +119,13 @@ const ServerSITEMAP = {
     get: designationsRoot,
     getById: `${designationsRoot}/:id`,
     put: `${designationsRoot}/:id`
+  },
+  settings: {
+    _params: { property: ':property' },
+    _: settingsRoot,
+    get: settingsRoot,
+    getByProperty: `${settingsRoot}/:property`,
+    put: `${settingsRoot}/:property`
   }
 }
 export default ServerSITEMAP

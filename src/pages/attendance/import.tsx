@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa, { ParseResult } from 'papaparse'
-import { useContext, useState } from 'react'
+import { useContext, useState, Fragment } from 'react'
 
 import Select from '../../components/Select'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
@@ -14,20 +14,14 @@ import Employee from 'backend/Entities/Employee'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import { addEmployeeAttendance } from 'backend/controllers/attendances'
 import { allEmployees } from 'backend/controllers/employees'
-
-const defaultAttendance: Omit<EmployeeAttendance, 'id'> = {
-  arrivalTime: '00:00:00',
-  leaveTime: '00:00:00',
-  date: new Date().toISOString().split('T')[0]!,
-  // @ts-ignore // FIXME
-  employee: { id: -1 }
-}
+import {
+  defaultAttendance,
+  defaultEmployee
+} from '../../constants/DEFAULT_MODELS'
 
 const ImportAttendance = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
-  const [attendances, setAttendances] = useState<
-    Omit<EmployeeAttendance, 'id'>[]
-  >([])
+  const [attendances, setAttendances] = useState<EmployeeAttendance[]>([])
 
   const { data: employees = BLANK_ARRAY, isFetching: employeesLoading } =
     useQuery({
@@ -101,6 +95,7 @@ const ImportAttendance = () => {
                     if (result.data.length > 0)
                       setAttendances(
                         result.data.map(row => ({
+                          id: -1,
                           leaveTime: row.leaveTime,
                           arrivalTime: row.arrivalTime,
                           date: row.date,
@@ -143,7 +138,7 @@ const ImportAttendance = () => {
               </thead>
               <tbody>
                 {attendances.map((attendance, i) => (
-                  <>
+                  <Fragment key={i}>
                     <tr>
                       <td>
                         <input
@@ -155,8 +150,10 @@ const ImportAttendance = () => {
                           value={attendance.date}
                           onChange={({ target: { valueAsDate } }) => {
                             const newAttendances = [...attendances]
-                            if (attendances[i]?.date)
-                              attendances[i]!.date = (valueAsDate || new Date())
+                            if (newAttendances[i])
+                              newAttendances[i]!.date = (
+                                valueAsDate || new Date()
+                              )
                                 .toISOString()
                                 .split('T')[0]!
                             setAttendances(newAttendances)
@@ -173,11 +170,9 @@ const ImportAttendance = () => {
                           }
                           value={attendance.arrivalTime}
                           onChange={({ target: { valueAsDate } }) => {
-                            console.log(valueAsDate)
-
                             const newAttendances = [...attendances]
-                            if (attendances[i]?.arrivalTime)
-                              attendances[i]!.arrivalTime = (
+                            if (newAttendances[i])
+                              newAttendances[i]!.arrivalTime = (
                                 valueAsDate || new Date()
                               )
                                 .toISOString()
@@ -195,8 +190,8 @@ const ImportAttendance = () => {
                           value={attendance.leaveTime}
                           onChange={({ target: { valueAsDate } }) => {
                             const newAttendances = [...attendances]
-                            if (attendances[i]?.leaveTime)
-                              attendances[i]!.leaveTime = (
+                            if (newAttendances[i])
+                              newAttendances[i]!.leaveTime = (
                                 valueAsDate || new Date()
                               )
                                 .toISOString()
@@ -209,7 +204,7 @@ const ImportAttendance = () => {
                         <Select
                           id={`employee_select${i}`}
                           disabled={employeesLoading}
-                          label=''
+                          label='Employee'
                           autoComplete='true'
                           options={employees.map(employee => ({
                             label: `${employee.eId} - ${employee.name}`,
@@ -217,9 +212,18 @@ const ImportAttendance = () => {
                           }))}
                           value={attendance.employee.id}
                           onChange={({ target: { value } }) => {
+                            {
+                              /* FIXME: changes all */
+                            }
                             const newAttendances = [...attendances]
-                            if (attendances[i])
-                              attendances[i]!.employee.id = parseInt(value)
+                            if (newAttendances[i])
+                              newAttendances[i] = {
+                                ...newAttendances[i]!,
+                                employee: {
+                                  ...newAttendances[i]!.employee,
+                                  id: parseInt(value)
+                                }
+                              }
                             setAttendances(newAttendances)
                           }}
                         />
@@ -259,7 +263,7 @@ const ImportAttendance = () => {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -269,7 +273,7 @@ const ImportAttendance = () => {
                 onClick={() =>
                   setAttendances(attendances => [
                     ...attendances,
-                    { ...defaultAttendance }
+                    { ...defaultAttendance, employee: { ...defaultEmployee } }
                   ])
                 }
               >

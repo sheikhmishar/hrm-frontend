@@ -1,20 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import {
-  ChangeEventHandler,
-  useContext,
-  useEffect,
-  useMemo,
-  useState
-} from 'react'
-import { FaArrowLeft, FaPen, FaTrash } from 'react-icons/fa6'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { useContext, useMemo, useState, type ChangeEventHandler } from 'react'
+import { FaPen, FaTrash } from 'react-icons/fa6'
 
 import Button from '../../../components/Button'
 import CalenderSlider from '../../../components/CalenderDropdown'
 import Input from '../../../components/Input'
 import Modal from '../../../components/Modal'
 import Table from '../../../components/Table'
-import { ROUTES } from '../../../constants/CONSTANTS'
+import { BLANK_ARRAY } from '../../../constants/CONSTANTS'
 import { defaultAttendance } from '../../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../../contexts/toast'
@@ -24,37 +17,22 @@ import modifiedFetch from '../../../libs/modifiedFetch'
 import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import {
+  allEmployeeAttendances,
   deleteEmployeeAttendance,
-  employeeAttendanceDetails,
   updateEmployeeAttendance
 } from 'backend/controllers/attendances'
 
-const AttendanceDetails = () => {
+const AttendanceHistory = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
-
-  const location = useLocation()
-  const { month: monthFromQuery } = useMemo(
-    () =>
-      Object.fromEntries(new URLSearchParams(location.search)) as Partial<
-        (typeof ROUTES)['attendance']['_queries']
-      >,
-    [location.search]
-  )
-
-  const { id = '-1' } = useParams<(typeof ROUTES)['attendance']['_params']>()
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const [attendance, setAttendance] = useState<EmployeeAttendance>({
     ...defaultAttendance
   })
+
   const onAttendanceChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value }
   }) => setAttendance(attendance => ({ ...attendance, [id]: value }))
-
-  useEffect(
-    () => setCurrentDate(new Date(monthFromQuery || currentDate)),
-    [monthFromQuery]
-  )
 
   const [fromDate, toDate] = useMemo(
     () => getDateRange(currentDate),
@@ -77,29 +55,25 @@ const AttendanceDetails = () => {
     })
 
   const {
-    data: attendanceDetails,
+    data: attendances = BLANK_ARRAY,
     isFetching: _isFetching,
     refetch
   } = useQuery({
     queryKey: [
-      'employeeAttendanceDetails',
-      ServerSITEMAP.attendances.getByEmployeeId,
+      'allEmployeeAttendances',
+      ServerSITEMAP.attendances.get,
       fromDateString,
       toDateString
     ],
     queryFn: () =>
-      modifiedFetch<GetResponseType<typeof employeeAttendanceDetails>>(
-        ServerSITEMAP.attendances.getByEmployeeId.replace(
-          ServerSITEMAP.attendances._params.employeeId,
-          id || '-1'
-        ) +
+      modifiedFetch<GetResponseType<typeof allEmployeeAttendances>>(
+        ServerSITEMAP.attendances.get +
           '?' +
           new URLSearchParams({
             from: fromDateString,
             to: toDateString
           } satisfies Partial<typeof ServerSITEMAP.attendances._queries>)
       ),
-    enabled: !!(id && id !== '-1'),
     onError: onErrorDisplayToast
   })
 
@@ -163,15 +137,7 @@ const AttendanceDetails = () => {
   return (
     <>
       <div className='align-items-center mb-3 row'>
-        <div className='col-4'>
-          <Link
-            to={ROUTES.attendance.monthly}
-            className='link-primary text-decoration-none'
-          >
-            <FaArrowLeft /> Attendance List
-          </Link>
-        </div>
-        <div className='col-4'>
+        <div className='col-8'>
           {_isFetching && (
             <div
               className='ms-2 spinner-border spinner-border-sm text-light'
@@ -203,85 +169,93 @@ const AttendanceDetails = () => {
           'Total Time',
           'Action'
         ]}
-        // FIXME: not clearing after deletion
-        rows={(attendanceDetails?.attendances || [])
-          .map(attendance => {
-            const late = Math.ceil(
-              (new Date('2021-01-01T' + attendance.arrivalTime).getTime() -
-                new Date(
-                  '2021-01-01T' + attendanceDetails?.officeStartTime
-                ).getTime()) /
-                60000
-            )
-            const overtime = Math.ceil(
-              (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
-                new Date(
-                  '2021-01-01T' + attendanceDetails?.officeEndTime
-                ).getTime()) /
-                60000
-            )
-            return {
-              ...attendance,
-              totalTime: Math.ceil(
-                (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
-                  new Date('2021-01-01T' + attendance.arrivalTime).getTime()) /
-                  60000
-              ),
-              late: Math.max(0, late),
-              overtime: Math.max(0, overtime)
-            }
-          })
-          .map(attendance => [
-            <>{attendance.date}</>,
-            <>{attendanceDetails?.name || ''}</>,
-            <>{attendanceDetails?.designation.name || ''}</>,
-            <>{attendance.arrivalTime}</>,
-            <>{attendance.leaveTime}</>,
-            attendanceDetails?.checkedInLateFee === 'inApplicable' ? (
-              <>'N/A'</>
-            ) : (
-              <>{attendance.late} minutes</>
+        rows={attendances.reduce(
+          (prev, employee) =>
+            prev.concat(
+              // FIXME: ?
+              (employee.attendances || [])
+                .map(attendance => {
+                  const late = Math.ceil(
+                    (new Date(
+                      '2021-01-01T' + attendance.arrivalTime
+                    ).getTime() -
+                      new Date(
+                        '2021-01-01T' + employee?.officeStartTime
+                      ).getTime()) /
+                      60000
+                  )
+                  const overtime = Math.ceil(
+                    (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
+                      new Date(
+                        '2021-01-01T' + employee?.officeEndTime
+                      ).getTime()) /
+                      60000
+                  )
+                  return {
+                    ...attendance,
+                    totalTime: Math.ceil(
+                      (new Date(
+                        '2021-01-01T' + attendance.leaveTime
+                      ).getTime() -
+                        new Date(
+                          '2021-01-01T' + attendance.arrivalTime
+                        ).getTime()) /
+                        60000
+                    ),
+                    late: Math.max(0, late),
+                    overtime: Math.max(0, overtime)
+                  }
+                })
+                .map(attendance => [
+                  <>{attendance.date}</>,
+                  <>{employee?.name || ''}</>,
+                  <>{employee?.designation.name || ''}</>,
+                  <>{attendance.arrivalTime}</>,
+                  <>{attendance.leaveTime}</>,
+                  employee?.checkedInLateFee === 'inApplicable' ? (
+                    <>'N/A'</>
+                  ) : (
+                    <>{attendance.late} minutes</>
+                  ),
+                  <>{attendance.overtime} minutes</>,
+                  // TODO: check applicable
+                  <>{attendance.tasks || 'N/A'}</>,
+                  <>{attendance.totalTime} minutes</>,
+                  <>
+                    <Button
+                      disabled={isFetching}
+                      onClick={() => {
+                        // FIXME ||[]
+                        const foundAttendance = (
+                          employee?.attendances || []
+                        ).find(({ id }) => id === attendance.id)
+                        if (foundAttendance) {
+                          setAttendance(foundAttendance)
+                          toggleSidebar()
+                        } else addToast('Invalid Entry', 'ERROR')
+                      }}
+                      className='border-0 link-primary text-body'
+                    >
+                      <FaPen />
+                    </Button>
+                    <Button
+                      disabled={isFetching}
+                      onClick={() => deleteAttendance(attendance.id)}
+                      className='border-0 link-primary text-body'
+                    >
+                      <FaTrash />
+                    </Button>
+                  </>
+                ])
             ),
-            <>{attendance.overtime} minutes</>,
-            // TODO: check applicable
-            <>{attendance.tasks || 'N/A'}</>,
-            <>{attendance.totalTime} minutes</>,
-            <>
-              <Button
-                disabled={isFetching}
-                onClick={() => {
-                  // FIXME ||[]
-                  const foundAttendance = (
-                    attendanceDetails?.attendances || []
-                  ).find(att => att.id === attendance.id)
-                  console.log(foundAttendance)
-
-                  if (foundAttendance) {
-                    // FIXME: not changing
-                    setAttendance(foundAttendance)
-                    toggleSidebar()
-                  } else addToast('Invalid Entry', 'ERROR')
-                }}
-                className='border-0 link-primary text-body'
-              >
-                <FaPen />
-              </Button>
-              <Button
-                disabled={isFetching}
-                onClick={() => deleteAttendance(attendance.id)}
-                className='border-0 link-primary text-body'
-              >
-                <FaTrash />
-              </Button>
-            </>
-          ])}
+          [] as JSX.Element[][]
+        )}
+        // FIXME: not clearing after deletion
+        // rows={(attendanceDetails?.attendances || [])
       />
 
       <Modal isOpen={sidebar} setIsOpen={setSidebar}>
-        <Modal.Header
-          title={`${attendance.id === -1 ? 'Add' : 'Update'} Attendance`}
-          close={toggleSidebar}
-        />
+        <Modal.Header title='Update Attendance' close={toggleSidebar} />
         <Modal.Body>
           {(
             ['date'] satisfies KeysOfObjectOfType<EmployeeAttendance, string>[]
@@ -324,7 +298,7 @@ const AttendanceDetails = () => {
           ).map(k => (
             <Input
               key={k}
-              // disabled={attendanceLoading}
+              disabled={isFetching}
               id={k}
               label={capitalizeDelim(k)}
               containerClass='my-3'
@@ -363,4 +337,4 @@ const AttendanceDetails = () => {
   )
 }
 
-export default AttendanceDetails
+export default AttendanceHistory

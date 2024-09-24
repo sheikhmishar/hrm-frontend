@@ -1030,6 +1030,7 @@ const EmployeeDetails = () => {
                   ])}
                 />
               </div>
+              <hr />
               <div className='d-flex justify-content-end mt-3'>
                 {employee.id === -1 && (
                   <Button className='btn-light mx-2' onClick={resetData}>
@@ -1070,3 +1071,5 @@ const EmployeeDetails = () => {
   )
 }
 export default EmployeeDetails
+
+// TODO: change confirmation silo

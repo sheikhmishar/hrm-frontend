@@ -42,3 +42,30 @@ export const getDateRange = (date: Date | string) => {
   }
   return [from, to] as [Date, Date]
 }
+
+// const daysInYear = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31].map(
+//   (days, i) => new Array(days).fill(null).map((_, i) => i)
+// )
+
+const nameOfDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+export default function generateCalender(from: Date, to: Date) {
+  const firstDay = from.getDay()
+
+  const date = new Date(from)
+  date.setDate(date.getDate() - 1)
+  const daysInMonth = new Array(
+    (to.getTime() - from.getTime()) / (24 * 3600000) + 1
+  )
+    .fill(null)
+    .map(() => {
+      date.setTime(date.getTime() + 24 * 3600000)
+      return date.toISOString().substring(0, 10).substring(5)
+    })
+
+  return daysInMonth.map((date, i) => ({
+    dayName: nameOfDays[(firstDay + i) % 7] as (typeof nameOfDays)[number],
+    date: date.substring(3),
+    month: date.substring(0, 2)
+  }))
+}

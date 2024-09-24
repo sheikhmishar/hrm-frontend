@@ -25,12 +25,19 @@ export const ROUTES = {
   },
   attendance: {
     _: attendanceRoot,
+    _params: ROUTE_PARAMS,
+    _queries: { month: 'month' },
+    history: `${attendanceRoot}/history`,
     monthly: `${attendanceRoot}/monthly`,
+    details: `${attendanceRoot}/details/:id`,
     import: `${attendanceRoot}/import`
   },
   leave: {
     _: leaveRoot,
-    assigned: `${leaveRoot}/assigned`,
+    _params: ROUTE_PARAMS,
+    _queries: { month: 'month' },
+    assigned: `${leaveRoot}/assigned/`,
+    details: `${leaveRoot}/details/:id`,
     calender: `${leaveRoot}/calender`
   },
   payroll: {

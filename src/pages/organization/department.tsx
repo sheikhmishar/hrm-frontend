@@ -5,16 +5,14 @@ import {
   useState,
   type ChangeEventHandler
 } from 'react'
-
-import { FaPen, FaRotateLeft, FaPlus } from 'react-icons/fa6'
+import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
 import Modal from '../../components/Modal'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Table from '../../components/Table'
+import { defaultDepartment } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
@@ -28,12 +26,6 @@ import type {
   departmentDetails,
   updateDepartment
 } from 'backend/controllers/departments'
-
-const defaultDepartment: Department = {
-  id: -1,
-  name: '',
-  status: 'active'
-}
 
 const visibleKeys = (
   Object.keys(defaultDepartment) as (keyof Department)[]
