@@ -113,7 +113,9 @@ const MonthlyAttendance = () => {
           [<></>].concat(
             calender.map(({ date, month }) => (
               <strong className='text-primary'>
-                {date.endsWith('21') || date.endsWith('07') ? month : ''}
+                {date.endsWith('22') || date.endsWith('07')
+                  ? new Date(`2011-${month}-01`).toDateString().substring(4, 7)
+                  : ''}
                 {date.endsWith('01') ? '|' : ''}
               </strong>
             ))

@@ -27,18 +27,32 @@ const LeaveCalender = () => {
     () => getDateRange(currentDate),
     [currentDate]
   )
-  const fromDateString = useMemo(
-    () => fromDate.toISOString().split('T')[0]!,
-    [fromDate]
+  const [fromDateString, toDateString] = useMemo(
+    () =>
+      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
+        string,
+        string
+      ],
+    [fromDate, toDate]
   )
 
   useEffect(() => setCurrentDate(new Date(fromDateString)), [fromDateString])
 
   const { data: employeeLeaves = BLANK_ARRAY, isFetching } = useQuery({
-    queryKey: ['employeeLeaves', ServerSITEMAP.leaves.get],
+    queryKey: [
+      'employeeLeaves',
+      ServerSITEMAP.leaves.get,
+      fromDateString,
+      toDateString
+    ],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allEmployeeLeaves>>(
-        ServerSITEMAP.leaves.get
+        ServerSITEMAP.leaves.get +
+          '?' +
+          new URLSearchParams({
+            from: fromDateString,
+            to: toDateString
+          } satisfies Partial<typeof ServerSITEMAP.attendances._queries>)
       ),
     onError: onErrorDisplayToast
   })
@@ -100,7 +114,9 @@ const LeaveCalender = () => {
           [<></>].concat(
             calender.map(({ date, month }) => (
               <strong className='text-primary'>
-                {date.endsWith('21') || date.endsWith('07') ? month : ''}
+                {date.endsWith('22') || date.endsWith('07')
+                  ? new Date(`2011-${month}-01`).toDateString().substring(4, 7)
+                  : ''}
                 {date.endsWith('01') ? '|' : ''}
               </strong>
             ))
