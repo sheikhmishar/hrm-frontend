@@ -23,7 +23,7 @@ const defaultSelfDetails: GetResponseType<typeof selfDetails> = {
   email: '',
   iat: 1,
   name: '',
-  type: 'admin'
+  type: 'HR'
 }
 
 type AuthContext = {

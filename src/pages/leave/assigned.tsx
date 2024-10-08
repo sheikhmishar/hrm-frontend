@@ -19,7 +19,7 @@ import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import { defaultLeave } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim, getDateRange } from '../../libs'
+import { capitalizeDelim, getDateRange, getEmployeeId } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -241,7 +241,7 @@ const Assigned = () => {
                     />
                     <div>
                       <p className='m-0'>{employee.name}</p>
-                      {employee.eId}
+                      {getEmployeeId(employee)}
                     </div>
                   </div>,
                   <>{employee.company.name}</>,
@@ -287,7 +287,7 @@ const Assigned = () => {
               value={leave[k].id}
               options={employees.map(employee => ({
                 value: employee.id,
-                label: `${employee.eId} - ${employee.name}`
+                label: `${getEmployeeId(employee)} - ${employee.name}`
               }))}
               onChange={onSelectChange}
             />
@@ -325,6 +325,24 @@ const Assigned = () => {
               onChange={onSelectChange}
             />
           ))}
+          {(['type'] satisfies KeysOfObjectOfType<EmployeeLeave, string>[]).map(
+            k => (
+              <Select
+                key={k}
+                id={k}
+                disabled={isFetching}
+                autoComplete='true'
+                label={capitalizeDelim(k)}
+                containerClass='my-3'
+                placeholder={'Enter ' + capitalizeDelim(k)}
+                value={leave[k]}
+                options={(
+                  ['paid', 'unpaid'] satisfies EmployeeLeave[typeof k][]
+                ).map(name => ({ value: name, label: name }))}
+                onChange={onSelectChange}
+              />
+            )
+          )}
           {(
             ['reason'] satisfies KeysOfObjectOfType<EmployeeLeave, string>[]
           ).map(k => (

@@ -30,7 +30,6 @@ export const defaultCompany: Company = {
 export const defaultEmployee: Employee = {
   id: -1,
   photo: '',
-  eId: '',
   name: '',
   phoneNumber: '',
   altPhoneNumber: '',
@@ -117,5 +116,8 @@ export const defaultAttendance: EmployeeAttendance = {
   arrivalTime: '',
   date: '',
   leaveTime: '',
+  late: 0,
+  overtime: 0,
+  totalTime: 0,
   employee: defaultEmployee
 }

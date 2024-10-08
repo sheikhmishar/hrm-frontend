@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useContext, useState } from 'react'
 
 import Input from '../../components/Input'
+import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
+import { getEmployeeId } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
 import { allEmployeeAssets } from 'backend/controllers/employees'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 
 const Assets = () => {
   const { onErrorDisplayToast } = useContext(ToastContext)
@@ -45,7 +46,9 @@ const Assets = () => {
         .filter(
           employee =>
             employee.name.toLowerCase().includes(search.toLowerCase()) ||
-            employee.eId.toLowerCase().includes(search.toLowerCase()) ||
+            getEmployeeId(employee)
+              .toLowerCase()
+              .includes(search.toLowerCase()) ||
             employee.assets.find(asset =>
               asset.name.toLowerCase().includes(search.toLowerCase())
             )
@@ -67,7 +70,7 @@ const Assets = () => {
                       {employee.name}
                     </p>
                     <p className='m-0'>{employee.company.name}</p>
-                    <p className='m-0'>{employee.eId}</p>
+                    <p className='m-0'>{getEmployeeId(employee)}</p>
                   </div>
                 </div>
                 <table className='mt-2 table table-borderless'>

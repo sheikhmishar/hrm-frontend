@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import CalenderSlider from '../../../components/CalenderDropdown'
 import Select from '../../../components/Select'
@@ -13,7 +14,6 @@ import modifiedFetch from '../../../libs/modifiedFetch'
 import { GetResponseType } from 'backend/@types/response'
 import { allCompanies } from 'backend/controllers/companies'
 import { allEmployeeLeaves } from 'backend/controllers/leaves'
-import { Link } from 'react-router-dom'
 
 // TODO: 09 -> September, legend
 
@@ -108,16 +108,22 @@ const LeaveCalender = () => {
       </div>
       <Table
         columns={['Employee'].concat(
-          calender.map(({ date }) => (date === '01' ? ' |  01' : date))
+          calender.map(({ date }, i) =>
+            calender[i + 1]?.date === '01' ? date + ' | ' : date
+          )
         )}
         rows={[
           [<></>].concat(
-            calender.map(({ date, month }) => (
+            calender.map(({ date, month }, i) => (
               <strong className='text-primary'>
                 {date.endsWith('22') || date.endsWith('07')
                   ? new Date(`2011-${month}-01`).toDateString().substring(4, 7)
                   : ''}
-                {date.endsWith('01') ? '|' : ''}
+                {calender[i + 1]?.date === '01' ? (
+                  <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| </>
+                ) : (
+                  ''
+                )}
               </strong>
             ))
           )
@@ -172,12 +178,17 @@ const LeaveCalender = () => {
                 </Link>
               ].concat(
                 calender.map(({ month, date }) => {
-                  const d = new Date(
-                    `${currentDate.getFullYear()}-${month}-${date}`
-                  )
+                  const year =
+                    month === '01'
+                      ? toDate.getFullYear()
+                      : fromDate.getFullYear()
+                  const targetDate = new Date(`${year}-${month}-${date}`)
+
+                  // FIXME: undefined sometimes
                   const leave = employee.leaves.find(
                     leave =>
-                      new Date(leave.from) <= d && new Date(leave.to) >= d
+                      new Date(leave.from) <= targetDate &&
+                      new Date(leave.to) >= targetDate
                   )
                   if (leave)
                     return (

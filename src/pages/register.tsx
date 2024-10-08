@@ -14,8 +14,12 @@ import modifiedFetch from '../libs/modifiedFetch'
 
 import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import { registerUser } from 'backend/controllers/users'
+import Employee from 'backend/Entities/Employee'
 
-type Creds = Required<GetReqBodyType<typeof registerUser>>
+type Creds = Modify<
+  Required<GetReqBodyType<typeof registerUser>>,
+  { employee?: Employee }
+>
 
 const defaultRegisterCreds: Creds = {
   id: 1,
@@ -23,7 +27,7 @@ const defaultRegisterCreds: Creds = {
   name: '',
   password: '',
   phoneNumber: '',
-  type: 'admin'
+  type: 'HR'
 }
 
 const Register: React.FC = () => {

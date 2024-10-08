@@ -463,7 +463,7 @@ const EmployeeDetails = () => {
               </h5>
               <div className='row'>
                 {(
-                  ['name', 'eId', 'phoneNumber'] satisfies KeysOfObjectOfType<
+                  ['name', 'phoneNumber'] satisfies KeysOfObjectOfType<
                     Employee,
                     string
                   >[]

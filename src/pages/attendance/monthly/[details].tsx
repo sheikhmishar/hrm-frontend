@@ -165,6 +165,7 @@ const AttendanceDetails = () => {
       <div className='align-items-center mb-3 row'>
         <div className='col-4'>
           <Link
+            // TODO: add from
             to={ROUTES.attendance.monthly}
             className='link-primary text-decoration-none'
           >
@@ -201,80 +202,91 @@ const AttendanceDetails = () => {
           'Overtime',
           'Tasks',
           'Total Time',
+          'Status',
           'Action'
         ]}
         // FIXME: not clearing after deletion
-        rows={(attendanceDetails?.attendances || [])
-          .map(attendance => {
-            const late = Math.ceil(
-              (new Date('2021-01-01T' + attendance.arrivalTime).getTime() -
-                new Date(
-                  '2021-01-01T' + attendanceDetails?.officeStartTime
-                ).getTime()) /
-                60000
-            )
-            const overtime = Math.ceil(
-              (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
-                new Date(
-                  '2021-01-01T' + attendanceDetails?.officeEndTime
-                ).getTime()) /
-                60000
-            )
-            return {
-              ...attendance,
-              totalTime: Math.ceil(
-                (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
-                  new Date('2021-01-01T' + attendance.arrivalTime).getTime()) /
-                  60000
-              ),
-              late: Math.max(0, late),
-              overtime: Math.max(0, overtime)
-            }
-          })
-          .map(attendance => [
-            <>{attendance.date}</>,
-            <>{attendanceDetails?.name || ''}</>,
-            <>{attendanceDetails?.designation.name || ''}</>,
-            <>{attendance.arrivalTime}</>,
-            <>{attendance.leaveTime}</>,
-            attendanceDetails?.checkedInLateFee === 'inApplicable' ? (
-              <>'N/A'</>
-            ) : (
-              <>{attendance.late} minutes</>
-            ),
-            <>{attendance.overtime} minutes</>,
-            // TODO: check applicable
-            <>{attendance.tasks || 'N/A'}</>,
-            <>{attendance.totalTime} minutes</>,
-            <>
-              <Button
-                disabled={isFetching}
-                onClick={() => {
-                  // FIXME ||[]
-                  const foundAttendance = (
-                    attendanceDetails?.attendances || []
-                  ).find(att => att.id === attendance.id)
-                  console.log(foundAttendance)
+        rows={(attendanceDetails?.attendances || []).map(attendance => [
+          <>{attendance.date}</>,
+          <>{attendanceDetails?.name || ''}</>,
+          <>{attendanceDetails?.designation.name || ''}</>,
+          <>{attendance.arrivalTime}</>,
+          <>{attendance.leaveTime}</>,
+          <>
+            {attendance.late === -1 ? 'N/A' : Math.max(0, attendance.late)}{' '}
+            minutes
+          </>,
+          <>
+            {attendance.overtime === -1
+              ? 'N/A'
+              : Math.max(0, attendance.overtime)}{' '}
+            minutes
+          </>,
+          // TODO: check applicable
+          <>{attendance.tasks || 'N/A'}</>,
+          <>{attendance.totalTime} minutes</>,
+          <>
+            <span
+              className={
+                attendance.late === 0
+                  ? 'text-bg-warning'
+                  : attendance.late < 0
+                  ? 'text-bg-success'
+                  : 'text-bg-danger'
+              }
+            >
+              {attendance.late === 0
+                ? 'In time'
+                : attendance.late < 0
+                ? 'Early In'
+                : 'Late In'}
+            </span>
+            |
+            <span
+              className={
+                attendance.overtime === 0
+                  ? 'text-bg-warning'
+                  : attendance.overtime < 0
+                  ? 'text-bg-danger'
+                  : 'text-bg-success'
+              }
+            >
+              {attendance.overtime === 0
+                ? 'On time'
+                : attendance.overtime < 0
+                ? 'Early Out'
+                : 'Late Out'}
+            </span>
+          </>,
+          <>
+            <Button
+              disabled={isFetching}
+              onClick={() => {
+                // FIXME ||[]
+                const foundAttendance = (
+                  attendanceDetails?.attendances || []
+                ).find(att => att.id === attendance.id)
+                console.log(foundAttendance)
 
-                  if (foundAttendance) {
-                    // FIXME: not changing
-                    setAttendance(foundAttendance)
-                    toggleSidebar()
-                  } else addToast('Invalid Entry', 'ERROR')
-                }}
-                className='border-0 link-primary text-body'
-              >
-                <FaPen />
-              </Button>
-              <Button
-                disabled={isFetching}
-                onClick={() => deleteAttendance(attendance.id)}
-                className='border-0 link-primary text-body'
-              >
-                <FaTrash />
-              </Button>
-            </>
-          ])}
+                if (foundAttendance) {
+                  // FIXME: not changing
+                  setAttendance(foundAttendance)
+                  toggleSidebar()
+                } else addToast('Invalid Entry', 'ERROR')
+              }}
+              className='border-0 link-primary text-body'
+            >
+              <FaPen />
+            </Button>
+            <Button
+              disabled={isFetching}
+              onClick={() => deleteAttendance(attendance.id)}
+              className='border-0 link-primary text-body'
+            >
+              <FaTrash />
+            </Button>
+          </>
+        ])}
       />
 
       <Modal isOpen={sidebar} setIsOpen={setSidebar}>

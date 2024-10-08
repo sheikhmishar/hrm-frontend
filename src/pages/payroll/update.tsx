@@ -19,7 +19,7 @@ import type {
 import Employee from 'backend/Entities/Employee'
 import { allDesignations } from 'backend/controllers/designations'
 import Input from '../../components/Input'
-import { capitalizeDelim } from '../../libs'
+import { capitalizeDelim, getEmployeeId } from '../../libs'
 import Company from 'backend/Entities/Company'
 import Designation from 'backend/Entities/Designation'
 import Table from '../../components/Table'
@@ -136,7 +136,7 @@ const UpdatePayroll = () => {
             placeholder='Enter Employee ID'
             value={employee.id}
             options={employees.map(employee => ({
-              label: `${employee.eId}-${employee.name}`,
+              label: `${getEmployeeId(employee)}-${employee.name}`,
               value: employee.id
             }))}
             onChange={({ target: { value } }) => {
@@ -284,7 +284,7 @@ const UpdatePayroll = () => {
         ]}
         rows={[
           [
-            <>{employee.eId}</>,
+            <>{getEmployeeId(employee)}</>,
             <>{prevSalary}</>,
             <>{employee.totalSalary}</>,
             <>{prevDesignation.name}</>,

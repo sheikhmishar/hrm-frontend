@@ -167,86 +167,93 @@ const AttendanceHistory = () => {
           'Overtime',
           'Tasks',
           'Total Time',
+          'Status',
           'Action'
         ]}
         rows={attendances.reduce(
           (prev, employee) =>
             prev.concat(
               // FIXME: ?
-              (employee.attendances || [])
-                .map(attendance => {
-                  const late = Math.ceil(
-                    (new Date(
-                      '2021-01-01T' + attendance.arrivalTime
-                    ).getTime() -
-                      new Date(
-                        '2021-01-01T' + employee?.officeStartTime
-                      ).getTime()) /
-                      60000
-                  )
-                  const overtime = Math.ceil(
-                    (new Date('2021-01-01T' + attendance.leaveTime).getTime() -
-                      new Date(
-                        '2021-01-01T' + employee?.officeEndTime
-                      ).getTime()) /
-                      60000
-                  )
-                  return {
-                    ...attendance,
-                    totalTime: Math.ceil(
-                      (new Date(
-                        '2021-01-01T' + attendance.leaveTime
-                      ).getTime() -
-                        new Date(
-                          '2021-01-01T' + attendance.arrivalTime
-                        ).getTime()) /
-                        60000
-                    ),
-                    late: Math.max(0, late),
-                    overtime: Math.max(0, overtime)
-                  }
-                })
-                .map(attendance => [
-                  <>{attendance.date}</>,
-                  <>{employee?.name || ''}</>,
-                  <>{employee?.designation.name || ''}</>,
-                  <>{attendance.arrivalTime}</>,
-                  <>{attendance.leaveTime}</>,
-                  employee?.checkedInLateFee === 'inApplicable' ? (
-                    <>'N/A'</>
-                  ) : (
-                    <>{attendance.late} minutes</>
-                  ),
-                  <>{attendance.overtime} minutes</>,
-                  // TODO: check applicable
-                  <>{attendance.tasks || 'N/A'}</>,
-                  <>{attendance.totalTime} minutes</>,
-                  <>
-                    <Button
-                      disabled={isFetching}
-                      onClick={() => {
-                        // FIXME ||[]
-                        const foundAttendance = (
-                          employee?.attendances || []
-                        ).find(({ id }) => id === attendance.id)
-                        if (foundAttendance) {
-                          setAttendance(foundAttendance)
-                          toggleSidebar()
-                        } else addToast('Invalid Entry', 'ERROR')
-                      }}
-                      className='border-0 link-primary text-body'
-                    >
-                      <FaPen />
-                    </Button>
-                    <Button
-                      disabled={isFetching}
-                      onClick={() => deleteAttendance(attendance.id)}
-                      className='border-0 link-primary text-body'
-                    >
-                      <FaTrash />
-                    </Button>
-                  </>
-                ])
+              (employee.attendances || []).map(attendance => [
+                <>{attendance.date}</>,
+                <>{employee?.name || ''}</>,
+                <>{employee?.designation.name || ''}</>,
+                <>{attendance.arrivalTime}</>,
+                <>{attendance.leaveTime}</>,
+                <>
+                  {attendance.late === -1
+                    ? 'N/A'
+                    : Math.max(0, attendance.late)}{' '}
+                  minutes
+                </>,
+                <>
+                  {attendance.overtime === -1
+                    ? 'N/A'
+                    : Math.max(0, attendance.overtime)}{' '}
+                  minutes
+                </>,
+                // TODO: check applicable
+                <>{attendance.tasks || 'N/A'}</>,
+                <>{attendance.totalTime} minutes</>,
+                <>
+                  <span
+                    className={
+                      attendance.late === 0
+                        ? 'text-bg-warning'
+                        : attendance.late < 0
+                        ? 'text-bg-success'
+                        : 'text-bg-danger'
+                    }
+                  >
+                    {attendance.late === 0
+                      ? 'In time'
+                      : attendance.late < 0
+                      ? 'Early In'
+                      : 'Late In'}
+                  </span>
+                  |
+                  <span
+                    className={
+                      attendance.overtime === 0
+                        ? 'text-bg-warning'
+                        : attendance.overtime < 0
+                        ? 'text-bg-danger'
+                        : 'text-bg-success'
+                    }
+                  >
+                    {attendance.overtime === 0
+                      ? 'On time'
+                      : attendance.overtime < 0
+                      ? 'Early Out'
+                      : 'Late Out'}
+                  </span>
+                </>,
+                <>
+                  <Button
+                    disabled={isFetching}
+                    onClick={() => {
+                      // FIXME ||[]
+                      const foundAttendance = (
+                        employee?.attendances || []
+                      ).find(({ id }) => id === attendance.id)
+                      if (foundAttendance) {
+                        setAttendance(foundAttendance)
+                        toggleSidebar()
+                      } else addToast('Invalid Entry', 'ERROR')
+                    }}
+                    className='border-0 link-primary text-body'
+                  >
+                    <FaPen />
+                  </Button>
+                  <Button
+                    disabled={isFetching}
+                    onClick={() => deleteAttendance(attendance.id)}
+                    className='border-0 link-primary text-body'
+                  >
+                    <FaTrash />
+                  </Button>
+                </>
+              ])
             ),
           [] as JSX.Element[][]
         )}
@@ -285,6 +292,24 @@ const AttendanceHistory = () => {
               label={capitalizeDelim(k)}
               containerClass='my-3'
               type='time'
+              placeholder={'Enter ' + capitalizeDelim(k)}
+              value={attendance[k]}
+              onChange={onAttendanceChange}
+            />
+          ))}
+          {(
+            ['late', 'overtime', 'totalTime'] satisfies KeysOfObjectOfType<
+              EmployeeAttendance,
+              number
+            >[]
+          ).map(k => (
+            <Input
+              key={k}
+              disabled={isFetching || attendance[k] === -1}
+              id={k}
+              label={capitalizeDelim(k) + ' Minutes'}
+              containerClass='my-3'
+              type='number'
               placeholder={'Enter ' + capitalizeDelim(k)}
               value={attendance[k]}
               onChange={onAttendanceChange}

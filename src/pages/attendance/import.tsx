@@ -1,12 +1,20 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa, { ParseResult } from 'papaparse'
-import { useContext, useState, Fragment } from 'react'
+import { Fragment, useContext, useState } from 'react'
 
 import Select from '../../components/Select'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import {
+  defaultAttendance,
+  defaultEmployee
+} from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim } from '../../libs'
+import {
+  capitalizeDelim,
+  downloadStringAsFile,
+  getEmployeeId
+} from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -14,10 +22,6 @@ import Employee from 'backend/Entities/Employee'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import { addEmployeeAttendance } from 'backend/controllers/attendances'
 import { allEmployees } from 'backend/controllers/employees'
-import {
-  defaultAttendance,
-  defaultEmployee
-} from '../../constants/DEFAULT_MODELS'
 
 const ImportAttendance = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
@@ -63,7 +67,7 @@ const ImportAttendance = () => {
   })
 
   return (
-    <div className='pt-5 px-4'>
+    <>
       <div className='align-items-center mb-3 row'>
         <div className='col'>
           <h4 className='m-0'>Download Sample CSV</h4>
@@ -72,6 +76,14 @@ const ImportAttendance = () => {
           <a
             className='btn btn-primary'
             href={`${import.meta.env.REACT_APP_BASE_URL}/sample.csv`}
+            onClick={e => {
+              e.preventDefault()
+              downloadStringAsFile(
+                'arrivalTime,leaveTime,date,employeeId',
+                'sample.csv',
+                { type: 'text/plain' }
+              )
+            }}
           >
             Download
           </a>
@@ -99,6 +111,9 @@ const ImportAttendance = () => {
                           leaveTime: row.leaveTime,
                           arrivalTime: row.arrivalTime,
                           date: row.date,
+                          late: 0,
+                          overtime: 0,
+                          totalTime: 0,
                           employee: { id: row.employeeId } as Employee
                         }))
                       )
@@ -207,7 +222,9 @@ const ImportAttendance = () => {
                           label='Employee'
                           autoComplete='true'
                           options={employees.map(employee => ({
-                            label: `${employee.eId} - ${employee.name}`,
+                            label: `${getEmployeeId(employee)} - ${
+                              employee.name
+                            }`,
                             value: employee.id
                           }))}
                           value={attendance.employee.id}
@@ -288,8 +305,10 @@ const ImportAttendance = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
 export default ImportAttendance
+
+// TODO: multi entry same data assignd
