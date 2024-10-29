@@ -7,6 +7,7 @@ import { ROUTES } from './constants/CONSTANTS'
 import NotFound404 from './pages/404'
 import Login from './pages/login'
 import Register from './pages/register'
+import UpdatePassword from './pages/password'
 
 const delayedLazy = <T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>
@@ -48,6 +49,7 @@ const AttendanceHistoryLazy = delayedLazy(
 )
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
+const PayrollByIdLazy = delayedLazy(() => import('./pages/payroll/[id]'))
 
 const BranchLazy = delayedLazy(() => import('./pages/organization/branch'))
 const CompanyLazy = delayedLazy(() => import('./pages/organization/company'))
@@ -99,9 +101,17 @@ const Routes = () => (
         }
       />
       <Route
-        path={ROUTES.dashboard}
+        path={ROUTES.password}
         element={
           <ProtectedRoute authenticatedOnly>
+            <UpdatePassword />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.dashboard}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <DashboardLazy />
           </ProtectedRoute>
         }
@@ -141,7 +151,7 @@ const Routes = () => (
       <Route
         path={ROUTES.attendance.import}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <AttendanceImportLazy />
           </ProtectedRoute>
         }
@@ -197,8 +207,16 @@ const Routes = () => (
       <Route
         path={ROUTES.payroll.update}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <PayrollUpdateLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.payroll.id}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <PayrollByIdLazy />
           </ProtectedRoute>
         }
       />
@@ -213,7 +231,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.branch}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <BranchLazy />
           </ProtectedRoute>
         }
@@ -221,7 +239,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.company}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <CompanyLazy />
           </ProtectedRoute>
         }
@@ -229,7 +247,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.department}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <DepartmentLazy />
           </ProtectedRoute>
         }
@@ -237,7 +255,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.designation}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <DesignationLazy />
           </ProtectedRoute>
         }
@@ -245,7 +263,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.dutyType}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <DutyTypeLazy />
           </ProtectedRoute>
         }
@@ -253,7 +271,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.salaryType}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <SalaryTypeLazy />
           </ProtectedRoute>
         }
@@ -261,7 +279,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.settings}
         element={
-          <ProtectedRoute authenticatedOnly>
+          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
             <SettingsLazy />
           </ProtectedRoute>
         }

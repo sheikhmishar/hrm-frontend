@@ -20,6 +20,7 @@ import { VscOrganization } from 'react-icons/vsc'
 import { ROUTES } from '../constants/CONSTANTS'
 import AccordionItem from './Accordion'
 import Footer from './Footer'
+import ProtectedComponent from './ProtectedComponent'
 
 const BASE_NAVLINK_CLASSES =
   'nav-link px-3 py-2 rounded-3 my-1 text-hover-opacity-100 text-light text-opacity-75'
@@ -83,9 +84,11 @@ const SidebarItems: React.FC = () => {
         <CompanyLogo src='/favicon.png' />
       </NavLink>
 
-      <NavItem to={ROUTES.dashboard}>
-        <FaBorderAll className='me-2' /> Dashboard
-      </NavItem>
+      <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+        <NavItem to={ROUTES.dashboard}>
+          <FaBorderAll className='me-2' /> Dashboard
+        </NavItem>
+      </ProtectedComponent>
 
       <div className='accordion mt-1'>
         <AccordionItem
@@ -145,9 +148,11 @@ const SidebarItems: React.FC = () => {
           <NavItem to={ROUTES.attendance.history}>
             <FaUsers className='me-2' /> Check In/Out History
           </NavItem>
-          <NavItem to={ROUTES.attendance.import}>
-            <FaUsers className='me-2' /> Import
-          </NavItem>
+          <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+            <NavItem to={ROUTES.attendance.import}>
+              <FaUsers className='me-2' /> Import
+            </NavItem>
+          </ProtectedComponent>
         </AccordionItem>
       </div>
       <div className='accordion mt-1'>
@@ -164,48 +169,51 @@ const SidebarItems: React.FC = () => {
           <NavItem to={ROUTES.payroll.monthly}>
             <FaUsers className='me-2' /> Monthly payroll
           </NavItem>
-          <NavItem to={ROUTES.payroll.update}>
-            <FaUsers className='me-2' /> Update
-          </NavItem>
+          <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+            <NavItem to={ROUTES.payroll.update}>
+              <FaUsers className='me-2' /> Update
+            </NavItem>
+          </ProtectedComponent>
         </AccordionItem>
       </div>
 
-      <div className='accordion mt-1'>
-        <AccordionItem
-          active={location.pathname.startsWith(ROUTES.organization._)}
-          className='pe-0'
-          contentJSX={
-            <>
-              <FaBuildingNgo className='me-2' />
-              &nbsp;Organization
-            </>
-          }
-        >
-          <NavItem to={ROUTES.organization.branch}>
-            <FaMapLocationDot className='me-2' /> Branch
-          </NavItem>
-          <NavItem to={ROUTES.organization.company}>
-            <VscOrganization className='me-2' /> Company
-          </NavItem>
-          <NavItem to={ROUTES.organization.department}>
-            <LuBuilding2 className='me-2' /> Department
-          </NavItem>
-          <NavItem to={ROUTES.organization.designation}>
-            <BsPersonVideo2 className='me-2' /> Designation
-          </NavItem>
-          <NavItem to={ROUTES.organization.dutyType}>
-            <FaBusinessTime className='me-2' />
-            &nbsp;Duty Type
-          </NavItem>
-          <NavItem to={ROUTES.organization.salaryType}>
-            <FaMoneyBills className='me-2' /> Salary Type
-          </NavItem>
-          <NavItem to={ROUTES.organization.settings}>
-            <FaWrench className='me-2' /> Settings
-          </NavItem>
-        </AccordionItem>
-      </div>
-
+      <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+        <div className='accordion mt-1'>
+          <AccordionItem
+            active={location.pathname.startsWith(ROUTES.organization._)}
+            className='pe-0'
+            contentJSX={
+              <>
+                <FaBuildingNgo className='me-2' />
+                &nbsp;Organization
+              </>
+            }
+          >
+            <NavItem to={ROUTES.organization.branch}>
+              <FaMapLocationDot className='me-2' /> Branch
+            </NavItem>
+            <NavItem to={ROUTES.organization.company}>
+              <VscOrganization className='me-2' /> Company
+            </NavItem>
+            <NavItem to={ROUTES.organization.department}>
+              <LuBuilding2 className='me-2' /> Department
+            </NavItem>
+            <NavItem to={ROUTES.organization.designation}>
+              <BsPersonVideo2 className='me-2' /> Designation
+            </NavItem>
+            <NavItem to={ROUTES.organization.dutyType}>
+              <FaBusinessTime className='me-2' />
+              &nbsp;Duty Type
+            </NavItem>
+            <NavItem to={ROUTES.organization.salaryType}>
+              <FaMoneyBills className='me-2' /> Salary Type
+            </NavItem>
+            <NavItem to={ROUTES.organization.settings}>
+              <FaWrench className='me-2' /> Settings
+            </NavItem>
+          </AccordionItem>
+        </div>
+      </ProtectedComponent>
       <Footer />
     </>
   )

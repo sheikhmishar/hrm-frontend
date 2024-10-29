@@ -9,6 +9,7 @@ import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import EmployeeContact from 'backend/Entities/EmployeeContacts'
 import EmployeeFinancial from 'backend/Entities/EmployeeFinancial'
 import EmployeeLeave from 'backend/Entities/EmployeeLeave'
+import MonthlySalary from 'backend/Entities/MonthlySalary'
 import SalaryType from 'backend/Entities/SalaryType'
 import Setting from 'backend/Entities/Setting'
 
@@ -57,6 +58,7 @@ export const defaultEmployee: Employee = {
   checkedInLateFee: 'inApplicable',
   overtime: 'inApplicable',
   noticePeriod: undefined,
+  noticePeriodRemark: undefined,
   extraBonus: 'inApplicable',
   status: 'active',
   createdDate: new Date(),
@@ -65,7 +67,8 @@ export const defaultEmployee: Employee = {
   financials: [],
   attendances: [],
   leaves: [],
-  salaries: []
+  salaries: [],
+  loans: []
 }
 
 export const defaultFinancial: EmployeeFinancial = {
@@ -104,6 +107,7 @@ export const defaultLeave: EmployeeLeave = {
   id: -1,
   from: '',
   to: '',
+  totalDays: 0,
   duration: 'fullday',
   reason: '',
   status: 'approved',
@@ -119,5 +123,28 @@ export const defaultAttendance: EmployeeAttendance = {
   late: 0,
   overtime: 0,
   totalTime: 0,
+  employee: defaultEmployee
+}
+
+export const defaultMonthlySalary: MonthlySalary = {
+  id: -1,
+  basicSalary: 0,
+  bonus: 0,
+  conveyance: 0,
+  foodCost: 0,
+  houseRent: 0,
+  late: 0,
+  lateDeduction: 0,
+  leave: 0,
+  leaveDeduction: 0,
+  medicalCost: 0,
+  monthStartDate: '2011-01-01',
+  overtime: 0,
+  overtimePayment: 0,
+  paymentMethod: '',
+  penalty: 0,
+  status: 'Unpaid',
+  totalSalary: 0,
+  paidAt: new Date(),
   employee: defaultEmployee
 }

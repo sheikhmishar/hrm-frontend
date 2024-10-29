@@ -14,6 +14,7 @@ export const ROUTES = {
   root: `${root}/`,
   register: `${root}/register`,
   login: `${root}/login`,
+  password: `${root}/password`,
   dashboard: `${root}/dashboard`,
   employee: {
     _: employeeRoot,
@@ -42,6 +43,8 @@ export const ROUTES = {
   },
   payroll: {
     _: payrollRoot,
+    _params: ROUTE_PARAMS,
+    id: `${payrollRoot}/:id`,
     monthly: `${payrollRoot}/monthly`,
     update: `${payrollRoot}/update`
   },

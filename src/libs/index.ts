@@ -120,6 +120,5 @@ export function downloadStringAsFile(
 }
 
 export const getEmployeeId = (employee: Employee) =>
-  employee.dateOfJoining.substring(2).substring(0, 5) +
-  '-' +
+  employee.dateOfJoining.substring(2).substring(0, 5).replace('-', '') +
   employee.id.toString().padStart(4, '0')

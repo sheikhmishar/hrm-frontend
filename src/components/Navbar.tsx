@@ -7,11 +7,12 @@ import { AuthContext } from '../contexts/auth'
 import NavDropdownButton from './NavbarDropdownButton'
 import Offcanvas from './Offcanvas'
 import SidebarItems from './SidebarItems'
+import { ROUTES } from '../constants/CONSTANTS'
 
 const Navbar: React.FC = () => {
   const location = useLocation()
 
-  const { setToken, self } = useContext(AuthContext)
+  const { setToken, self, setSelf } = useContext(AuthContext)
 
   const [sidebar, setSidebar] = useState(false)
   const collapseSidebar = () => setSidebar(false)
@@ -30,7 +31,7 @@ const Navbar: React.FC = () => {
           >
             <span className='navbar-toggler-icon' />
           </button>
-          <h5 className='text-muted mb-0'>
+          <h5 className='mb-0 text-muted'>
             <strong>HR Management</strong>
           </h5>
           <div className='align-items-center d-flex ms-auto'>
@@ -40,17 +41,17 @@ const Navbar: React.FC = () => {
               className='ms-2 pe-0'
               icon={<FaUser />}
             >
-              {/* <NavDropdownButton.NavDropdownItem
-                to={ROUTES.updateProfile}
+              <NavDropdownButton.NavDropdownItem to={ROUTES.password}>
+                Update Password
+              </NavDropdownButton.NavDropdownItem>
+              <li
+                role='button'
+                onClick={() => {
+                  setToken(null)
+                  setSelf(undefined)
+                }}
               >
-                <i className='fa fa-user-edit me-1' />
-                Update Profile
-              </NavDropdownButton.NavDropdownItem> */}
-              <li role='button' onClick={() => setToken(null)}>
-                <div className='dropdown-item'>
-                  <i className='fa fa-close me-3' />
-                  Logout
-                </div>
+                <div className='dropdown-item'>Logout</div>
               </li>
             </NavDropdownButton>
           </div>

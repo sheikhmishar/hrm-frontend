@@ -57,7 +57,7 @@ const Login: React.FC = () => {
                 disabled={isLoading || fetchingAuth}
                 id={k}
                 // TODO: capitalizeDelim for camelCase
-                label={capitalizeDelim(k)}
+                label={capitalizeDelim(k === 'inputData' ? 'usernameOrEmail' : k)}
                 containerClass='my-3'
                 placeholder={'Enter ' + capitalizeDelim(k)}
                 value={loginCreds[k]}

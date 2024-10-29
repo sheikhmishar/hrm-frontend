@@ -30,12 +30,14 @@ type AuthContext = {
   token: string | null
   setToken: (token: string | null) => void
   self?: typeof defaultSelfDetails
+  setSelf: (self: typeof defaultSelfDetails) => void
   fetchingAuth: boolean
 }
 
 export const AuthContext = createContext<AuthContext>({
   token: '',
   setToken() {},
+  setSelf() {},
   fetchingAuth: false
 })
 
@@ -57,6 +59,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   const tokenRef = useRef<string | null>(null)
 
   useEffect(() => {
+    // TODO: react query
     //   TODO: usePreviousUnchanged
     if (tokenRef.current !== token) {
       tokenRef.current = token
@@ -104,8 +107,8 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [navigate, location.pathname, prevURL, self])
 
   const value = useMemo(
-    () => ({ token, setToken, self, fetchingAuth }),
-    [fetchingAuth, self, setToken, token]
+    () => ({ token, setToken, self, setSelf, fetchingAuth }),
+    [fetchingAuth, self, setToken, setSelf, token]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

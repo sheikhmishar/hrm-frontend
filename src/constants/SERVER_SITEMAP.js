@@ -7,6 +7,7 @@ const root = '/api',
   salariesRoot = `${root}/salaries`,
   companiesRoot = `${root}/companies`,
   departmentsRoot = `${root}/departments`,
+  monthlySalariesRoot = `${root}/monthly-salaries`,
   branchesRoot = `${root}/branches`,
   settingsRoot = `${root}/settings`,
   dutyTypesRoot = `${root}/duty-types`,
@@ -64,13 +65,19 @@ const ServerSITEMAP = {
   },
   salaries: {
     _params: { ...rootParams, employeeId: ':employeeId' },
-    _queries: { from: 'from', to: 'to' },
     _: salariesRoot,
-    post: salariesRoot,
-    get: salariesRoot,
-    getByEmployeeId: `${salariesRoot}/:employeeId`,
-    put: `${salariesRoot}/:id`,
-    delete: `${salariesRoot}/:id`
+    getByEmployeeId: `${salariesRoot}/:employeeId`
+  },
+  monthlySalaries: {
+    _params: { ...rootParams, start_date: ':start_date' },
+    _queries: { monthStartDate: 'monthStartDate' },
+    _: monthlySalariesRoot,
+    post: monthlySalariesRoot,
+    get: monthlySalariesRoot,
+    getById: `${monthlySalariesRoot}/:id`,
+    put: `${monthlySalariesRoot}/:id`,
+    putConfirm: `${monthlySalariesRoot}/confirm/:start_date`,
+    delete: `${monthlySalariesRoot}/:start_date`
   },
   companies: {
     _params: rootParams,
