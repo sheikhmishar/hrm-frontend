@@ -22,9 +22,11 @@ const ProtectedRoute: React.FC<Props> = props => {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const { self, token } = useContext(AuthContext)
+  const { self, token, fetchingAuth } = useContext(AuthContext)
 
   useLayoutEffect(() => {
+    if (fetchingAuth) return
+
     if (authenticatedOnly || rolesAllowed) {
       if (!self) {
         if (location.pathname !== ROUTES.login)
@@ -43,6 +45,7 @@ const ProtectedRoute: React.FC<Props> = props => {
     )
       navigate(ROUTES.employee.list)
   }, [
+    fetchingAuth,
     authenticatedOnly,
     navigate,
     location.pathname,
@@ -52,6 +55,19 @@ const ProtectedRoute: React.FC<Props> = props => {
     unAuthenticatedOnly
   ])
 
+  if (fetchingAuth)
+    return (
+      <div className='bottom-0 overflow-auto position-absolute pt-4 start-50 toast-container top-0 translate-middle-x vh-100'>
+        <div
+          className='align-items-center border-0 fade mb-2 show text-bg-info toast'
+          role='alert'
+        >
+          <div className='d-flex'>
+            <div className='toast-body'>Signing In...</div>
+          </div>
+        </div>
+      </div>
+    )
   return <>{children}</>
 }
 
