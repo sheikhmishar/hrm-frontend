@@ -1,7 +1,8 @@
 import React, {
   useContext,
   useLayoutEffect,
-  type PropsWithChildren
+  type PropsWithChildren,
+  useMemo
 } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -23,6 +24,13 @@ const ProtectedRoute: React.FC<Props> = props => {
   const navigate = useNavigate()
   const location = useLocation()
   const { self, token, fetchingAuth } = useContext(AuthContext)
+  const { prev: prevURL } = useMemo(
+    () =>
+      Object.fromEntries(new URLSearchParams(location.search)) as {
+        prev?: string
+      },
+    [location.search]
+  )
 
   useLayoutEffect(() => {
     if (fetchingAuth) return
@@ -38,18 +46,19 @@ const ProtectedRoute: React.FC<Props> = props => {
         if (location.pathname !== ROUTES.login) navigate(ROUTES.login)
       } else if (rolesAllowed && !rolesAllowed.includes(self.type))
         navigate(ROUTES.employee.list)
-    } else if (
-      unAuthenticatedOnly &&
-      self &&
-      location.pathname !== ROUTES.employee.list
-    )
-      navigate(ROUTES.employee.list)
+    } else if (unAuthenticatedOnly && self) {
+      if (prevURL && location.pathname !== prevURL) navigate(prevURL)
+      else if (location.pathname !== ROUTES.employee.list)
+        navigate(ROUTES.employee.list)
+    }
   }, [
     fetchingAuth,
+    rolesAllowed,
     authenticatedOnly,
     navigate,
     location.pathname,
     location.search,
+    prevURL,
     self,
     token,
     unAuthenticatedOnly
