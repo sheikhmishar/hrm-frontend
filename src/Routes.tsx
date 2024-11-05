@@ -47,6 +47,9 @@ const AttendanceDetailsLazy = delayedLazy(
 const AttendanceHistoryLazy = delayedLazy(
   () => import('./pages/attendance/monthly/history')
 )
+const HolidayManagementLazy = delayedLazy(
+  () => import('./pages/attendance/holiday')
+)
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
 const PayrollByIdLazy = delayedLazy(() => import('./pages/payroll/[id]'))
@@ -177,6 +180,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <AttendanceHistoryLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.attendance.holiday}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <HolidayManagementLazy />
           </ProtectedRoute>
         }
       />

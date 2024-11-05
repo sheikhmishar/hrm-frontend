@@ -31,7 +31,8 @@ export const ROUTES = {
     history: `${attendanceRoot}/history`,
     monthly: `${attendanceRoot}/monthly`,
     details: `${attendanceRoot}/details/:id`,
-    import: `${attendanceRoot}/import`
+    import: `${attendanceRoot}/import`,
+    holiday: `${attendanceRoot}/holiday`
   },
   leave: {
     _: leaveRoot,

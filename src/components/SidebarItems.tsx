@@ -153,6 +153,9 @@ const SidebarItems: React.FC = () => {
               <FaUsers className='me-2' /> Import
             </NavItem>
           </ProtectedComponent>
+          <NavItem to={ROUTES.attendance.holiday}>
+            <FaUsers className='me-2' /> Holidays
+          </NavItem>
         </AccordionItem>
       </div>
       <div className='accordion mt-1'>
@@ -171,7 +174,7 @@ const SidebarItems: React.FC = () => {
           </NavItem>
           <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
             <NavItem to={ROUTES.payroll.update}>
-              <FaUsers className='me-2' /> Update
+              <FaUsers className='me-2' /> Salary Update
             </NavItem>
           </ProtectedComponent>
         </AccordionItem>
