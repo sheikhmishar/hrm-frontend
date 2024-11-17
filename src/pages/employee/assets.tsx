@@ -4,6 +4,7 @@ import { useContext, useState } from 'react'
 import Input from '../../components/Input'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
 import { getEmployeeId } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
@@ -12,6 +13,7 @@ import { GetResponseType } from 'backend/@types/response'
 import { allEmployeeAssets } from 'backend/controllers/employees'
 
 const Assets = () => {
+  const { self } = useContext(AuthContext)
   const { onErrorDisplayToast } = useContext(ToastContext)
 
   const [search, setSearch] = useState('')
@@ -45,13 +47,16 @@ const Assets = () => {
       {employees
         .filter(
           employee =>
-            employee.name.toLowerCase().includes(search.toLowerCase()) ||
-            getEmployeeId(employee)
-              .toLowerCase()
-              .includes(search.toLowerCase()) ||
-            employee.assets.find(asset =>
-              asset.name.toLowerCase().includes(search.toLowerCase())
-            )
+            (employee.name.toLowerCase().includes(search.toLowerCase()) ||
+              getEmployeeId(employee)
+                .toLowerCase()
+                .includes(search.toLowerCase()) ||
+              employee.assets.find(asset =>
+                asset.name.toLowerCase().includes(search.toLowerCase())
+              )) &&
+            (self?.type === 'Employee' && self.employeeId
+              ? employee.id === self.employeeId
+              : true)
         )
         .map(employee => (
           <div key={employee.id} className='col-12 my-2'>
