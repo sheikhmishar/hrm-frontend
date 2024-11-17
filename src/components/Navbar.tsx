@@ -3,11 +3,12 @@ import { useLocation } from 'react-router-dom'
 
 import { FaUser } from 'react-icons/fa6'
 
+import { ROUTES } from '../constants/CONSTANTS'
 import { AuthContext } from '../contexts/auth'
 import NavDropdownButton from './NavbarDropdownButton'
 import Offcanvas from './Offcanvas'
+import ProtectedComponent from './ProtectedComponent'
 import SidebarItems from './SidebarItems'
-import { ROUTES } from '../constants/CONSTANTS'
 
 const Navbar: React.FC = () => {
   const location = useLocation()
@@ -44,6 +45,11 @@ const Navbar: React.FC = () => {
               <NavDropdownButton.NavDropdownItem to={ROUTES.password}>
                 Update Password
               </NavDropdownButton.NavDropdownItem>
+              <ProtectedComponent rolesAllowed={['SuperAdmin']}>
+                <NavDropdownButton.NavDropdownItem to={ROUTES.user}>
+                  Users
+                </NavDropdownButton.NavDropdownItem>
+              </ProtectedComponent>
               <li
                 role='button'
                 onClick={() => {

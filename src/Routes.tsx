@@ -8,6 +8,7 @@ import NotFound404 from './pages/404'
 import Login from './pages/login'
 import Register from './pages/register'
 import UpdatePassword from './pages/password'
+import User from './pages/user'
 
 const delayedLazy = <T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>
@@ -24,7 +25,7 @@ const delayedLazy = <T extends ComponentType<any>>(
 const DashboardLazy = delayedLazy(() => import('./pages/dashboard'))
 const EmployeeListLazy = delayedLazy(() => import('./pages/employee/list'))
 const EmployeeDetailsLazy = delayedLazy(
-  () => import('./pages/employee/details')
+  () => import('./pages/employee/details/[id]')
 )
 const EmployeeAssetsLazy = delayedLazy(() => import('./pages/employee/assets'))
 const EmployeeNoticesLazy = delayedLazy(
@@ -33,7 +34,7 @@ const EmployeeNoticesLazy = delayedLazy(
 const LeaveAssignedLazy = delayedLazy(() => import('./pages/leave/assigned'))
 const LeaveCalenderLazy = delayedLazy(() => import('./pages/leave/calender'))
 const LeaveDetailsLazy = delayedLazy(
-  () => import('./pages/leave/calender/[details]')
+  () => import('./pages/leave/calender/[id]')
 )
 const AttendanceImportLazy = delayedLazy(
   () => import('./pages/attendance/import')
@@ -42,16 +43,17 @@ const AttendanceMonthlyLazy = delayedLazy(
   () => import('./pages/attendance/monthly')
 )
 const AttendanceDetailsLazy = delayedLazy(
-  () => import('./pages/attendance/monthly/[details]')
+  () => import('./pages/attendance/monthly/[id]')
 )
 const AttendanceHistoryLazy = delayedLazy(
-  () => import('./pages/attendance/monthly/history')
+  () => import('./pages/attendance/history')
 )
 const HolidayManagementLazy = delayedLazy(
   () => import('./pages/attendance/holiday')
 )
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
+const LoanLazy = delayedLazy(() => import('./pages/payroll/loan'))
 const PayrollByIdLazy = delayedLazy(() => import('./pages/payroll/[id]'))
 
 const BranchLazy = delayedLazy(() => import('./pages/organization/branch'))
@@ -108,6 +110,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <UpdatePassword />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.user}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <User />
           </ProtectedRoute>
         }
       />
@@ -236,6 +246,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <PayrollMonthlyLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.payroll.loan}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <LoanLazy />
           </ProtectedRoute>
         }
       />

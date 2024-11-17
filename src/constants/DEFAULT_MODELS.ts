@@ -1,3 +1,5 @@
+import { dateToString } from '../libs'
+
 import Branch from 'backend/Entities/Branch'
 import Company from 'backend/Entities/Company'
 import Department from 'backend/Entities/Department'
@@ -9,9 +11,11 @@ import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import EmployeeContact from 'backend/Entities/EmployeeContacts'
 import EmployeeFinancial from 'backend/Entities/EmployeeFinancial'
 import EmployeeLeave from 'backend/Entities/EmployeeLeave'
+import Loan from 'backend/Entities/Loan'
 import MonthlySalary from 'backend/Entities/MonthlySalary'
 import SalaryType from 'backend/Entities/SalaryType'
 import Setting from 'backend/Entities/Setting'
+import User from 'backend/Entities/User'
 
 export const defaultDepartment: Department = {
   id: -1,
@@ -44,13 +48,15 @@ export const defaultEmployee: Employee = {
   designation: defaultDesignation,
   dutyType: defaultDutyType,
   salaryType: defaultSalaryType,
-  dateOfJoining: new Date().toISOString().split('T')[0]!,
+  dateOfJoining: dateToString(new Date()),
   basicSalary: 0,
   conveyance: 0,
   foodCost: 0,
   houseRent: 0,
   medicalCost: 0,
   totalSalary: 0,
+  loanRemaining: 0,
+  loanTaken: 0,
   taskWisePayment: undefined,
   wordLimit: undefined,
   officeStartTime: '12:00',
@@ -115,6 +121,13 @@ export const defaultLeave: EmployeeLeave = {
   employee: defaultEmployee
 }
 
+export const defaultLoan: Loan = {
+  id: -1,
+  amount: 0,
+  date: dateToString(new Date()),
+  employee: defaultEmployee
+}
+
 export const defaultAttendance: EmployeeAttendance = {
   id: -1,
   arrivalTime: '',
@@ -144,7 +157,17 @@ export const defaultMonthlySalary: MonthlySalary = {
   paymentMethod: '',
   penalty: 0,
   status: 'Unpaid',
+  loanDeduction: 0,
   totalSalary: 0,
   paidAt: new Date(),
   employee: defaultEmployee
+}
+
+export const defaultUser: User = {
+  id: -1,
+  name: '',
+  email: '',
+  password: '',
+  phoneNumber: '',
+  type: 'HR'
 }

@@ -16,6 +16,7 @@ export const ROUTES = {
   login: `${root}/login`,
   password: `${root}/password`,
   dashboard: `${root}/dashboard`,
+  user: `${organizationRoot}/user`,
   employee: {
     _: employeeRoot,
     _params: ROUTE_PARAMS,
@@ -30,7 +31,7 @@ export const ROUTES = {
     _queries: { month: 'month' },
     history: `${attendanceRoot}/history`,
     monthly: `${attendanceRoot}/monthly`,
-    details: `${attendanceRoot}/details/:id`,
+    details: `${attendanceRoot}/monthly/:id`,
     import: `${attendanceRoot}/import`,
     holiday: `${attendanceRoot}/holiday`
   },
@@ -46,6 +47,7 @@ export const ROUTES = {
     _: payrollRoot,
     _params: ROUTE_PARAMS,
     id: `${payrollRoot}/:id`,
+    loan: `${payrollRoot}/loan`,
     monthly: `${payrollRoot}/monthly`,
     update: `${payrollRoot}/update`
   },
@@ -60,35 +62,5 @@ export const ROUTES = {
     settings: `${organizationRoot}/settings`
   }
 }
-
-// export const STAKEHOLDER_CLIENT_QUERY = `${
-//   ROUTES.transaction._query.type
-// }=${Satisfies<Stakeholder['type']>('CLIENT')}`
-
-export const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-].map(m => m.slice(0, 3))
-
-export const isLeapYear = (y: number) => (!(y % 4) && y % 100) || !(y % 400)
-
-export const getMonthDays = (monthIdx: number, year: number) =>
-  monthIdx === 1
-    ? isLeapYear(year)
-      ? 29
-      : 28
-    : [8, 3, 5, 10].includes(monthIdx)
-    ? 30
-    : 31
 
 export const BLANK_ARRAY = [] as never[]

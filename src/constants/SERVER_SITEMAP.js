@@ -4,6 +4,7 @@ const root = '/api',
   employeesRoot = `${root}/employees`,
   attendancesRoot = `${root}/attendances`,
   leavesRoot = `${root}/leaves`,
+  loansRoot = `${root}/loans`,
   holidaysRoot = `${root}/holidays`,
   salariesRoot = `${root}/salaries`,
   companiesRoot = `${root}/companies`,
@@ -38,7 +39,6 @@ const ServerSITEMAP = {
     _params: rootParams,
     _: employeesRoot,
     post: employeesRoot,
-    postBulk: `${employeesRoot}/bulk`, // TODO:
     get: employeesRoot,
     getAssets: `${employeesRoot}/assets`,
     getById: `${employeesRoot}/:id`,
@@ -63,6 +63,14 @@ const ServerSITEMAP = {
     get: leavesRoot,
     getByEmployeeId: `${leavesRoot}/:employeeId`,
     delete: `${leavesRoot}/:id`
+  },
+  loans: {
+    _params: { ...rootParams, employeeId: ':employeeId' },
+    _: loansRoot,
+    post: loansRoot,
+    get: loansRoot,
+    getByEmployeeId: `${loansRoot}/:employeeId`,
+    delete: `${loansRoot}/:id`
   },
   salaries: {
     _params: { ...rootParams, employeeId: ':employeeId' },
