@@ -5,9 +5,11 @@ import { FaPen, FaPlus } from 'react-icons/fa6'
 import { Link } from 'react-router-dom'
 
 import Button from '../../components/Button'
+import ProtectedComponent from '../../components/ProtectedComponent'
 import Table from '../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
 import { capitalize, downloadStringAsFile, getEmployeeId } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
@@ -20,7 +22,6 @@ const visibleKeys = [
   'id',
   'name',
   'phoneNumber',
-  'email',
   'company',
   'department'
 ] satisfies (keyof Employee)[]
@@ -60,6 +61,8 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         overtime,
         status,
         totalSalary,
+        loanTaken,
+        loanRemaining,
         altPhoneNumber,
         noticePeriod,
         photo,
@@ -70,7 +73,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           id:
             dateOfJoining.substring(0, 7) +
             '-' +
-            id.toString().padStart(4, '0'),
+            id.toString().padStart(4, '0'), // TODO: use globals
           email,
           name,
           phoneNumber,
@@ -103,6 +106,8 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           overtime,
           status,
           totalSalary,
+          loanTaken,
+          loanRemaining,
           altPhoneNumber,
           noticePeriod,
           photo,
@@ -117,7 +122,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         } satisfies {
           [k in keyof OmitKey<
             Employee,
-            'attendances' | 'leaves' | 'salaries'
+            'attendances' | 'leaves' | 'salaries' | 'loans'
           >]: string | number | undefined
         })
     ),
@@ -132,6 +137,8 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         'foodCost',
         'medicalCost',
         'totalSalary',
+        'loanTaken',
+        'loanRemaining',
         'taskWisePayment',
         'wordLimit',
         'checkedInLateFee',
@@ -160,6 +167,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
 
 const EmployeePage = () => {
   const { onErrorDisplayToast } = useContext(ToastContext)
+  const { self } = useContext(AuthContext)
 
   const [search, setSearch] = useState('')
   const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
@@ -178,56 +186,64 @@ const EmployeePage = () => {
     <>
       <div className='mb-4 mt-2 row'>
         <div className='align-items-center d-flex'>
-          <Button
-            onClick={() =>
-              downloadStringAsFile(
-                getCsvFromEmployees(employees),
-                'employees.csv',
-                { type: 'text/csv' }
-              )
-            }
-            className='btn-primary'
-          >
-            Export CSV
-          </Button>
+          <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+            <Button
+              onClick={() =>
+                downloadStringAsFile(
+                  getCsvFromEmployees(employees),
+                  'employees.csv',
+                  { type: 'text/csv' }
+                )
+              }
+              className='btn-primary'
+            >
+              Export CSV
+            </Button>
+          </ProtectedComponent>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
             </div>
           )}
-          <div className='ms-auto w-25'>
-            <input
-              className='form-control py-2 rounded-3'
-              id='search'
-              placeholder='Search here'
-              onChange={onSearchInputChange}
-              value={search}
-            />
-          </div>
-          <div>
-            <Link
-              role='button'
-              className='btn btn-primary ms-2'
-              to={ROUTES.employee.details.replace(
-                ROUTES.employee._params.id,
-                '-1'
-              )}
-            >
-              Add New <FaPlus />
-            </Link>
-          </div>
+          <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+            <div className='ms-auto w-25'>
+              <input
+                className='form-control py-2 rounded-3'
+                id='search'
+                placeholder='Search here'
+                onChange={onSearchInputChange}
+                value={search}
+              />
+            </div>
+            <div>
+              <Link
+                role='button'
+                className='btn btn-primary ms-2'
+                to={ROUTES.employee.details.replace(
+                  ROUTES.employee._params.id,
+                  '-1'
+                )}
+              >
+                Add New <FaPlus />
+              </Link>
+            </div>
+          </ProtectedComponent>
         </div>
       </div>
       <Table
         columns={columns}
         rows={employees
-          .filter(employee =>
-            visibleKeys.find(key =>
-              employee[key]
-                ?.toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            employee =>
+              visibleKeys.find(key =>
+                employee[key]
+                  ?.toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              ) &&
+              (self?.type === 'Employee' && self.employeeId
+                ? employee.id === self.employeeId
+                : true)
           )
           .map(employee =>
             visibleKeys
