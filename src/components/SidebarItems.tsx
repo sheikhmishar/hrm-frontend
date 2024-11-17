@@ -172,6 +172,9 @@ const SidebarItems: React.FC = () => {
           <NavItem to={ROUTES.payroll.monthly}>
             <FaUsers className='me-2' /> Monthly payroll
           </NavItem>
+          <NavItem to={ROUTES.payroll.loan}>
+            <FaUsers className='me-2' /> Loan
+          </NavItem>
           <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
             <NavItem to={ROUTES.payroll.update}>
               <FaUsers className='me-2' /> Salary Update
