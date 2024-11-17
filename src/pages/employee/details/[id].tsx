@@ -10,10 +10,12 @@ import { BsArrowLeftShort } from 'react-icons/bs'
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import Button from '../../components/Button'
-import Input from '../../components/Input'
-import Select, { DropDownEventHandler } from '../../components/Select'
-import { ROUTES } from '../../constants/CONSTANTS'
+import Button from '../../../components/Button'
+import Input from '../../../components/Input'
+import ProtectedComponent from '../../../components/ProtectedComponent'
+import Select, { DropDownEventHandler } from '../../../components/Select'
+import Table from '../../../components/Table'
+import { ROUTES } from '../../../constants/CONSTANTS'
 import {
   defaultAsset,
   defaultBranch,
@@ -25,11 +27,12 @@ import {
   defaultEmployee,
   defaultFinancial,
   defaultSalaryType
-} from '../../constants/DEFAULT_MODELS'
-import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
-import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim } from '../../libs'
-import modifiedFetch from '../../libs/modifiedFetch'
+} from '../../../constants/DEFAULT_MODELS'
+import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../../contexts/auth'
+import { ToastContext } from '../../../contexts/toast'
+import { capitalizeDelim, splitGrossSalary } from '../../../libs'
+import modifiedFetch from '../../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
 import Branch from 'backend/Entities/Branch'
@@ -50,7 +53,6 @@ import {
   updateEmployee
 } from 'backend/controllers/employees'
 import { allSalaryTypes } from 'backend/controllers/salary-types'
-import Table from '../../components/Table'
 
 const ScrollLink: React.FC<
   JSX.IntrinsicElements['a'] & React.PropsWithChildren & { isFirst?: boolean }
@@ -73,9 +75,11 @@ const ScrollLink: React.FC<
 }
 
 const EmployeeDetails = () => {
+  const { self } = useContext(AuthContext)
   const { id: idFromRoute } =
     useParams<Partial<(typeof ROUTES)['employee']['_params']>>()
-  const id = parseInt(idFromRoute)
+  const id =
+    self?.type === 'Employee' ? self.employeeId || -1 : parseInt(idFromRoute)
   const location = useLocation()
 
   useEffect(() => {
@@ -86,9 +90,7 @@ const EmployeeDetails = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
   const navigate = useNavigate()
 
-  const [employee, setEmployee] = useState<Employee>({
-    ...defaultEmployee
-  })
+  const [employee, setEmployee] = useState<Employee>({ ...defaultEmployee })
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value, valueAsNumber }
   }) =>
@@ -112,13 +114,24 @@ const EmployeeDetails = () => {
         ...employee,
         [id]: isNumeric ? valueAsNumber : value
       }
-      if (isNumeric)
-        updatedEmployee.totalSalary =
-          updatedEmployee.basicSalary +
-          updatedEmployee.conveyance +
-          updatedEmployee.foodCost +
-          updatedEmployee.houseRent +
-          updatedEmployee.medicalCost
+
+      if (isNumeric) {
+        if ((id as keyof Employee) === 'totalSalary') {
+          const { basic, conveyance, food, houseRent, medical } =
+            splitGrossSalary(updatedEmployee.totalSalary)
+          updatedEmployee.basicSalary = basic
+          updatedEmployee.conveyance = conveyance
+          updatedEmployee.foodCost = food
+          updatedEmployee.houseRent = houseRent
+          updatedEmployee.medicalCost = medical
+        } else
+          updatedEmployee.totalSalary =
+            updatedEmployee.basicSalary +
+            updatedEmployee.conveyance +
+            updatedEmployee.foodCost +
+            updatedEmployee.houseRent +
+            updatedEmployee.medicalCost
+      }
 
       return updatedEmployee
     })
@@ -261,7 +274,7 @@ const EmployeeDetails = () => {
     [companies, departments, branches, designations, dutyTypes, salaryTypes]
   )
 
-  const { isFetching: employeeLoading } = useQuery({
+  const { refetch, isFetching: employeeLoading } = useQuery({
     queryKey: ['employee', ServerSITEMAP.employees.getById, employee.id],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof employeeDetails>>(
@@ -289,6 +302,7 @@ const EmployeeDetails = () => {
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
+        refetch()
         refetchCompanies()
         refetchDepartments()
         refetchBranches()
@@ -309,6 +323,7 @@ const EmployeeDetails = () => {
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
+        refetch()
         refetchCompanies()
         refetchDepartments()
         refetchBranches()
@@ -331,7 +346,8 @@ const EmployeeDetails = () => {
     isFetchingBranches ||
     isFetchingDesignations ||
     isFetchingDutyTypes ||
-    isFetchingSalaryTypes
+    isFetchingSalaryTypes ||
+    !!(self?.type === 'Employee' && self.employeeId)
 
   return (
     <>
@@ -345,8 +361,8 @@ const EmployeeDetails = () => {
       </Link>
 
       <div className='row'>
-        <div className='col-6 col-lg-4 overflow-hidden rounded-3'>
-          <div className='border-0 card rounded-3'>
+        <div className='col-6 col-lg-4 rounded-3'>
+          <div className='border-0 card rounded-3 sticky-top'>
             <div className='card-body'>
               <div className='bg-primary-subtle mt-5 rounded-3 text-center w-100'>
                 <img
@@ -603,7 +619,10 @@ const EmployeeDetails = () => {
                   <div key={k} className='col-12 col-lg-6'>
                     <Select
                       id={k}
-                      disabled={isEmployeeLoading}
+                      disabled={
+                        isEmployeeLoading ||
+                        (k === 'designation' && employee.id > 0)
+                      }
                       autoComplete='true'
                       label={capitalizeDelim(k)}
                       required
@@ -658,14 +677,32 @@ const EmployeeDetails = () => {
                     'foodCost',
                     'houseRent',
                     'medicalCost',
-                    'totalSalary',
-                    'taskWisePayment',
-                    'wordLimit'
-                  ] satisfies KeysOfObjectOfType<Employee, number | undefined>[]
+                    'totalSalary'
+                  ] satisfies KeysOfObjectOfType<Employee, number>[]
                 ).map(k => (
                   <div key={k} className='col-12 col-lg-6'>
                     <Input
-                      disabled={k === 'totalSalary' || isEmployeeLoading}
+                      disabled={isEmployeeLoading || employee.id > 0}
+                      id={k}
+                      required
+                      label={capitalizeDelim(k)}
+                      containerClass='my-3'
+                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      value={employee[k]}
+                      type='number'
+                      onChange={onEmployeeChange}
+                    />
+                  </div>
+                ))}
+                {(
+                  ['taskWisePayment', 'wordLimit'] satisfies KeysOfObjectOfType<
+                    Employee,
+                    number | undefined
+                  >[]
+                ).map(k => (
+                  <div key={k} className='col-12 col-lg-6'>
+                    <Input
+                      disabled={isEmployeeLoading || employee.id > 0}
                       id={k}
                       label={capitalizeDelim(k)}
                       containerClass='my-3'
@@ -742,12 +779,31 @@ const EmployeeDetails = () => {
                     />
                   </div>
                 ))}
+                {(
+                  ['noticePeriodRemark'] satisfies KeysOfObjectOfType<
+                    Employee,
+                    string | undefined
+                  >[]
+                ).map(k => (
+                  <div key={k} className='col-12 col-lg-6'>
+                    <Input
+                      disabled={isEmployeeLoading}
+                      id={k}
+                      label={capitalizeDelim(k)}
+                      containerClass='my-3'
+                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      value={employee[k] || ''}
+                      onChange={onEmployeeChange}
+                    />
+                  </div>
+                ))}
 
                 <h5 className='my-4' id='financial-details'>
                   Financial details
                 </h5>
                 <div className='col-12'>
                   <Button
+                    disabled={isEmployeeLoading}
                     className='btn-primary'
                     onClick={() =>
                       setEmployee(employee => ({
@@ -763,6 +819,7 @@ const EmployeeDetails = () => {
                   </Button>
                 </div>
                 <Table
+                  contCls=' '
                   columns={[
                     'Sl.No',
                     'Holder Name',
@@ -773,8 +830,9 @@ const EmployeeDetails = () => {
                     'Action'
                   ]}
                   rows={employee.financials.map((financial, idx) => [
-                    <>{financial.id > 0 ? financial.id : ''}</>,
+                    <>{idx + 1}</>,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={financial.holderName}
                       onChange={({ target: { value } }) =>
@@ -789,6 +847,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={financial.medium}
                       onChange={({ target: { value } }) =>
@@ -803,6 +862,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={financial.accountNumber}
                       onChange={({ target: { value } }) =>
@@ -817,6 +877,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={financial.bankName}
                       onChange={({ target: { value } }) =>
@@ -831,6 +892,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={financial.branch}
                       onChange={({ target: { value } }) =>
@@ -846,6 +908,7 @@ const EmployeeDetails = () => {
                     />,
                     <Button
                       className='link-primary'
+                      disabled={isEmployeeLoading}
                       onClick={() =>
                         setEmployee(employee => ({
                           ...employee,
@@ -864,6 +927,7 @@ const EmployeeDetails = () => {
                 </h5>
                 <div className='col-12'>
                   <Button
+                    disabled={isEmployeeLoading}
                     className='btn-primary'
                     onClick={() =>
                       setEmployee(employee => ({
@@ -876,6 +940,7 @@ const EmployeeDetails = () => {
                   </Button>
                 </div>
                 <Table
+                  contCls=' '
                   columns={[
                     'Sl.No',
                     'Name',
@@ -884,8 +949,9 @@ const EmployeeDetails = () => {
                     'Action'
                   ]}
                   rows={employee.contacts.map((contact, idx) => [
-                    <>{contact.id > 0 ? contact.id : ''}</>,
+                    <>{idx + 1}</>,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={contact.name}
                       onChange={({ target: { value } }) =>
@@ -898,6 +964,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={contact.phoneNo}
                       onChange={({ target: { value } }) =>
@@ -911,6 +978,7 @@ const EmployeeDetails = () => {
                     />,
                     <input
                       // TODO: disable on
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={contact.relation}
                       onChange={({ target: { value } }) =>
@@ -926,6 +994,7 @@ const EmployeeDetails = () => {
                     />,
                     <Button
                       className='link-primary'
+                      disabled={isEmployeeLoading}
                       onClick={() =>
                         setEmployee(employee => ({
                           ...employee,
@@ -943,6 +1012,7 @@ const EmployeeDetails = () => {
                 </h5>
                 <div className='col-12'>
                   <Button
+                    disabled={isEmployeeLoading}
                     className='btn-primary'
                     onClick={() =>
                       setEmployee(employee => ({
@@ -955,6 +1025,7 @@ const EmployeeDetails = () => {
                   </Button>
                 </div>
                 <Table
+                  contCls=' '
                   columns={[
                     'Sl.No',
                     'Asset Name',
@@ -964,8 +1035,9 @@ const EmployeeDetails = () => {
                     'Action'
                   ]}
                   rows={employee.assets.map((asset, idx) => [
-                    <>{asset.id > 0 ? asset.id : ''}</>,
+                    <>{idx + 1}</>,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={asset.name}
                       // TODO: required optional
@@ -979,6 +1051,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={asset.description}
                       onChange={({ target: { value } }) =>
@@ -991,6 +1064,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       type='date'
                       value={asset.givenDate}
@@ -1004,6 +1078,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <input
+                      disabled={isEmployeeLoading}
                       className='form-control'
                       value={asset.returnDate || ''}
                       type='date'
@@ -1017,6 +1092,7 @@ const EmployeeDetails = () => {
                       }
                     />,
                     <Button
+                      disabled={isEmployeeLoading}
                       className='link-primary'
                       onClick={() =>
                         setEmployee(employee => ({
@@ -1031,38 +1107,40 @@ const EmployeeDetails = () => {
                 />
               </div>
               <hr />
-              <div className='d-flex justify-content-end mt-3'>
-                {employee.id === -1 && (
-                  <Button className='btn-light mx-2' onClick={resetData}>
-                    <FaRotateLeft />
-                  </Button>
-                )}
-                <Button
-                  disabled={
-                    isEmployeeLoading ||
-                    employeeCreateLoading ||
-                    employeeUpdateLoading
-                  }
-                  className='btn-primary mx-2'
-                  onClick={() =>
-                    employee.id > 0 ? employeeUpdate() : employeeCreate()
-                  }
-                >
-                  <span className='align-items-center d-flex'>
-                    {employee.id > 0 ? 'Update' : 'Add'}
-                    {(isEmployeeLoading ||
+              <ProtectedComponent rolesAllowed={['HR', 'SuperAdmin']}>
+                <div className='d-flex justify-content-end mt-3'>
+                  {employee.id === -1 && (
+                    <Button className='btn-light mx-2' onClick={resetData}>
+                      <FaRotateLeft />
+                    </Button>
+                  )}
+                  <Button
+                    disabled={
+                      isEmployeeLoading ||
                       employeeCreateLoading ||
-                      employeeUpdateLoading) && (
-                      <div
-                        className='ms-2 spinner-border spinner-border-sm text-light'
-                        role='status'
-                      >
-                        <span className='visually-hidden'>Loading...</span>
-                      </div>
-                    )}
-                  </span>
-                </Button>
-              </div>
+                      employeeUpdateLoading
+                    }
+                    className='btn-primary mx-2'
+                    onClick={() =>
+                      employee.id > 0 ? employeeUpdate() : employeeCreate()
+                    }
+                  >
+                    <span className='align-items-center d-flex'>
+                      {employee.id > 0 ? 'Update' : 'Add'}
+                      {(isEmployeeLoading ||
+                        employeeCreateLoading ||
+                        employeeUpdateLoading) && (
+                        <div
+                          className='ms-2 spinner-border spinner-border-sm text-light'
+                          role='status'
+                        >
+                          <span className='visually-hidden'>Loading...</span>
+                        </div>
+                      )}
+                    </span>
+                  </Button>
+                </div>
+              </ProtectedComponent>
             </div>
           </div>
         </div>
