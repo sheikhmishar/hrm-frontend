@@ -5,10 +5,7 @@ import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import modifiedFetch from '../../libs/modifiedFetch'
 import Select from '../../components/Select'
-import {
-  defaultDesignation,
-  defaultEmployee
-} from '../../constants/DEFAULT_MODELS'
+import { defaultEmployee } from '../../constants/DEFAULT_MODELS'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 
 import type { GetResponseType } from 'backend/@types/response'
@@ -24,14 +21,10 @@ import Company from 'backend/Entities/Company'
 import Designation from 'backend/Entities/Designation'
 import Table from '../../components/Table'
 import Button from '../../components/Button'
+import { employeeSalaryDetails } from 'backend/controllers/salaries'
 
 const UpdatePayroll = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
-
-  const [prevSalary, setPrevSalary] = useState(0)
-  const [prevDesignation, setPrevDesignation] = useState({
-    ...defaultDesignation
-  })
 
   const [employee, setEmployee] = useState<Employee>({ ...defaultEmployee })
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
@@ -57,7 +50,7 @@ const UpdatePayroll = () => {
         ...employee,
         [id]: isNumeric ? valueAsNumber : value
       }
-      if (isNumeric)
+      if (isNumeric && (id as keyof Employee) !== 'totalSalary')
         updatedEmployee.totalSalary =
           updatedEmployee.basicSalary +
           updatedEmployee.conveyance +
@@ -82,8 +75,6 @@ const UpdatePayroll = () => {
     onSuccess: data => {
       const newEmployee = data?.find(e => e.id === employee.id)
       setEmployee(() => ({ ...(newEmployee || defaultEmployee) }))
-      setPrevSalary(newEmployee?.totalSalary || 0)
-      setPrevDesignation(newEmployee?.designation || defaultDesignation)
     }
   })
 
@@ -100,6 +91,26 @@ const UpdatePayroll = () => {
     onError: onErrorDisplayToast
   })
 
+  const {
+    refetch: refetchSalaryHistory,
+    data: salaryHistory = BLANK_ARRAY,
+    isFetching: isSalaryHistoryFetching
+  } = useQuery({
+    queryKey: [
+      'salaryHistory',
+      ServerSITEMAP.salaries.getByEmployeeId,
+      employee.id
+    ],
+    queryFn: () =>
+      modifiedFetch<GetResponseType<typeof employeeSalaryDetails>>(
+        ServerSITEMAP.salaries.getByEmployeeId.replace(
+          ServerSITEMAP.salaries._params.employeeId,
+          employee.id.toString()
+        )
+      ),
+    enabled: employee.id > 0
+  })
+
   const { mutate: employeeUpdate, isLoading: employeeUpdateLoading } =
     useMutation({
       mutationKey: ['employeeUpdate', ServerSITEMAP.employees.put, employee],
@@ -111,16 +122,21 @@ const UpdatePayroll = () => {
           ),
           { method: 'put', body: JSON.stringify(employee) }
         ),
+      retry: false,
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
         refetchEmployees()
         refetchDesignations()
+        refetchSalaryHistory()
       }
     })
 
   const isFetching =
-    _isFetching || isDesignationFetching || employeeUpdateLoading
+    _isFetching ||
+    isDesignationFetching ||
+    isSalaryHistoryFetching ||
+    employeeUpdateLoading
 
   return (
     <>
@@ -144,8 +160,6 @@ const UpdatePayroll = () => {
                 employee => employee.id === parseInt(value)
               )
               setEmployee(employee => ({ ...(newEmployee || employee) }))
-              setPrevSalary(newEmployee?.totalSalary || 0)
-              setPrevDesignation(newEmployee?.designation || defaultDesignation)
             }}
           />
 
@@ -179,25 +193,7 @@ const UpdatePayroll = () => {
                 />
               </div>
             ))}
-            <div className='col-12 col-lg-6'>
-              <Input
-                disabled
-                id='prevDesignation'
-                label='Previous Designation'
-                containerClass='my-3'
-                value={employee.designation.name}
-              />
-            </div>
 
-            <div className='col-12 col-lg-6'>
-              <Input
-                disabled
-                id='currentSalary'
-                label='Current Salary'
-                containerClass='my-3'
-                value={prevSalary}
-              />
-            </div>
             {(
               [
                 'totalSalary',
@@ -210,12 +206,31 @@ const UpdatePayroll = () => {
             ).map(k => (
               <div key={k} className='col-12 col-lg-6'>
                 <Input
-                  disabled={isFetching || k === 'totalSalary'}
+                  disabled={isFetching}
                   id={k}
-                  label={'New ' + capitalizeDelim(k)}
-                  placeholder={'Enter New ' + capitalizeDelim(k)}
+                  label={capitalizeDelim(k)}
+                  placeholder={'Enter ' + capitalizeDelim(k)}
                   containerClass='my-3'
                   value={employee[k]}
+                  type='number'
+                  onChange={onEmployeeChange}
+                />
+              </div>
+            ))}
+            {(
+              ['wordLimit', 'taskWisePayment'] satisfies KeysOfObjectOfType<
+                Employee,
+                number | undefined
+              >[]
+            ).map(k => (
+              <div key={k} className='col-12 col-lg-6'>
+                <Input
+                  disabled={isFetching}
+                  id={k}
+                  label={capitalizeDelim(k)}
+                  placeholder={'Enter ' + capitalizeDelim(k)}
+                  containerClass='my-3'
+                  value={employee[k] || ''}
                   type='number'
                   onChange={onEmployeeChange}
                 />
@@ -232,7 +247,7 @@ const UpdatePayroll = () => {
                   id={k}
                   disabled={isFetching}
                   autoComplete='true'
-                  label={'New ' + capitalizeDelim(k)}
+                  label={capitalizeDelim(k)}
                   required
                   containerClass='my-3'
                   placeholder={'Enter ' + capitalizeDelim(k)}
@@ -275,24 +290,30 @@ const UpdatePayroll = () => {
       <Table
         columns={[
           'Sl.No',
-          'Previous Salary',
-          'New Salary',
-          'Prev. Designation',
-          'New Designation',
-          'Change Reason',
+          'Basic Salary',
+          'House Rent',
+          'Food Cost',
+          'Conveyance',
+          'Medical Cost',
+          'Total Salary',
+          'TaskWise Payment',
+          'Word Limit',
+          'Designation',
           'Date'
         ]}
-        rows={[
-          [
-            <>{getEmployeeId(employee)}</>,
-            <>{prevSalary}</>,
-            <>{employee.totalSalary}</>,
-            <>{prevDesignation.name}</>,
-            <>{employee.designation.name}</>,
-            <></>,
-            <></>
-          ]
-        ]}
+        rows={salaryHistory.map((salary, i) => [
+          <>{i + 1}</>,
+          <>{salary.basicSalary}</>,
+          <>{salary.houseRent}</>,
+          <>{salary.foodCost}</>,
+          <>{salary.conveyance}</>,
+          <>{salary.medicalCost}</>,
+          <>{salary.totalSalary}</>,
+          <>{salary.taskWisePayment}</>,
+          <>{salary.wordLimit}</>,
+          <>{salary.designation.name}</>,
+          <>{new Date(salary.changedAt).toDateString()}</>
+        ])}
       />
     </>
   )
