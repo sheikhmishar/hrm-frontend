@@ -2,9 +2,9 @@ const path = require('path')
 const fs = require('fs')
 const Fontmin = require('fontmin')
 
-const srcFontDir = path.join(__dirname, '../../../build/static/media')
+const srcFontDir = path.join(__dirname, '../../../dist/assets')
 const destFontDir = srcFontDir
-const cssDir = path.join(__dirname, '../../../build/static/css')
+const cssDir = path.join(__dirname, '../../../dist/assets')
 if (!fs.existsSync(destFontDir)) fs.mkdirSync(destFontDir, { recursive: true })
 const fontFilePaths = fs
   .readdirSync(srcFontDir, { withFileTypes: true })

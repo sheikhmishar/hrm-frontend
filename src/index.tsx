@@ -7,9 +7,12 @@ import App from './App'
 import AuthProvider from './contexts/auth'
 import ToastProvider from './contexts/toast'
 import ErrorBoundary from './pages/error'
+import reportWebVitals from './reportWebVitals'
 
 import './assets/css/bootstrap.css'
 import './assets/css/style.css'
+
+reportWebVitals()
 
 if (import.meta.env.PROD) {
   const _ = window as typeof window & { __REACT_DEVTOOLS_GLOBAL_HOOK__: any }

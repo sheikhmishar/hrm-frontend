@@ -2,9 +2,9 @@ const path = require('path')
 const fs = require('fs')
 const { PurgeCSS } = require('purgecss')
 
-let srcDir = path.join(__dirname, '../../../build')
+let srcDir = path.join(__dirname, '../../../dist')
 if (path.sep === '\\') srcDir = srcDir.replace(/\\/g, '/')
-const srcCssDir = `${srcDir}/static/css`
+const srcCssDir = `${srcDir}/assets`
 const destCssDir = srcCssDir
 
 console.log([srcDir, srcCssDir, destCssDir])

@@ -39,8 +39,8 @@
     "build": "tsc && vite build",
     "export": "npm run build && npm run run:purgecss:global && npm run run:fontmin:global",
     "link:purgecss-fontmin:global": "npm link purgecss fontmin @types/fontmin",
-    "run:purgecss:global": "node ./src/libs/purgecss",
-    "run:fontmin:global": "node ./src/libs/fontmin",
+    "run:purgecss:global": "node ./src/libs/purgecss/index.cjs",
+    "run:fontmin:global": "node ./src/libs/fontmin/index.cjs",
     "typecheck": "tsc -p ./tsconfig.json --watch",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
