@@ -11,9 +11,10 @@ import { FaArrowLeft, FaRotateLeft } from 'react-icons/fa6'
 import { Link, useLocation, useParams } from 'react-router-dom'
 
 import Button from '../../../components/Button'
-import CalenderSlider from '../../../components/CalenderDropdown'
+import CalenderSlider from '../../../components/CalenderSlider'
 import Input from '../../../components/Input'
 import Modal from '../../../components/Modal'
+import ProtectedComponent from '../../../components/ProtectedComponent'
 import Select, { DropDownEventHandler } from '../../../components/Select'
 import { ROUTES } from '../../../constants/CONSTANTS'
 import {
@@ -21,25 +22,29 @@ import {
   defaultLeave
 } from '../../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
   capitalizeDelim,
   getDateRange,
+  dateToString,
   getEmployeeId,
-  getWeekData
+  getWeekData,
+  stringToDate
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
 import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import Employee from 'backend/Entities/Employee'
 import EmployeeLeave from 'backend/Entities/EmployeeLeave'
+import { employeeDetails } from 'backend/controllers/employees'
 import {
   addEmployeeLeave,
   employeeLeaveDetails
 } from 'backend/controllers/leaves'
-import { employeeDetails } from 'backend/controllers/employees'
 
 const LeaveDetails = () => {
+  const { self } = useContext(AuthContext)
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const location = useLocation()
@@ -51,12 +56,14 @@ const LeaveDetails = () => {
     [location.search]
   )
 
-  const { id = '-1' } = useParams<(typeof ROUTES)['leave']['_params']>()
+  const [id, setId] = useState(-1)
+  const { id: idFromParam = '-1' } =
+    useParams<(typeof ROUTES)['leave']['_params']>()
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const [leave, setLeave] = useState<EmployeeLeave>({
     ...defaultLeave,
-    employee: { ...defaultLeave.employee, id: parseInt(id) }
+    employee: { ...defaultLeave.employee, id }
   })
   const onLeaveChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value }
@@ -72,8 +79,16 @@ const LeaveDetails = () => {
     []
   )
 
+  useEffect(() => {
+    if (self?.type === 'Employee' && self.employeeId) setId(self.employeeId)
+    else setId(parseInt(idFromParam) || -1)
+  }, [self, idFromParam])
+
   useEffect(
-    () => setCurrentDate(new Date(monthFromQuery || currentDate)),
+    () =>
+      setCurrentDate(currentDate =>
+        stringToDate(monthFromQuery || currentDate.toDateString())
+      ),
     [monthFromQuery]
   )
 
@@ -82,11 +97,7 @@ const LeaveDetails = () => {
     [currentDate]
   )
   const [fromDateString, toDateString] = useMemo(
-    () =>
-      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
-        string,
-        string
-      ],
+    () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
   )
 
@@ -95,7 +106,7 @@ const LeaveDetails = () => {
   const resetData = () =>
     setLeave({
       ...defaultLeave,
-      employee: { ...defaultLeave.employee, id: parseInt(id) }
+      employee: { ...defaultLeave.employee, id }
     })
 
   const { data: employee, isFetching: employeeLoading } = useQuery({
@@ -104,10 +115,10 @@ const LeaveDetails = () => {
       modifiedFetch<GetResponseType<typeof employeeDetails>>(
         ServerSITEMAP.employees.getById.replace(
           ServerSITEMAP.employees._params.id,
-          id
+          id.toString()
         )
       ),
-    enabled: parseInt(id) > 0,
+    enabled: id > 0,
     onError: onErrorDisplayToast
   })
 
@@ -126,7 +137,7 @@ const LeaveDetails = () => {
       modifiedFetch<GetResponseType<typeof employeeLeaveDetails>>(
         ServerSITEMAP.leaves.getByEmployeeId.replace(
           ServerSITEMAP.leaves._params.employeeId,
-          id || '-1'
+          id.toString()
         ) +
           '?' +
           new URLSearchParams({
@@ -134,7 +145,7 @@ const LeaveDetails = () => {
             to: toDateString
           } satisfies Partial<typeof ServerSITEMAP.leaves._queries>)
       ),
-    enabled: !!(id && id !== '-1'),
+    enabled: id > 0,
     retry: false
   })
 
@@ -198,18 +209,20 @@ const LeaveDetails = () => {
         <div className='col-12 my-3'>
           <div className='border-0 card shadow-sm'>
             <div className='card-body'>
-              <div className='d-flex'>
-                <Button
-                  disabled={isFetching}
-                  className='btn-primary ms-auto my-2'
-                  onClick={() => {
-                    resetData()
-                    toggleSidebar()
-                  }}
-                >
-                  Apply for Leave
-                </Button>
-              </div>
+              <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+                <div className='d-flex'>
+                  <Button
+                    disabled={isFetching}
+                    className='btn-primary ms-auto my-2'
+                    onClick={() => {
+                      resetData()
+                      toggleSidebar()
+                    }}
+                  >
+                    Apply for Leave
+                  </Button>
+                </div>
+              </ProtectedComponent>
 
               <div className='d-flex justify-content-end my-2'>
                 <CalenderSlider
@@ -217,6 +230,75 @@ const LeaveDetails = () => {
                   currentDate={currentDate}
                   setCurrentDate={setCurrentDate}
                 />
+              </div>
+
+              <div className='container text-center'>
+                <div className='row'>
+                  <div className='col-12'>
+                    <h5 className='text-muted'>Paid Leave</h5>
+                    <hr />
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>Allowed in Year</h5>
+                      <h3 className='fw-bold mb-0'>13</h3>
+                    </div>
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>Allowed in Month</h5>
+                      <h3 className='fw-bold mb-0'>3</h3>
+                    </div>
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>Taken in Year</h5>
+                      <h3 className='fw-bold mb-0'>
+                        {leaveDetails?.employeePaidLeaveInYear || 0}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>Taken in Month</h5>
+                      <h3 className='fw-bold mb-0'>
+                        {leaveDetails?.employeeLeave?.leaves
+                          .filter(leave => leave.type === 'paid')
+                          .reduce(
+                            (total, leave) => total + leave.totalDays,
+                            0
+                          ) || 0}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>
+                        Remaining in Year
+                      </h5>
+                      <h3 className='fw-bold mb-0'>
+                        {13 - (leaveDetails?.employeePaidLeaveInYear || 0)}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className='col-6 mb-3'>
+                    <div className='bg-light p-2 rounded'>
+                      <h5 className='fw-bold text-primary'>
+                        Remaining in Month
+                      </h5>
+                      <h3 className='fw-bold mb-0'>
+                        {/* TODO: totalPaidDays */}
+                        {3 -
+                          (leaveDetails?.employeeLeave?.leaves
+                            .filter(leave => leave.type === 'paid')
+                            .reduce(
+                              (total, leave) => total + leave.totalDays,
+                              0
+                            ) || 0)}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className='d-flex justify-content-center my-2'>
@@ -235,10 +317,6 @@ const LeaveDetails = () => {
                   <tbody>
                     {weekData.map((week, i) => (
                       <tr key={i}>
-                        {(() => {
-                          console.log('START')
-                          return <></>
-                        })()}
                         {week.map((date, index) => {
                           const month =
                             (date < 15
@@ -250,20 +328,15 @@ const LeaveDetails = () => {
                               : fromDate.getFullYear()
                           const targetDate =
                             date !== -1
-                              ? new Date(
-                                  `${year}-${month
-                                    .toString()
-                                    .padStart(2, '0')}-${date
-                                    .toString()
-                                    .padStart(2, '0')}`
-                                )
+                              ? new Date(year, month - 1, date)
                               : undefined
-                          const leaveData = leaveDetails?.leaves.find(
-                            ({ from, to }) =>
-                              targetDate &&
-                              new Date(from) <= targetDate &&
-                              new Date(to) >= targetDate
-                          )
+                          const leaveData =
+                            leaveDetails?.employeeLeave?.leaves.find(
+                              ({ from, to }) =>
+                                targetDate &&
+                                stringToDate(from) <= targetDate &&
+                                stringToDate(to) >= targetDate
+                            )
 
                           return (
                             <td
@@ -321,6 +394,8 @@ const LeaveDetails = () => {
               containerClass='my-3'
               placeholder={'Enter ' + capitalizeDelim(k)}
               type='date'
+              min={fromDateString}
+              max={toDateString}
               value={leave[k]}
               onChange={onLeaveChange}
             />
@@ -427,4 +502,3 @@ const LeaveDetails = () => {
 }
 
 export default LeaveDetails
-// TODO: details
