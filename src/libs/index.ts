@@ -1,8 +1,5 @@
 import Employee from 'backend/Entities/Employee'
 
-export const SatisfiesKey = <T>(k: keyof T) => k
-export const Satisfies = <T>(k: T) => k
-
 export const capitalize = (value: string) =>
   `${(value[0] || '').toUpperCase()}${value.substring(1)}`
 
@@ -11,7 +8,17 @@ const delim = '_',
 export const capitalizeDelim = (value: string) =>
   value.replace(replace, '').split(delim).map(capitalize).join(' ')
 
-export const getPreviousMonth = (date: Date | string) => {
+export const timeToLocaleString = (time: string) =>
+  new Date('2000-01-01T' + time).toLocaleTimeString()
+
+export const stringToDate = (str: string) => new Date(str.replace(/-/g, '/'))
+
+export const dateToString = (date: Date) =>
+  `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+
+export const getPreviousMonth = (date: Date) => {
   const newDate = new Date(date)
   newDate.setMonth((newDate.getMonth() + 12 - 1) % 12)
   newDate.setFullYear(
@@ -22,7 +29,7 @@ export const getPreviousMonth = (date: Date | string) => {
   return newDate
 }
 
-export const getNextMonth = (date: Date | string) => {
+export const getNextMonth = (date: Date) => {
   const newDate = new Date(date)
   newDate.setMonth((newDate.getMonth() + 1) % 12)
   newDate.setFullYear(
@@ -31,7 +38,7 @@ export const getNextMonth = (date: Date | string) => {
   return newDate
 }
 
-export const getDateRange = (date: Date | string) => {
+export const getDateRange = (date: Date) => {
   let [from, to] = [new Date(date), new Date(date)]
   if (from.getDate() < 15) {
     from = getPreviousMonth(from)
@@ -42,12 +49,16 @@ export const getDateRange = (date: Date | string) => {
     to = getNextMonth(to)
     to.setDate(14)
   }
-  return [from, to] as [Date, Date]
+  return [from, to] as const
 }
 
-// const daysInYear = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31].map(
-//   (days, i) => new Array(days).fill(null).map((_, i) => i)
-// )
+export const dayDifference = (date1: Date, date2: Date, absolute = true) => {
+  let timestampDiff = date1.getTime() - date2.getTime()
+  if (absolute) timestampDiff = Math.abs(timestampDiff)
+  return (
+    Math.floor(timestampDiff / (3600000 * 24)) + (timestampDiff < 0 ? -1 : 1)
+  )
+}
 
 const nameOfDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -56,14 +67,10 @@ export default function generateCalender(from: Date, to: Date) {
 
   const date = new Date(from)
   date.setDate(date.getDate() - 1)
-  const daysInMonth = new Array(
-    (to.getTime() - from.getTime()) / (24 * 3600000) + 1
-  )
-    .fill(null)
-    .map(() => {
-      date.setTime(date.getTime() + 24 * 3600000)
-      return date.toISOString().substring(0, 10).substring(5)
-    })
+  const daysInMonth = new Array(dayDifference(from, to)).fill(null).map(() => {
+    date.setTime(date.getTime() + 24 * 3600000)
+    return dateToString(date).substring(5)
+  })
 
   return daysInMonth.map((date, i) => ({
     dayName: nameOfDays[(firstDay + i) % 7] as (typeof nameOfDays)[number],
@@ -72,30 +79,48 @@ export default function generateCalender(from: Date, to: Date) {
   }))
 }
 
+type Enumerate<
+  N extends number,
+  Acc extends number[] = []
+> = Acc['length'] extends N
+  ? Acc[number]
+  : Enumerate<N, [...Acc, Acc['length']]>
+
+type IntRange<F extends number, T extends number> = Exclude<
+  Enumerate<T>,
+  Enumerate<F>
+>
+
+type MonthDay = IntRange<1, 32> | -1
+
 export const getWeekData = (
   from: Date,
   monthlyCalender: ReturnType<typeof generateCalender>
-): number[][] => {
+): MonthDay[][] => {
   const firstDay = from.getDay()
   const totalDays = monthlyCalender.length
-  const data: number[][] = []
+  const data: MonthDay[][] = []
 
   const lastDateOfFirstMonth = new Date(
     from.getFullYear(),
     from.getMonth() + 1,
     0
-  ).getDate()
+  ).getDate() as IntRange<28, 32>
 
-  let day = 15
+  let day = 15 as Exclude<MonthDay, -1>
   for (let row = 0; day - 15 < totalDays; row++) {
-    const week: number[] = []
+    const week: MonthDay[] = []
     for (let col = 0; col < 7; col++) {
       if (row === 0 && col < firstDay) {
         week.push(-1)
       } else if (day - 15 >= totalDays) {
         week.push(-1)
       } else {
-        week.push(day > lastDateOfFirstMonth ? day % lastDateOfFirstMonth : day)
+        week.push(
+          day > lastDateOfFirstMonth
+            ? ((day % lastDateOfFirstMonth) as typeof day)
+            : day
+        )
         day++
       }
     }
@@ -121,4 +146,15 @@ export function downloadStringAsFile(
 
 export const getEmployeeId = (employee: Employee) =>
   employee.dateOfJoining.substring(2).substring(0, 5).replace('-', '') +
-  employee.id.toString().padStart(4, '0')
+  (employee.id % 100).toString().padStart(2, '0')
+
+export function splitGrossSalary(gross: number) {
+  const basic = Math.ceil((gross - 2450) / 1.5)
+  return {
+    food: 1250,
+    conveyance: 450,
+    medical: 750,
+    basic,
+    houseRent: Math.ceil(basic / 2)
+  }
+}
