@@ -6,14 +6,16 @@ import { Link } from 'react-router-dom'
 import Table from '../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
-import { getEmployeeId } from '../../libs'
+import { dayDifference, getEmployeeId, stringToDate } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
 import { allEmployees } from 'backend/controllers/employees'
 
 const Notices = () => {
+  const { self } = useContext(AuthContext)
   const { onErrorDisplayToast } = useContext(ToastContext)
   const { data: employees = BLANK_ARRAY, isFetching } = useQuery({
     queryKey: ['employeeAssets', ServerSITEMAP.employees.get],
@@ -38,20 +40,27 @@ const Notices = () => {
           'Department',
           'Date',
           'Days Remaining',
+          'Remarks',
           'Action'
         ]}
         rows={employees
           .filter(
             employee =>
-              employee.noticePeriod && employee.noticePeriod !== '0NaN-aN-aN'
+              // TODO: active only
+              employee.noticePeriod &&
+              employee.noticePeriod !== '0NaN-aN-aN' &&
+              (self?.type === 'Employee' && self.employeeId
+                ? self.employeeId === employee.id
+                : true)
           )
           .sort((a, b) => (a.noticePeriod! > b.noticePeriod! ? -1 : 1))
           .map(employee => ({
             ...employee,
             noticePeriodRemaining: employee.noticePeriod
-              ? Math.ceil(
-                  (new Date(employee.noticePeriod).getTime() - Date.now()) /
-                    (24 * 3600000)
+              ? dayDifference(
+                  stringToDate(employee.noticePeriod),
+                  new Date(),
+                  false
                 )
               : undefined
           }))
@@ -61,9 +70,7 @@ const Notices = () => {
               noticePeriodRemaining >= 0
           )
           .map(employee => [
-            <>
-              {getEmployeeId(employee)}
-            </>,
+            <>{getEmployeeId(employee)}</>,
             <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
               <img
                 src='/favicon.png'
@@ -91,6 +98,7 @@ const Notices = () => {
             <>{employee.department.name}</>,
             <>{employee.noticePeriod}</>,
             <>{employee.noticePeriodRemaining} Days</>,
+            <>{employee.noticePeriodRemark}</>,
             <Link
               to={
                 ROUTES.employee.details.replace(
