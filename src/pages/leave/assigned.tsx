@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import Papa from 'papaparse'
 import {
   useCallback,
   useContext,
@@ -10,16 +11,26 @@ import {
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
-import CalenderSlider from '../../components/CalenderDropdown'
+import CalenderSlider from '../../components/CalenderSlider'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
+import ProtectedComponent from '../../components/ProtectedComponent'
 import Select, { DropDownEventHandler } from '../../components/Select'
 import Table from '../../components/Table'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import { defaultLeave } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim, getDateRange, getEmployeeId } from '../../libs'
+import {
+  capitalizeDelim,
+  downloadStringAsFile,
+  getDateRange,
+  dateToString,
+  getEmployeeId,
+  dayDifference,
+  stringToDate
+} from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -33,7 +44,42 @@ import {
   deleteEmployeeLeave
 } from 'backend/controllers/leaves'
 
+const getCsvFromLeaves = (employees: Employee[]) =>
+  Papa.unparse(
+    employees.reduce(
+      (prev, employee) =>
+        prev.concat(
+          employee.leaves.map(({ from, to, duration, type, status }) => ({
+            employee: getEmployeeId(employee) + ' | ' + employee.name,
+            company: employee.company.name,
+            from,
+            to,
+            duration,
+            totalDays:
+              dayDifference(stringToDate(to), stringToDate(from)) *
+              (duration === 'fullday' ? 1 : 0.5),
+            leaveType: type,
+            leaveStatus: status
+          }))
+        ),
+      [] as { [x: string]: number | string }[]
+    ),
+    {
+      columns: [
+        'employee',
+        'company',
+        'from',
+        'to',
+        'duration',
+        'totalDays',
+        'leaveType',
+        'leaveStatus'
+      ]
+    }
+  )
+
 const Assigned = () => {
+  const { self } = useContext(AuthContext)
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [companyId, setCompanyId] = useState(-1)
@@ -46,15 +92,14 @@ const Assigned = () => {
     [currentDate]
   )
   const [fromDateString, toDateString] = useMemo(
-    () =>
-      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
-        string,
-        string
-      ],
+    () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
   )
 
-  useEffect(() => setCurrentDate(new Date(fromDateString)), [fromDateString])
+  useEffect(
+    () => setCurrentDate(stringToDate(fromDateString)),
+    [fromDateString]
+  )
 
   const onLeaveChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value }
@@ -79,7 +124,7 @@ const Assigned = () => {
   const resetData = () => setLeave({ ...defaultLeave })
 
   const {
-    data: employeeLeaves = BLANK_ARRAY,
+    data: _employeeLeaves = BLANK_ARRAY,
     isFetching: fetchingLeaves,
     refetch
   } = useQuery({
@@ -167,17 +212,40 @@ const Assigned = () => {
     fetchingEmployees ||
     leaveCreateLoading
 
+  const employeeLeaves = useMemo(
+    () =>
+      _employeeLeaves.filter(
+        ({ id, company: { id: cid } }) =>
+          (companyId < 1 || cid === companyId) &&
+          (self?.type === 'Employee' && self.employeeId
+            ? id === self.employeeId
+            : true)
+      ),
+    [_employeeLeaves, companyId, self]
+  )
+
   return (
     <>
-      <div className='mb-3 row'>
-        <div className='col-4 col-lg-3'>
-          <CalenderSlider
-            monthly
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-          />
-        </div>
-        <div className='col-3 col-lg-4'>
+      <div className='align-items-center d-flex gap-2 justify-content-between mb-3'>
+        <CalenderSlider
+          monthly
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+        />
+        <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+          <Button
+            onClick={() =>
+              downloadStringAsFile(
+                getCsvFromLeaves(employeeLeaves),
+                'employeeLeaves.csv',
+                { type: 'text/csv' }
+              )
+            }
+            className='btn-primary'
+          >
+            Export CSV
+          </Button>
+
           <Select
             id='company'
             label=''
@@ -185,6 +253,7 @@ const Assigned = () => {
             onChange={({ target: { value } }) =>
               setCompanyId(parseInt(value) || -1)
             }
+            className='w-25'
             options={[{ label: 'All', value: -1 }].concat(
               companies.map(company => ({
                 label: company.name,
@@ -192,15 +261,11 @@ const Assigned = () => {
               }))
             )}
           />
-        </div>
-        <div className='col-2'>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
             </div>
           )}
-        </div>
-        <div className='col-3 d-flex'>
           <Button
             onClick={() => {
               toggleSidebar()
@@ -210,7 +275,7 @@ const Assigned = () => {
           >
             + Add leave
           </Button>
-        </div>
+        </ProtectedComponent>
       </div>
 
       <Table
@@ -226,7 +291,13 @@ const Assigned = () => {
           'Action'
         ]}
         rows={employeeLeaves
-          .filter(({ company: { id } }) => companyId < 1 || id === companyId)
+          .filter(
+            ({ id, company: { id: cid } }) =>
+              (companyId < 1 || cid === companyId) &&
+              (self?.type === 'Employee' && self.employeeId
+                ? id === self.employeeId
+                : true)
+          )
           .reduce(
             (prev, employee) =>
               prev.concat(
@@ -248,17 +319,11 @@ const Assigned = () => {
                   <>{leave.from}</>,
                   <>{leave.to}</>,
                   <>{leave.duration}</>,
-                  <>
-                    {((new Date(leave.to).getTime() -
-                      new Date(leave.from).getTime()) /
-                      (3600000 * 24) +
-                      1) *
-                      (leave.duration === 'fullday' ? 1 : 0.5)}
-                  </>,
+                  <>{leave.totalDays}</>,
                   <>{leave.type}</>,
                   <>{leave.status}</>,
                   <Button
-                    disabled={isLoading}
+                    disabled={isLoading || self?.type === 'Employee'}
                     onClick={() => mutate(leave.id)}
                     className='link-primary text-body'
                   >
@@ -303,6 +368,9 @@ const Assigned = () => {
               containerClass='my-3'
               placeholder={'Enter ' + capitalizeDelim(k)}
               type='date'
+              min={fromDateString}
+              max={toDateString}
+              // TODO: all
               value={leave[k]}
               onChange={onLeaveChange}
             />
