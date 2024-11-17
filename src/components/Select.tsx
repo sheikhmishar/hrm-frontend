@@ -93,7 +93,7 @@ const Select: React.FC<Props> = ({
       <div className='position-relative'>
         <label htmlFor={`${props.id}_search`} className='mb-2 text-wrap'>
           {label} -{' '}
-          <span className='px-2 py-1 rounded-3 text-bg-dark'>{selectedLabel}</span>{' '}
+          <span className='px-2 py-1 rounded-3 text-bg-primary'>{selectedLabel}</span>{' '}
           {props.required && <span className='text-primary'>*</span>}
         </label>
         <input
