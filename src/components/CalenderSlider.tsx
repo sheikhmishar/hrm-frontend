@@ -7,7 +7,7 @@ import {
 } from 'react'
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io'
 
-import { getNextMonth, getPreviousMonth } from '../libs'
+import { dateToString, getNextMonth, getPreviousMonth } from '../libs'
 
 type Prop = JSX.IntrinsicElements['div'] & {
   currentDate: Date
@@ -53,8 +53,9 @@ const CalenderSlider = ({
   const handleDateChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { valueAsDate }
   }) => {
+    if (!valueAsDate) valueAsDate = new Date()
     if (monthly && valueAsDate) valueAsDate.setDate(15)
-    setCurrentDate(valueAsDate || new Date())
+    setCurrentDate(valueAsDate)
     setShowDatePicker(false)
   }
 
@@ -87,7 +88,7 @@ const CalenderSlider = ({
           <input
             ref={datePickerRef}
             type={monthly ? 'month' : 'date'}
-            value={currentDate.toISOString().substring(0, monthly ? 7 : 10)}
+            value={dateToString(currentDate).substring(0, monthly ? 7 : 10)}
             onChange={handleDateChange}
             onBlur={handleDatePickerBlur}
           />
