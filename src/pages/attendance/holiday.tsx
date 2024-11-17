@@ -1,11 +1,17 @@
-import { useContext, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useContext, useEffect, useMemo, useState } from 'react'
 
-import { ToastContext } from '../../contexts/toast'
-import generateCalender, { getDateRange, getWeekData } from '../../libs'
-import CalenderSlider from '../../components/CalenderDropdown'
+import CalenderSlider from '../../components/CalenderSlider'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../contexts/auth'
+import { ToastContext } from '../../contexts/toast'
+import generateCalender, {
+  dateToString,
+  getDateRange,
+  getWeekData,
+  stringToDate
+} from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -16,8 +22,10 @@ import {
 } from 'backend/controllers/holidays'
 import Holiday from 'backend/Entities/Holiday'
 
+// FIXME: duplicate 'PRIMARY'
 const HolidayManagement = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
+  const { self } = useContext(AuthContext)
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const [fromDate, toDate] = useMemo(
@@ -25,12 +33,13 @@ const HolidayManagement = () => {
     [currentDate]
   )
   const [fromDateString] = useMemo(
-    () =>
-      [fromDate, toDate].map(date => date.toISOString().split('T')[0]) as [
-        string,
-        string
-      ],
+    () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
+  )
+
+  useEffect(
+    () => setCurrentDate(stringToDate(fromDateString)),
+    [fromDateString]
   )
 
   const calender = useMemo(
@@ -47,7 +56,11 @@ const HolidayManagement = () => {
     data: holidays = BLANK_ARRAY,
     isFetching: holidaysLoading
   } = useQuery({
-    queryKey: ['holidays', ServerSITEMAP.holidays.getByMonthStart],
+    queryKey: [
+      'holidays',
+      ServerSITEMAP.holidays.getByMonthStart,
+      fromDateString
+    ],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof holidaysByMonth>>(
         ServerSITEMAP.holidays.getByMonthStart.replace(
@@ -134,9 +147,9 @@ const HolidayManagement = () => {
                     (date < 15 ? toDate.getMonth() : fromDate.getMonth()) + 1
                   const year =
                     month === 1 ? toDate.getFullYear() : fromDate.getFullYear()
-                  const targetDateString = `${year}-${month
-                    .toString()
-                    .padStart(2, '0')}-${date.toString().padStart(2, '0')}`
+                  const targetDateString = dateToString(
+                    new Date(year, month - 1, date)
+                  )
                   const holiday =
                     date !== -1
                       ? holidays.find(({ date }) => date === targetDateString)
@@ -146,11 +159,19 @@ const HolidayManagement = () => {
                     <td
                       role='button'
                       key={index}
-                      className={holiday ? 'bg-primary text-white' : ''}
-                      onClick={() =>
+                      className={
                         holiday
-                          ? holidayDelete(targetDateString)
-                          : holidayAdd({ date: targetDateString })
+                          ? isFetching
+                            ? 'text-bg-dark bg-opacity-50'
+                            : 'text-bg-primary'
+                          : ''
+                      }
+                      onClick={() =>
+                        self?.type !== 'Employee' && !isFetching
+                          ? holiday
+                            ? holidayDelete(targetDateString)
+                            : holidayAdd({ date: targetDateString })
+                          : undefined
                       }
                     >
                       {date !== -1 ? date : ''}
