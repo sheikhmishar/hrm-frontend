@@ -163,14 +163,11 @@ const ImportAttendance = () => {
                           type='date'
                           name={'date' satisfies keyof EmployeeAttendance}
                           value={attendance.date}
-                          onChange={({ target: { valueAsDate } }) => {
+                          onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
                             if (newAttendances[i])
-                              newAttendances[i]!.date = (
-                                valueAsDate || new Date()
-                              )
-                                .toISOString()
-                                .split('T')[0]!
+                              newAttendances[i]!.date = value
+
                             setAttendances(newAttendances)
                           }}
                         />
@@ -184,14 +181,10 @@ const ImportAttendance = () => {
                             'arrivalTime' satisfies keyof EmployeeAttendance
                           }
                           value={attendance.arrivalTime}
-                          onChange={({ target: { valueAsDate } }) => {
+                          onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
                             if (newAttendances[i])
-                              newAttendances[i]!.arrivalTime = (
-                                valueAsDate || new Date()
-                              )
-                                .toISOString()
-                                .substring(11, 16)
+                              newAttendances[i]!.arrivalTime = value
                             setAttendances(newAttendances)
                           }}
                         />
@@ -203,14 +196,10 @@ const ImportAttendance = () => {
                           type='time'
                           name={'leaveTime' satisfies keyof EmployeeAttendance}
                           value={attendance.leaveTime}
-                          onChange={({ target: { valueAsDate } }) => {
+                          onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
                             if (newAttendances[i])
-                              newAttendances[i]!.leaveTime = (
-                                valueAsDate || new Date()
-                              )
-                                .toISOString()
-                                .substring(11, 16)
+                              newAttendances[i]!.leaveTime = value
                             setAttendances(newAttendances)
                           }}
                         />
