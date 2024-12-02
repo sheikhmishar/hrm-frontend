@@ -120,23 +120,25 @@ const MonthlyPaysheetById = () => {
     HTMLInputElement | HTMLSelectElement
   > = ({ target: { id, value } }) =>
     setMonthlySalary(monthlySalary => {
-      const isNumeric = [
-        'basicSalary',
-        'houseRent',
-        'foodCost',
-        'conveyance',
-        'medicalCost',
-        'overtime',
-        'overtimePayment',
-        'bonus',
-        'late',
-        'lateDeduction',
-        'penalty',
-        'leave',
-        'leaveDeduction',
-        'loanDeduction',
-        'totalSalary'
-      ] satisfies KeysOfObjectOfType<MonthlySalary, number>[]
+      const isNumeric = (
+        [
+          'basicSalary',
+          'houseRent',
+          'foodCost',
+          'conveyance',
+          'medicalCost',
+          'overtime',
+          'overtimePayment',
+          'bonus',
+          'late',
+          'lateDeduction',
+          'penalty',
+          'leave',
+          'leaveDeduction',
+          'loanDeduction',
+          'totalSalary'
+        ] satisfies KeysOfObjectOfType<MonthlySalary, number>[] as string[]
+      ).includes(id)
 
       const updatedSalary = {
         ...monthlySalary,
@@ -726,7 +728,7 @@ const MonthlyPaysheetById = () => {
                     ? 'On time'
                     : attendance.overtime < 0
                     ? 'Early Out'
-                    : 'Late Out'}
+                    : 'Overtime'}
                 </span>
               </>
             ])
@@ -1174,25 +1176,25 @@ const MonthlyPaysheetById = () => {
         />
       ))}
       <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
-          <div className='d-flex justify-content-end mt-3'>
-            <Button
-              disabled={isFetching}
-              className='btn-primary mx-2'
-              onClick={() => monthlySalaryUpdate()}
-            >
-              <span className='align-items-center d-flex'>
-                Update
-                {isFetching && (
-                  <div
-                    className='ms-2 spinner-border spinner-border-sm text-light'
-                    role='status'
-                  >
-                    <span className='visually-hidden'>Loading...</span>
-                  </div>
-                )}
-              </span>
-            </Button>
-          </div>
+        <div className='d-flex justify-content-end mt-3'>
+          <Button
+            disabled={isFetching}
+            className='btn-primary mx-2'
+            onClick={() => monthlySalaryUpdate()}
+          >
+            <span className='align-items-center d-flex'>
+              Update
+              {isFetching && (
+                <div
+                  className='ms-2 spinner-border spinner-border-sm text-light'
+                  role='status'
+                >
+                  <span className='visually-hidden'>Loading...</span>
+                </div>
+              )}
+            </span>
+          </Button>
+        </div>
       </ProtectedComponent>
     </>
   )

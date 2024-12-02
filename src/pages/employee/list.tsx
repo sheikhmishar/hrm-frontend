@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
 import { useContext, useState, type ChangeEventHandler } from 'react'
 import { FaPen, FaPlus } from 'react-icons/fa6'
@@ -14,16 +14,20 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, downloadStringAsFile, getEmployeeId } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type Employee from 'backend/Entities/Employee'
-import type { allEmployees } from 'backend/controllers/employees'
+import type {
+  allEmployees,
+  updateEmployee
+} from 'backend/controllers/employees'
 
 const visibleKeys = [
   'id',
   'name',
   'phoneNumber',
   'company',
-  'department'
+  'department',
+  'status'
 ] satisfies (keyof Employee)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
@@ -156,7 +160,6 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         'officeEndTime',
         'overtime',
         'salaryType',
-        'status',
         'assets'
       ] satisfies (keyof OmitKey<
         Employee,
@@ -165,15 +168,19 @@ const getCsvFromEmployees = (employees: Employee[]) =>
     }
   )
 
-const EmployeePage = () => {
-  const { onErrorDisplayToast } = useContext(ToastContext)
+const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
+  const { onErrorDisplayToast, addToast } = useContext(ToastContext)
   const { self } = useContext(AuthContext)
 
   const [search, setSearch] = useState('')
   const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
     setSearch(e.target.value)
 
-  const { data: employees = BLANK_ARRAY, isFetching } = useQuery({
+  const {
+    refetch,
+    data: employees = BLANK_ARRAY,
+    isFetching: fetchingEmployees
+  } = useQuery({
     queryKey: ['employees', ServerSITEMAP.employees.get],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allEmployees>>(
@@ -181,6 +188,37 @@ const EmployeePage = () => {
       ),
     onError: onErrorDisplayToast
   })
+
+  const { mutate: employeeUpdate, isLoading: employeeUpdateLoading } =
+    useMutation({
+      mutationKey: ['employeeUpdate', ServerSITEMAP.employees.put],
+      mutationFn: ({
+        id,
+        employee
+      }: {
+        id: number
+        employee: Partial<Employee>
+      }) =>
+        modifiedFetch<GetResponseType<typeof updateEmployee>>(
+          ServerSITEMAP.employees.put.replace(
+            ServerSITEMAP.employees._params.id,
+            id.toString()
+          ),
+          {
+            method: 'put',
+            body: JSON.stringify(
+              employee satisfies GetReqBodyType<typeof updateEmployee>
+            )
+          }
+        ),
+      onError: onErrorDisplayToast,
+      onSuccess: data => {
+        data?.message && addToast(data.message)
+        refetch()
+      }
+    })
+
+  const isFetching = fetchingEmployees || employeeUpdateLoading
 
   return (
     <>
@@ -235,6 +273,9 @@ const EmployeePage = () => {
         rows={employees
           .filter(
             employee =>
+              (approval
+                ? employee.status === 'inactive'
+                : employee.status === 'active') &&
               visibleKeys.find(key =>
                 employee[key]
                   ?.toString()
@@ -279,6 +320,28 @@ const EmployeePage = () => {
                         </p>
                       </div>
                     </div>
+                  ) : key === 'status' ? (
+                    <span
+                      className={`p-1 rounded ${
+                        approval
+                          ? 'text-bg-danger bg-opacity-50'
+                          : 'text-bg-primary'
+                      }`}
+                      role='button'
+                      onClick={() =>
+                        approval
+                          ? employeeUpdate({
+                              id: employee.id,
+                              employee: { status: 'active' }
+                            })
+                          : employeeUpdate({
+                              id: employee.id,
+                              employee: { status: 'inactive' }
+                            })
+                      }
+                    >
+                      {employee[key]}
+                    </span>
                   ) : (
                     // TODO: global
                     employee[key]?.toString().substring(0, 50) +

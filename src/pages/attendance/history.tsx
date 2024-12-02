@@ -323,7 +323,7 @@ const AttendanceHistory = () => {
                         ? 'On time'
                         : attendance.overtime < 0
                         ? 'Early Out'
-                        : 'Late Out'}
+                        : 'Overtime'}
                     </span>
                   </>,
                   <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>

@@ -323,7 +323,6 @@ const EmployeeDetails = () => {
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        refetch()
         refetchCompanies()
         refetchDepartments()
         refetchBranches()
@@ -333,7 +332,7 @@ const EmployeeDetails = () => {
         navigate(
           ROUTES.employee.details.replace(
             ROUTES.employee._params.id,
-            data?.data.id.toString() || '-1'
+            data?.data.employee?.id.toString() || '-1'
           )
         )
       }
@@ -362,7 +361,7 @@ const EmployeeDetails = () => {
 
       <div className='row'>
         <div className='col-6 col-lg-4 rounded-3'>
-          <div className='border-0 card rounded-3 sticky-top'>
+          <div className='border-0 card rounded-3 sticky-top z-1'>
             <div className='card-body'>
               <div className='bg-primary-subtle mt-5 rounded-3 text-center w-100'>
                 <img
@@ -460,7 +459,7 @@ const EmployeeDetails = () => {
         <div className='col-6 col-lg-8 rounded-3'>
           <div className='border-0 card rounded-3'>
             <div className='card-body'>
-              <div className='bg-white border-bottom d-flex gap-3 justify-content-between overflow-x-auto py-2 sticky-top w-100'>
+              <div className='bg-white border-bottom d-flex gap-3 justify-content-between overflow-x-auto py-2 sticky-top w-100 z-1'>
                 <ScrollLink isFirst href='#personal-details'>
                   Personal Details
                 </ScrollLink>
@@ -770,9 +769,9 @@ const EmployeeDetails = () => {
                     <Input
                       disabled={isEmployeeLoading}
                       id={k}
-                      label={capitalizeDelim(k)}
+                      label='Last Working Day'
                       containerClass='my-3'
-                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      placeholder='Enter Last Working Day'
                       value={employee[k] || ''}
                       type='date'
                       onChange={onEmployeeChange}
@@ -789,9 +788,9 @@ const EmployeeDetails = () => {
                     <Input
                       disabled={isEmployeeLoading}
                       id={k}
-                      label={capitalizeDelim(k)}
+                      label='Remark'
                       containerClass='my-3'
-                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      placeholder='Enter Remark'
                       value={employee[k] || ''}
                       onChange={onEmployeeChange}
                     />
@@ -1106,6 +1105,27 @@ const EmployeeDetails = () => {
                   ])}
                 />
               </div>
+
+              {(
+                ['status'] satisfies KeysOfObjectOfType<Employee, string>[]
+              ).map(k => (
+                <div key={k} className='col-12 col-lg-6'>
+                  <Select
+                    id={k}
+                    disabled={isEmployeeLoading}
+                    autoComplete='true'
+                    label={capitalizeDelim(k)}
+                    containerClass='my-3'
+                    required
+                    placeholder={'Enter ' + capitalizeDelim(k)}
+                    value={employee[k]}
+                    options={(
+                      ['active', 'inactive'] satisfies Employee[typeof k][]
+                    ).map(name => ({ value: name, label: name }))}
+                    onChange={onSelectChange}
+                  />
+                </div>
+              ))}
               <hr />
               <ProtectedComponent rolesAllowed={['HR', 'SuperAdmin']}>
                 <div className='d-flex justify-content-end mt-3'>
