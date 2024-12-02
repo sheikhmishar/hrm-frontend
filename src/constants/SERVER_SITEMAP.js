@@ -83,6 +83,7 @@ const ServerSITEMAP = {
     _: monthlySalariesRoot,
     post: monthlySalariesRoot,
     get: monthlySalariesRoot,
+    getAllCompanySalaries: `${monthlySalariesRoot}/companies`,
     getAllByEmployeeId: `${monthlySalariesRoot}/employee/:id`,
     getById: `${monthlySalariesRoot}/:id`,
     put: `${monthlySalariesRoot}/:id`,
