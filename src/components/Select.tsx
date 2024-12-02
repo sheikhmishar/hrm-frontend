@@ -28,7 +28,8 @@ const Select: React.FC<Props> = ({
   className = '',
   ...props
 }) => {
-  const [focus, setFocus] = useState(false)
+  const [inputFocus, setInputFocus] = useState(false)
+  const [dropdownFocus, setDropdownFocus] = useState(false)
   const [text, setText] = useState('')
   const selectedLabel = useMemo(
     () =>
@@ -39,14 +40,31 @@ const Select: React.FC<Props> = ({
 
   const onTextChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
     e => setText(e.target.value),
-    []
+    [setText]
   )
-  const onTextFocus = useCallback<FocusEventHandler<HTMLInputElement>>(
-    () => !props.disabled && setFocus(true),
-    [props.disabled]
+  const disableInputFocusTimeout300 = useTimeout(
+    () => setInputFocus(false),
+    300
   )
+  const disableDropdownFocusTimeout300 = useTimeout(
+    () => setDropdownFocus(false),
+    300
+  )
+  const onTextFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    if (!props.disabled) {
+      disableInputFocusTimeout300.end()
+      setInputFocus(true)
+    }
+  }, [props.disabled, setInputFocus])
 
-  const disableFocusTimeout300 = useTimeout(() => setFocus(false), 300)
+  const onDropdownFocus = useCallback<
+    FocusEventHandler<HTMLInputElement>
+  >(() => {
+    if (!props.disabled) {
+      disableDropdownFocusTimeout300.end()
+      setDropdownFocus(true)
+    }
+  }, [props.disabled, setDropdownFocus])
 
   const onSelectChange = useCallback<
     (e: ChangeEvent<DropdownElement>) => MouseEventHandler<HTMLAnchorElement>
@@ -93,7 +111,9 @@ const Select: React.FC<Props> = ({
       <div className='position-relative'>
         <label htmlFor={`${props.id}_search`} className='mb-2 text-wrap'>
           {label} -{' '}
-          <span className='px-2 py-1 rounded-3 text-bg-primary'>{selectedLabel}</span>{' '}
+          <span className='px-2 py-1 rounded-3 text-bg-primary'>
+            {selectedLabel}
+          </span>{' '}
           {props.required && <span className='text-primary'>*</span>}
         </label>
         <input
@@ -103,17 +123,19 @@ const Select: React.FC<Props> = ({
           value={text}
           disabled={props.disabled}
           onChange={onTextChange}
-          className={`form-control ${focus ? 'rounded-bottom-0' : ''}`}
+          className={`form-control ${inputFocus ? 'rounded-bottom-0' : ''}`}
           onFocus={onTextFocus}
-          onBlur={disableFocusTimeout300.start}
+          onBlur={disableInputFocusTimeout300.start}
         />
 
         <div className='dropdown end-0 position-absolute start-0 top-100 w-100 z-3'>
           <div
             style={{ maxHeight: 200 }}
             className={`dropdown-menu overflow-auto rounded-top-0 shadow-sm w-100 ${
-              focus ? 'show' : ''
+              inputFocus || dropdownFocus ? 'show' : ''
             }`}
+            onFocus={onDropdownFocus}
+            onBlur={disableDropdownFocusTimeout300.start}
             aria-labelledby='dropdownMenuButton'
           >
             <a
