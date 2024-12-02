@@ -169,5 +169,6 @@ export const defaultUser: User = {
   email: '',
   password: '',
   phoneNumber: '',
+  status: 'inactive',
   type: 'HR'
 }

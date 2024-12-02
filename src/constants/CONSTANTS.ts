@@ -1,11 +1,10 @@
-// import { Satisfies } from '../libs'
-
 const root = '',
   organizationRoot = `${root}/organization`,
   employeeRoot = `${root}/employee`,
   attendanceRoot = `${root}/attendance`,
   leaveRoot = `${root}/leave`,
-  payrollRoot = `${root}/payroll`
+  payrollRoot = `${root}/payroll`,
+  approvalRoot = `${root}/approval`
 
 export const ROUTE_PARAMS = { id: ':id' }
 export const LOGIN_ROUTE_QUERY = { prev: 'prev' }
@@ -15,8 +14,9 @@ export const ROUTES = {
   register: `${root}/register`,
   login: `${root}/login`,
   password: `${root}/password`,
+  awaitingApproval: `${root}/awaiting-approval`,
   dashboard: `${root}/dashboard`,
-  user: `${organizationRoot}/user`,
+  user: `${root}/user`,
   employee: {
     _: employeeRoot,
     _params: ROUTE_PARAMS,
@@ -49,6 +49,7 @@ export const ROUTES = {
     id: `${payrollRoot}/:id`,
     loan: `${payrollRoot}/loan`,
     monthly: `${payrollRoot}/monthly`,
+    cost: `${payrollRoot}/cost`,
     update: `${payrollRoot}/update`
   },
   organization: {
@@ -60,6 +61,16 @@ export const ROUTES = {
     salaryType: `${organizationRoot}/salary-type`,
     designation: `${organizationRoot}/designation`,
     settings: `${organizationRoot}/settings`
+  },
+  approval: {
+    _: approvalRoot,
+    company: `${approvalRoot}/company`,
+    department: `${approvalRoot}/department`,
+    branch: `${approvalRoot}/branch`,
+    dutyType: `${approvalRoot}/duty-type`,
+    salaryType: `${approvalRoot}/salary-type`,
+    designation: `${approvalRoot}/designation`,
+    employee: `${approvalRoot}/employee`
   }
 }
 

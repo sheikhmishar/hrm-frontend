@@ -5,9 +5,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Redirect from './components/Redirect'
 import { ROUTES } from './constants/CONSTANTS'
 import NotFound404 from './pages/404'
+import AwaitingApproval from './pages/awaiting-approval'
 import Login from './pages/login'
-import Register from './pages/register'
 import UpdatePassword from './pages/password'
+import Register from './pages/register'
 import User from './pages/user'
 
 const delayedLazy = <T extends ComponentType<any>>(
@@ -54,6 +55,7 @@ const HolidayManagementLazy = delayedLazy(
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
 const LoanLazy = delayedLazy(() => import('./pages/payroll/loan'))
+const SalaryCostLazy = delayedLazy(() => import('./pages/payroll/cost'))
 const PayrollByIdLazy = delayedLazy(() => import('./pages/payroll/[id]'))
 
 const BranchLazy = delayedLazy(() => import('./pages/organization/branch'))
@@ -110,6 +112,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <UpdatePassword />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.awaitingApproval}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <AwaitingApproval />
           </ProtectedRoute>
         }
       />
@@ -182,6 +192,7 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <AttendanceDetailsLazy />
+            {/* TODO: reuse monthly */}
           </ProtectedRoute>
         }
       />
@@ -258,9 +269,17 @@ const Routes = () => (
         }
       />
       <Route
+        path={ROUTES.payroll.cost}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
+            <SalaryCostLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.organization.branch}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <BranchLazy />
           </ProtectedRoute>
         }
@@ -268,7 +287,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.company}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <CompanyLazy />
           </ProtectedRoute>
         }
@@ -276,7 +295,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.department}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <DepartmentLazy />
           </ProtectedRoute>
         }
@@ -284,7 +303,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.designation}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <DesignationLazy />
           </ProtectedRoute>
         }
@@ -292,7 +311,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.dutyType}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <DutyTypeLazy />
           </ProtectedRoute>
         }
@@ -300,7 +319,7 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.salaryType}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <SalaryTypeLazy />
           </ProtectedRoute>
         }
@@ -308,8 +327,64 @@ const Routes = () => (
       <Route
         path={ROUTES.organization.settings}
         element={
-          <ProtectedRoute authenticatedOnly rolesAllowed={['SuperAdmin', 'HR']}>
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
             <SettingsLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.branch}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <BranchLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.company}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <CompanyLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.department}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <DepartmentLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.designation}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <DesignationLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.dutyType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <DutyTypeLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.salaryType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <SalaryTypeLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.employee}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <EmployeeListLazy approval />
           </ProtectedRoute>
         }
       />

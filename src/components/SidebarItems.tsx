@@ -108,7 +108,7 @@ const SidebarItems: React.FC = () => {
             <FaUsers className='me-2' /> Allocated Assets
           </NavItem>
           <NavItem to={ROUTES.employee.notices}>
-            <FaUsers className='me-2' /> Notice Periods
+            <FaUsers className='me-2' /> Last Working Day
           </NavItem>
         </AccordionItem>
       </div>
@@ -179,6 +179,9 @@ const SidebarItems: React.FC = () => {
             <NavItem to={ROUTES.payroll.update}>
               <FaUsers className='me-2' /> Salary Update
             </NavItem>
+            <NavItem to={ROUTES.payroll.cost}>
+              <FaUsers className='me-2' /> Salary Cost
+            </NavItem>
           </ProtectedComponent>
         </AccordionItem>
       </div>
@@ -216,6 +219,44 @@ const SidebarItems: React.FC = () => {
             </NavItem>
             <NavItem to={ROUTES.organization.settings}>
               <FaWrench className='me-2' /> Settings
+            </NavItem>
+          </AccordionItem>
+        </div>
+      </ProtectedComponent>
+
+      <ProtectedComponent rolesAllowed={['SuperAdmin']}>
+        <div className='accordion mt-1'>
+          <AccordionItem
+            active={location.pathname.startsWith(ROUTES.approval._)}
+            className='pe-0'
+            contentJSX={
+              <>
+                <FaBuildingNgo className='me-2' />
+                &nbsp;Approval
+              </>
+            }
+          >
+            <NavItem to={ROUTES.approval.branch}>
+              <FaMapLocationDot className='me-2' /> Branch
+            </NavItem>
+            <NavItem to={ROUTES.approval.company}>
+              <VscOrganization className='me-2' /> Company
+            </NavItem>
+            <NavItem to={ROUTES.approval.department}>
+              <LuBuilding2 className='me-2' /> Department
+            </NavItem>
+            <NavItem to={ROUTES.approval.designation}>
+              <BsPersonVideo2 className='me-2' /> Designation
+            </NavItem>
+            <NavItem to={ROUTES.approval.dutyType}>
+              <FaBusinessTime className='me-2' />
+              &nbsp;Duty Type
+            </NavItem>
+            <NavItem to={ROUTES.approval.salaryType}>
+              <FaMoneyBills className='me-2' /> Salary Type
+            </NavItem>
+            <NavItem to={ROUTES.approval.employee}>
+              <FaWrench className='me-2' /> Employee
             </NavItem>
           </AccordionItem>
         </div>
