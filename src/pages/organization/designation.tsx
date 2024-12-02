@@ -10,9 +10,7 @@ import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -20,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type Designation from 'backend/Entities/Designation'
 import type {
   addDesignation,
@@ -40,7 +38,7 @@ const visibleKeys = (
 ).filter(k => k !== 'id') as (keyof OmitKey<Designation, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const DesignationPage = () => {
+const DesignationPage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [designation, setDesignation] = useState<Designation>({
@@ -102,23 +100,30 @@ const DesignationPage = () => {
 
   const { mutate: designationUpdate, isLoading: designationUpdateLoading } =
     useMutation({
-      mutationKey: [
-        'designationUpdate',
-        ServerSITEMAP.designations.put,
+      mutationKey: ['designationUpdate', ServerSITEMAP.designations.put],
+      mutationFn: ({
+        id,
         designation
-      ],
-      mutationFn: () =>
+      }: {
+        id: number
+        designation: Partial<Designation>
+      }) =>
         modifiedFetch<GetResponseType<typeof updateDesignation>>(
           ServerSITEMAP.designations.put.replace(
             ServerSITEMAP.designations._params.id,
-            designation.id.toString()
+            id.toString()
           ),
-          { method: 'put', body: JSON.stringify(designation) }
+          {
+            method: 'put',
+            body: JSON.stringify(
+              designation satisfies GetReqBodyType<typeof updateDesignation>
+            )
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        toggleSidebar()
+        setSidebar(false)
         refetchDesignations()
       }
     })
@@ -184,22 +189,47 @@ const DesignationPage = () => {
       <Table
         columns={columns}
         rows={(designations || [])
-          .filter(designation =>
-            visibleKeys.find(key =>
-              designation[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            designation =>
+              (approval
+                ? designation.status === 'inactive'
+                : designation.status === 'active') &&
+              visibleKeys.find(key =>
+                designation[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
           )
           .map(designation =>
             visibleKeys
-              .map(key => (
-                <>
-                  {designation[key].substring(0, 50) +
-                    (designation[key].length > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      designationUpdate({
+                        id: designation.id,
+                        designation: {
+                          status: approval ? 'active' : 'inactive'
+                        }
+                      })
+                    }
+                  >
+                    {designation[key]}
+                  </span>
+                ) : (
+                  <>
+                    {designation[key].substring(0, 50) +
+                      (designation[key].length > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -271,7 +301,9 @@ const DesignationPage = () => {
               }
               className='btn-primary mx-2'
               onClick={() =>
-                designation.id > 0 ? designationUpdate() : designationCreate()
+                designation.id > 0
+                  ? designationUpdate({ id: designation.id, designation })
+                  : designationCreate()
               }
             >
               <span className='align-items-center d-flex'>

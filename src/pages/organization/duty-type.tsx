@@ -10,9 +10,7 @@ import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -20,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type DutyType from 'backend/Entities/DutyType'
 import type {
   addDutyType,
@@ -35,15 +33,12 @@ const defaultDutyType: DutyType = {
   status: 'active'
 }
 
-const visibleKeys = (
-  Object.keys(defaultDutyType) as (keyof DutyType)[]
-).filter(k => k !== 'id') as (keyof OmitKey<
-  DutyType,
-  'id'
->)[]
+const visibleKeys = (Object.keys(defaultDutyType) as (keyof DutyType)[]).filter(
+  k => k !== 'id'
+) as (keyof OmitKey<DutyType, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const DutyTypePage = () => {
+const DutyTypePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [dutyType, setDutyType] = useState<DutyType>({
@@ -101,34 +96,37 @@ const DutyTypePage = () => {
 
   const { mutate: dutyTypeUpdate, isLoading: dutyTypeUpdateLoading } =
     useMutation({
-      mutationKey: [
-        'dutyTypeUpdate',
-        ServerSITEMAP.dutyTypes.put,
+      mutationKey: ['dutyTypeUpdate', ServerSITEMAP.dutyTypes.put],
+      mutationFn: ({
+        id,
         dutyType
-      ],
-      mutationFn: () =>
+      }: {
+        id: number
+        dutyType: Partial<DutyType>
+      }) =>
         modifiedFetch<GetResponseType<typeof updateDutyType>>(
           ServerSITEMAP.dutyTypes.put.replace(
             ServerSITEMAP.dutyTypes._params.id,
-            dutyType.id.toString()
+            id.toString()
           ),
-          { method: 'put', body: JSON.stringify(dutyType) }
+          {
+            method: 'put',
+            body: JSON.stringify(
+              dutyType satisfies GetReqBodyType<typeof updateDutyType>
+            )
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        toggleSidebar()
+        setSidebar(false)
         refetchDutyTypes()
       }
     })
 
   const { mutate: dutyTypeCreate, isLoading: dutyTypeCreateLoading } =
     useMutation({
-      mutationKey: [
-        'dutyTypeCreate',
-        ServerSITEMAP.dutyTypes.post,
-        dutyType
-      ],
+      mutationKey: ['dutyTypeCreate', ServerSITEMAP.dutyTypes.post, dutyType],
       mutationFn: () =>
         modifiedFetch<GetResponseType<typeof addDutyType>>(
           ServerSITEMAP.dutyTypes.post,
@@ -154,7 +152,7 @@ const DutyTypePage = () => {
           </div>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
-              <span className="visually-hidden">Loading...</span>
+              <span className='visually-hidden'>Loading...</span>
             </div>
           )}
           <div className='ms-auto w-25'>
@@ -183,22 +181,45 @@ const DutyTypePage = () => {
       <Table
         columns={columns}
         rows={(dutyTypes || [])
-          .filter(dutyType =>
-            visibleKeys.find(key =>
-              dutyType[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            dutyType =>
+              (approval
+                ? dutyType.status === 'inactive'
+                : dutyType.status === 'active') &&
+              visibleKeys.find(key =>
+                dutyType[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
           )
           .map(dutyType =>
             visibleKeys
-              .map(key => (
-                <>
-                  {dutyType[key].substring(0, 50) +
-                    (dutyType[key].length > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      dutyTypeUpdate({
+                        id: dutyType.id,
+                        dutyType: { status: approval ? 'active' : 'inactive' }
+                      })
+                    }
+                  >
+                    {dutyType[key]}
+                  </span>
+                ) : (
+                  <>
+                    {dutyType[key].substring(0, 50) +
+                      (dutyType[key].length > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -270,7 +291,9 @@ const DutyTypePage = () => {
               }
               className='btn-primary mx-2'
               onClick={() =>
-                dutyType.id > 0 ? dutyTypeUpdate() : dutyTypeCreate()
+                dutyType.id > 0
+                  ? dutyTypeUpdate({ id: dutyType.id, dutyType })
+                  : dutyTypeCreate()
               }
             >
               <span className='align-items-center d-flex'>

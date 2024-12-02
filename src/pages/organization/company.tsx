@@ -18,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type Company from 'backend/Entities/Company'
 import type {
   addCompany,
@@ -38,7 +38,7 @@ const visibleKeys = (Object.keys(defaultCompany) as (keyof Company)[]).filter(
 ) as (keyof OmitKey<Company, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const CompanyPage = () => {
+const CompanyPage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [company, setCompany] = useState<Company>({
@@ -96,19 +96,30 @@ const CompanyPage = () => {
 
   const { mutate: companyUpdate, isLoading: companyUpdateLoading } =
     useMutation({
-      mutationKey: ['companyUpdate', ServerSITEMAP.companies.put, company],
-      mutationFn: () =>
+      mutationKey: ['companyUpdate', ServerSITEMAP.companies.put],
+      mutationFn: ({
+        id,
+        company
+      }: {
+        id: number
+        company: Partial<Company>
+      }) =>
         modifiedFetch<GetResponseType<typeof updateCompany>>(
           ServerSITEMAP.companies.put.replace(
             ServerSITEMAP.companies._params.id,
-            company.id.toString()
+            id.toString()
           ),
-          { method: 'put', body: JSON.stringify(company) }
+          {
+            method: 'put',
+            body: JSON.stringify(
+              company satisfies GetReqBodyType<typeof updateCompany>
+            )
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        toggleSidebar()
+        setSidebar(false)
         refetchCompanies()
       }
     })
@@ -170,22 +181,50 @@ const CompanyPage = () => {
       <Table
         columns={columns}
         rows={(companies || [])
-          .filter(company =>
-            visibleKeys.find(key =>
-              company[key]
-                ?.toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            company =>
+              (approval
+                ? company.status === 'inactive'
+                : company.status === 'active') &&
+              visibleKeys.find(key =>
+                company[key]
+                  ?.toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
           )
           .map(company =>
             visibleKeys
-              .map(key => (
-                <>
-                  {company[key]?.substring(0, 50) +
-                    (company[key]?.length || 0 > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      approval
+                        ? companyUpdate({
+                            id: company.id,
+                            company: { status: 'active' }
+                          })
+                        : companyUpdate({
+                            id: company.id,
+                            company: { status: 'inactive' }
+                          })
+                    }
+                  >
+                    {company[key]}
+                  </span>
+                ) : (
+                  <>
+                    {company[key]?.substring(0, 50) +
+                      (company[key]?.length || 0 > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -253,7 +292,9 @@ const CompanyPage = () => {
               }
               className='btn-primary mx-2'
               onClick={() =>
-                company.id > 0 ? companyUpdate() : companyCreate()
+                company.id > 0
+                  ? companyUpdate({ id: company.id, company })
+                  : companyCreate()
               }
             >
               <span className='align-items-center d-flex'>

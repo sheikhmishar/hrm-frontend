@@ -10,9 +10,7 @@ import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -20,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type Branch from 'backend/Entities/Branch'
 import type {
   addBranch,
@@ -40,7 +38,7 @@ const visibleKeys = (Object.keys(defaultBranch) as (keyof Branch)[]).filter(
 ) as (keyof OmitKey<Branch, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const BranchPage = () => {
+const BranchPage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [branch, setBranch] = useState<Branch>({
@@ -97,19 +95,24 @@ const BranchPage = () => {
   })
 
   const { mutate: branchUpdate, isLoading: branchUpdateLoading } = useMutation({
-    mutationKey: ['branchUpdate', ServerSITEMAP.branches.put, branch],
-    mutationFn: () =>
+    mutationKey: ['branchUpdate', ServerSITEMAP.branches.put],
+    mutationFn: ({ id, branch }: { id: number; branch: Partial<Branch> }) =>
       modifiedFetch<GetResponseType<typeof updateBranch>>(
         ServerSITEMAP.branches.put.replace(
           ServerSITEMAP.branches._params.id,
-          branch.id.toString()
+          id.toString()
         ),
-        { method: 'put', body: JSON.stringify(branch) }
+        {
+          method: 'put',
+          body: JSON.stringify(
+            branch satisfies GetReqBodyType<typeof updateBranch>
+          )
+        }
       ),
     onError: onErrorDisplayToast,
     onSuccess: data => {
       data?.message && addToast(data.message)
-      toggleSidebar()
+      setSidebar(false)
       refetchBranches()
     }
   })
@@ -171,21 +174,49 @@ const BranchPage = () => {
         columns={columns}
         rows={(branches || [])
           .filter(branch =>
-            visibleKeys.find(key =>
-              branch[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            visibleKeys.find(
+              key =>
+                (approval
+                  ? branch.status === 'inactive'
+                  : branch.status === 'active') &&
+                branch[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
             )
           )
           .map(branch =>
             visibleKeys
-              .map(key => (
-                <>
-                  {branch[key].substring(0, 50) +
-                    (branch[key].length > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      approval
+                        ? branchUpdate({
+                            id: branch.id,
+                            branch: { status: 'active' }
+                          })
+                        : branchUpdate({
+                            id: branch.id,
+                            branch: { status: 'inactive' }
+                          })
+                    }
+                  >
+                    {branch[key]}
+                  </span>
+                ) : (
+                  <>
+                    {branch[key].substring(0, 50) +
+                      (branch[key].length > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -252,7 +283,11 @@ const BranchPage = () => {
                 branchLoading || branchCreateLoading || branchUpdateLoading
               }
               className='btn-primary mx-2'
-              onClick={() => (branch.id > 0 ? branchUpdate() : branchCreate())}
+              onClick={() =>
+                branch.id > 0
+                  ? branchUpdate({ id: branch.id, branch })
+                  : branchCreate()
+              }
             >
               <span className='align-items-center d-flex'>
                 {branch.id > 0 ? 'Update' : 'Add'}

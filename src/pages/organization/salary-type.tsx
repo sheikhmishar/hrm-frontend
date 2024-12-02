@@ -10,9 +10,7 @@ import { FaPen, FaPlus, FaRotateLeft } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Select, {
-  type DropDownEventHandler
-} from '../../components/Select'
+import Select, { type DropDownEventHandler } from '../../components/Select'
 import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -20,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type SalaryType from 'backend/Entities/SalaryType'
 import type {
   addSalaryType,
@@ -37,13 +35,10 @@ const defaultSalaryType: SalaryType = {
 
 const visibleKeys = (
   Object.keys(defaultSalaryType) as (keyof SalaryType)[]
-).filter(k => k !== 'id') as (keyof OmitKey<
-  SalaryType,
-  'id'
->)[]
+).filter(k => k !== 'id') as (keyof OmitKey<SalaryType, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const SalaryTypePage = () => {
+const SalaryTypePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [salaryType, setSalaryType] = useState<SalaryType>({
@@ -101,23 +96,30 @@ const SalaryTypePage = () => {
 
   const { mutate: salaryTypeUpdate, isLoading: salaryTypeUpdateLoading } =
     useMutation({
-      mutationKey: [
-        'salaryTypeUpdate',
-        ServerSITEMAP.salaryTypes.put,
+      mutationKey: ['salaryTypeUpdate', ServerSITEMAP.salaryTypes.put],
+      mutationFn: ({
+        id,
         salaryType
-      ],
-      mutationFn: () =>
+      }: {
+        id: number
+        salaryType: Partial<SalaryType>
+      }) =>
         modifiedFetch<GetResponseType<typeof updateSalaryType>>(
           ServerSITEMAP.salaryTypes.put.replace(
             ServerSITEMAP.salaryTypes._params.id,
-            salaryType.id.toString()
+            id.toString()
           ),
-          { method: 'put', body: JSON.stringify(salaryType) }
+          {
+            method: 'put',
+            body: JSON.stringify(
+              salaryType satisfies GetReqBodyType<typeof updateSalaryType>
+            )
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        toggleSidebar()
+        setSidebar(false)
         refetchSalaryTypes()
       }
     })
@@ -154,7 +156,7 @@ const SalaryTypePage = () => {
           </div>
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
-              <span className="visually-hidden">Loading...</span>
+              <span className='visually-hidden'>Loading...</span>
             </div>
           )}
           <div className='ms-auto w-25'>
@@ -183,22 +185,45 @@ const SalaryTypePage = () => {
       <Table
         columns={columns}
         rows={(salaryTypes || [])
-          .filter(salaryType =>
-            visibleKeys.find(key =>
-              salaryType[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            salaryType =>
+              (approval
+                ? salaryType.status === 'inactive'
+                : salaryType.status === 'active') &&
+              visibleKeys.find(key =>
+                salaryType[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
           )
           .map(salaryType =>
             visibleKeys
-              .map(key => (
-                <>
-                  {salaryType[key].substring(0, 50) +
-                    (salaryType[key].length > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      salaryTypeUpdate({
+                        id: salaryType.id,
+                        salaryType: { status: approval ? 'active' : 'inactive' }
+                      })
+                    }
+                  >
+                    {salaryType[key]}
+                  </span>
+                ) : (
+                  <>
+                    {salaryType[key].substring(0, 50) +
+                      (salaryType[key].length > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -270,7 +295,9 @@ const SalaryTypePage = () => {
               }
               className='btn-primary mx-2'
               onClick={() =>
-                salaryType.id > 0 ? salaryTypeUpdate() : salaryTypeCreate()
+                salaryType.id > 0
+                  ? salaryTypeUpdate({ id: salaryType.id, salaryType })
+                  : salaryTypeCreate()
               }
             >
               <span className='align-items-center d-flex'>

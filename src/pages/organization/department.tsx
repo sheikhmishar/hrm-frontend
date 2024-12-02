@@ -18,7 +18,7 @@ import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import type Department from 'backend/Entities/Department'
 import type {
   addDepartment,
@@ -32,7 +32,7 @@ const visibleKeys = (
 ).filter(k => k !== 'id') as (keyof OmitKey<Department, 'id'>)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
-const DepartmentPage = () => {
+const DepartmentPage: React.FC<{ approval?: boolean }> = ({ approval }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [department, setDepartment] = useState<Department>({
@@ -90,23 +90,30 @@ const DepartmentPage = () => {
 
   const { mutate: departmentUpdate, isLoading: departmentUpdateLoading } =
     useMutation({
-      mutationKey: [
-        'departmentUpdate',
-        ServerSITEMAP.departments.put,
+      mutationKey: ['departmentUpdate', ServerSITEMAP.departments.put],
+      mutationFn: ({
+        id,
         department
-      ],
-      mutationFn: () =>
+      }: {
+        id: number
+        department: Partial<Department>
+      }) =>
         modifiedFetch<GetResponseType<typeof updateDepartment>>(
           ServerSITEMAP.departments.put.replace(
             ServerSITEMAP.departments._params.id,
-            department.id.toString()
+            id.toString()
           ),
-          { method: 'put', body: JSON.stringify(department) }
+          {
+            method: 'put',
+            body: JSON.stringify(
+              department satisfies GetReqBodyType<typeof updateDepartment>
+            )
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
         data?.message && addToast(data.message)
-        toggleSidebar()
+        setSidebar(false)
         refetchDepartments()
       }
     })
@@ -172,22 +179,50 @@ const DepartmentPage = () => {
       <Table
         columns={columns}
         rows={(departments || [])
-          .filter(department =>
-            visibleKeys.find(key =>
-              department[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            department =>
+              (approval
+                ? department.status === 'inactive'
+                : department.status === 'active') &&
+              visibleKeys.find(key =>
+                department[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
           )
           .map(department =>
             visibleKeys
-              .map(key => (
-                <>
-                  {department[key].substring(0, 50) +
-                    (department[key].length > 50 ? '...' : '')}
-                </>
-              ))
+              .map(key =>
+                key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      approval
+                        ? departmentUpdate({
+                            id: department.id,
+                            department: { status: 'active' }
+                          })
+                        : departmentUpdate({
+                            id: department.id,
+                            department: { status: 'inactive' }
+                          })
+                    }
+                  >
+                    {department[key]}
+                  </span>
+                ) : (
+                  <>
+                    {department[key].substring(0, 50) +
+                      (department[key].length > 50 ? '...' : '')}
+                  </>
+                )
+              )
               .concat(
                 <Button
                   className='border-0 link-primary text-body'
@@ -259,7 +294,9 @@ const DepartmentPage = () => {
               }
               className='btn-primary mx-2'
               onClick={() =>
-                department.id > 0 ? departmentUpdate() : departmentCreate()
+                department.id > 0
+                  ? departmentUpdate({ id: department.id, department })
+                  : departmentCreate()
               }
             >
               <span className='align-items-center d-flex'>
