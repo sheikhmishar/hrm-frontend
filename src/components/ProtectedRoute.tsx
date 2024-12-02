@@ -44,7 +44,12 @@ const ProtectedRoute: React.FC<Props> = props => {
           )
       } else if (!token) {
         if (location.pathname !== ROUTES.login) navigate(ROUTES.login)
-      } else if (rolesAllowed && !rolesAllowed.includes(self.type))
+      } else if (self.status === 'inactive') {
+        if (location.pathname !== ROUTES.awaitingApproval)
+          navigate(ROUTES.awaitingApproval)
+      } else if (location.pathname === ROUTES.awaitingApproval)
+        navigate(ROUTES.dashboard)
+      else if (rolesAllowed && !rolesAllowed.includes(self.type))
         navigate(ROUTES.employee.list)
     } else if (unAuthenticatedOnly && self) {
       if (prevURL && location.pathname !== prevURL) navigate(prevURL)

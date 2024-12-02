@@ -22,6 +22,7 @@ const defaultSelfDetails: GetResponseType<typeof selfDetails> = {
   email: '',
   iat: 1,
   name: '',
+  status: 'inactive',
   type: 'HR'
 }
 
@@ -31,13 +32,15 @@ type AuthContext = {
   self?: typeof defaultSelfDetails
   setSelf: (self: typeof defaultSelfDetails) => void
   fetchingAuth: boolean
+  refetchAuth: () => void
 }
 
 export const AuthContext = createContext<AuthContext>({
   token: '',
   setToken() {},
   setSelf() {},
-  fetchingAuth: false
+  fetchingAuth: false,
+  refetchAuth() {}
 })
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -54,7 +57,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     if (!token) return setSelf(undefined)
   }, [token, tokenRef, setSelf])
 
-  const { isFetching: fetchingAuth } = useQuery({
+  const { isFetching: fetchingAuth, refetch: refetchAuth } = useQuery({
     enabled: tokenRef.current !== token && !!token,
     queryKey: ['getSelf', ServerSITEMAP.users.getSelf, tokenRef.current, token],
     queryFn: () =>
@@ -71,8 +74,8 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   })
 
   const value = useMemo(
-    () => ({ token, setToken, self, setSelf, fetchingAuth }),
-    [fetchingAuth, self, setToken, setSelf, token]
+    () => ({ token, setToken, self, setSelf, fetchingAuth, refetchAuth }),
+    [token, setToken, self, setSelf, fetchingAuth, refetchAuth]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

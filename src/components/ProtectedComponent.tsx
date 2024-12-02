@@ -17,7 +17,10 @@ const ProtectedComponent: React.FC<Props> = props => {
   const { self, token } = useContext(AuthContext)
 
   if (authenticatedOnly || rolesAllowed) {
-    if (!(self && token) || (rolesAllowed && !rolesAllowed.includes(self.type)))
+    if (
+      !(self?.status === 'active' && token) ||
+      (rolesAllowed && !rolesAllowed.includes(self.type))
+    )
       return <></>
   }
   if (unAuthenticatedOnly && self) return <></>

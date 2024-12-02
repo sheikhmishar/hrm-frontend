@@ -27,6 +27,7 @@ const defaultRegisterCreds: Creds = {
   name: '',
   password: '',
   phoneNumber: '',
+  status: 'inactive',
   type: 'HR'
 }
 

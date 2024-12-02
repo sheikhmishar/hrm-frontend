@@ -37,6 +37,12 @@ const UserPage = () => {
   const { self } = useContext(AuthContext)
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
+  const [statusFilter, setStatusFilter] = useState<User['status']>(
+    defaultUser.status
+  )
+  const onStatusSelect: DropDownEventHandler = ({ target: { value } }) =>
+    setStatusFilter(value as User['status'])
+
   const [user, setUser] = useState<User>({ ...defaultUser })
   const onUserChange: ChangeEventHandler<HTMLInputElement> = ({
     target: { id, value }
@@ -102,19 +108,37 @@ const UserPage = () => {
   })
 
   const users = _users.filter(
-    ({ id, type }) => id !== self?.id && type !== 'Employee'
+    ({ id, type, status }) =>
+      id !== self?.id &&
+      type !== 'Employee' &&
+      (!statusFilter || statusFilter === status)
   )
 
   return (
     <>
       <div className='mb-4 mt-2 row'>
-        <div className='align-items-center d-flex'>
-          <div>
+        <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between'>
+          <div className='border-3 border-end border-primary pe-2'>
             <h4 className='m-0'>
               <strong>User</strong>
             </h4>
             <span className='text-primary'>Details</span>
           </div>
+          <Select
+            id='status'
+            disabled={isFetching}
+            autoComplete='true'
+            label='Filter Status'
+            containerClass='my-3 '
+            placeholder='Enter Status'
+            value={statusFilter}
+            options={[{ label: 'All', value: '' }].concat(
+              (['active', 'inactive'] satisfies User['status'][]).map(
+                value => ({ value, label: value })
+              )
+            )}
+            onChange={onStatusSelect}
+          />
           {isFetching && (
             <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
@@ -190,6 +214,22 @@ const UserPage = () => {
               placeholder={'Enter ' + capitalizeDelim(k)}
               value={user[k]}
               options={(['HR', 'SuperAdmin'] satisfies User['type'][]).map(
+                name => ({ value: name, label: name })
+              )}
+              onChange={onSelectChange}
+            />
+          ))}
+          {(['status'] satisfies KeysOfObjectOfType<User, string>[]).map(k => (
+            <Select
+              key={k}
+              id={k}
+              disabled={userLoading}
+              autoComplete='true'
+              label={capitalizeDelim(k)}
+              containerClass='my-3'
+              placeholder={'Enter ' + capitalizeDelim(k)}
+              value={user[k]}
+              options={(['active', 'inactive'] satisfies User['status'][]).map(
                 name => ({ value: name, label: name })
               )}
               onChange={onSelectChange}
