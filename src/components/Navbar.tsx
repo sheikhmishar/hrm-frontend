@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className='align-items-center bg-body d-flex navbar px-3 py-2 shadow-sm z-1'>
+      <nav className='align-items-center bg-body d-flex navbar px-3 py-2 shadow-sm z-3'>
         <div className='container-fluid'>
           <button
             className='border-0 d-md-none navbar-toggler ps-0'
