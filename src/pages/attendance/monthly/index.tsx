@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEventHandler
+} from 'react'
 import { Link } from 'react-router-dom'
 
 import CalenderSlider from '../../../components/CalenderSlider'
@@ -11,8 +17,9 @@ import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
-  getDateRange,
   dateToString,
+  getDateRange,
+  getEmployeeId,
   stringToDate
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
@@ -22,11 +29,15 @@ import { allEmployeeAttendances } from 'backend/controllers/attendances'
 import { allCompanies } from 'backend/controllers/companies'
 import { holidaysByMonth } from 'backend/controllers/holidays'
 import { allEmployeeLeaves } from 'backend/controllers/leaves'
+import Employee from 'backend/Entities/Employee'
 
 const MonthlyAttendance = () => {
   const { self } = useContext(AuthContext)
   const { onErrorDisplayToast } = useContext(ToastContext)
 
+  const [search, setSearch] = useState('')
+  const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
+    setSearch(e.target.value)
   const [companyId, setCompanyId] = useState(-1)
   const [currentDate, setCurrentDate] = useState(new Date())
 
@@ -152,6 +163,16 @@ const MonthlyAttendance = () => {
           </div>
         </ProtectedComponent>
 
+        <div className='ms-2 w-25'>
+          <input
+            className='form-control py-2 rounded-3'
+            id='search'
+            placeholder='Search here'
+            onChange={onSearchInputChange}
+            value={search}
+          />
+        </div>
+
         {isFetching && (
           <div className='ms-3 spinner-border text-primary' role='status'>
             <span className='visually-hidden'>Loading...</span>
@@ -206,6 +227,21 @@ const MonthlyAttendance = () => {
           ])
           .concat(
             employeeAttendances
+              .filter(
+                employee =>
+                  (
+                    [
+                      'name',
+                      'email',
+                      'phoneNumber'
+                    ] satisfies (keyof Employee)[]
+                  ).find(key =>
+                    employee[key]
+                      .toString()
+                      .toLowerCase()
+                      .includes(search.toLowerCase())
+                  ) || getEmployeeId(employee).includes(search.toLowerCase())
+              )
               .filter(({ id, company: { id: cid } }) =>
                 self?.type === 'Employee' && self.employeeId
                   ? id === self.employeeId
@@ -254,7 +290,7 @@ const MonthlyAttendance = () => {
                     </div>
                   </Link>
                 ].concat(
-                  calender.map(({ month, date, dayName: _ }) => {
+                  calender.map(({ month, date }) => {
                     const year =
                       month === '01'
                         ? toDate.getFullYear()
