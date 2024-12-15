@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type PropsWithChildren } from 'react'
 import type { ErrorInfo } from 'react'
 
 import Button from '../components/Button'
@@ -9,8 +9,8 @@ type State = {
   errorInfo?: ErrorInfo
 }
 
-class ErrorBoundary extends React.Component<any, State> {
-  constructor(props: any) {
+class ErrorBoundary extends React.Component<PropsWithChildren, State> {
+  constructor(props: PropsWithChildren) {
     super(props)
     this.state = { hasError: false, error: undefined, errorInfo: undefined }
   }
@@ -30,6 +30,9 @@ class ErrorBoundary extends React.Component<any, State> {
       return (
         <>
           <h3>Error Occured. Please Contact the developer</h3>
+          {import.meta.env.DEV && (
+            <h5 className='text-danger'>{this.state.error?.message}</h5>
+          )}
           <Button
             className='btn-danger'
             onClick={() => this.setState({ hasError: false })}
