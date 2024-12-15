@@ -78,7 +78,8 @@ const CalenderSlider = ({
           <IoIosArrowBack size={17} />
         </span>
         <span
-          className='fw-bold text-nowrap text-primary'
+          style={{ width: '9rem' }}
+          className='fw-bold text-nowrap text-center text-primary'
           onClick={handleDatePickerClick}
         >
           {monthly ? '' : currentDate.getDate()} {monthName}{' '}
