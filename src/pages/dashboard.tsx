@@ -286,7 +286,7 @@ const Dashboard: React.FC = () => {
                     }}
                     data={{
                       labels: companyAttendances.map(({ name }) =>
-                        name.substring(0, 8)
+                        name.substring(0, 16)
                       ),
                       datasets: [
                         {
