@@ -11,7 +11,7 @@ import UpdatePassword from './pages/password'
 import Register from './pages/register'
 import User from './pages/user'
 
-const delayedLazy = <T extends ComponentType<any>>(
+const delayedLazy = <T extends ComponentType>(
   factory: () => Promise<{ default: T }>
 ) =>
   lazy<T>(() =>
@@ -20,7 +20,7 @@ const delayedLazy = <T extends ComponentType<any>>(
       new Promise<{ default: T }>(resolve =>
         factory().then(({ default: C }) => resolve({ default: C }))
       )
-    ]).then(([_, C]) => C)
+    ]).then(([, C]) => C)
   )
 
 const DashboardLazy = delayedLazy(() => import('./pages/dashboard'))

@@ -38,7 +38,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "paths": { "backend/*": ["../skylane-hrm-backend/src/*"] }
+    "paths": { "backend/*": ["../skylane-hrm-backend/src/*"] },
+    "tsBuildInfoFile": "node_modules/.vite/.tsbuildinfo"
   },
   "typeAcquisition": {
     "enable": true

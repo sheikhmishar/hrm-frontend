@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router } from 'react-router-dom'
+import { HashRouter as Router } from 'react-router-dom'
 
 import App from './App'
 import AuthProvider from './contexts/auth'
@@ -15,7 +15,9 @@ import './assets/css/style.css'
 reportWebVitals()
 
 if (import.meta.env.PROD) {
-  const _ = window as typeof window & { __REACT_DEVTOOLS_GLOBAL_HOOK__: any }
+  const _ = window as typeof window & {
+    __REACT_DEVTOOLS_GLOBAL_HOOK__: { [x: string]: object | null }
+  }
   if (typeof _.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object')
     for (const prop in _.__REACT_DEVTOOLS_GLOBAL_HOOK__)
       if (prop === 'renderers')
