@@ -272,90 +272,93 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
         columns={columns}
         rows={employees
           .filter(
-            employee =>
-              (approval
-                ? employee.status === 'inactive'
-                : employee.status === 'active') &&
-              visibleKeys.find(key =>
-                employee[key]
-                  ?.toString()
-                  .toLowerCase()
-                  .includes(search.toLowerCase())
-              ) &&
+            ({ id, status }) =>
+              (approval ? status === 'inactive' : status === 'active') &&
               (self?.type === 'Employee' && self.employeeId
-                ? employee.id === self.employeeId
+                ? id === self.employeeId
                 : true)
+          )
+          .map(({ company, department, ...employee }) => ({
+            ...employee,
+            id: getEmployeeId(employee),
+            company: company.name,
+            department: department.name,
+            mainId: employee.id
+          }))
+          .filter(employee =>
+            visibleKeys.find(key =>
+              employee[key]
+                .toString()
+                .toLowerCase()
+                .includes(search.toLowerCase())
+            )
           )
           .map(employee =>
             visibleKeys
-              .map(key => (
-                <>
-                  {key === 'company' || key === 'department' ? (
-                    employee[key].name
-                  ) : key === 'id' ? (
-                    getEmployeeId(employee)
-                  ) : key === 'name' ? (
-                    <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
-                      <img
-                        src='/favicon.png'
-                        width='50'
-                        height='50'
-                        className='object-fit-cover rounded-circle'
-                      />
-                      <div>
-                        <p
-                          style={{ fontSize: 12 }}
-                          className='fw-lighter m-0 text-info'
-                        >
-                          {employee.email}
-                        </p>
-                        <p className='fw-bold m-0 text-nowrap'>
-                          {employee.name}
-                        </p>
-                        <p
-                          style={{ fontSize: 12 }}
-                          className='fw-lighter m-0 text-muted'
-                        >
-                          {employee.designation.name}
-                        </p>
-                      </div>
+              .map(key =>
+                key === 'name' ? (
+                  <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
+                    <img
+                      src='/favicon.png'
+                      width='50'
+                      height='50'
+                      className='object-fit-cover rounded-circle'
+                    />
+                    <div>
+                      <p
+                        style={{ fontSize: 12 }}
+                        className='fw-lighter m-0 text-info'
+                      >
+                        {employee.email}
+                      </p>
+                      <p className='fw-bold m-0 text-nowrap'>{employee.name}</p>
+                      <p
+                        style={{ fontSize: 12 }}
+                        className='fw-lighter m-0 text-muted'
+                      >
+                        {employee.designation.name}
+                      </p>
                     </div>
-                  ) : key === 'status' ? (
-                    <span
-                      className={`p-1 rounded ${
-                        approval
-                          ? 'text-bg-danger bg-opacity-50'
-                          : 'text-bg-primary'
-                      }`}
-                      role='button'
-                      onClick={() =>
-                        approval
-                          ? employeeUpdate({
-                              id: employee.id,
-                              employee: { status: 'active' }
-                            })
-                          : employeeUpdate({
-                              id: employee.id,
-                              employee: { status: 'inactive' }
-                            })
-                      }
-                    >
-                      {employee[key]}
-                    </span>
-                  ) : (
-                    // TODO: global
-                    employee[key]?.toString().substring(0, 50) +
-                    ((employee[key]?.toString().length || 0) > 50 ? '...' : '')
-                  )}
-                </>
-              ))
+                  </div>
+                ) : key === 'status' ? (
+                  <span
+                    className={`p-1 rounded ${
+                      approval
+                        ? 'text-bg-danger bg-opacity-50'
+                        : 'text-bg-primary'
+                    }`}
+                    role='button'
+                    onClick={() =>
+                      approval
+                        ? employeeUpdate({
+                            id: employee.mainId,
+                            employee: { status: 'active' }
+                          })
+                        : employeeUpdate({
+                            id: employee.mainId,
+                            employee: { status: 'inactive' }
+                          })
+                    }
+                  >
+                    {employee[key]}
+                  </span>
+                ) : (
+                  // TODO: global
+                  <>
+                    {employee[key]?.toString().substring(0, 50) +
+                      ((employee[key]?.toString().length || 0) > 50
+                        ? '...'
+                        : '')}
+                  </>
+                )
+              )
               .concat(
                 <Link
                   role='button'
                   className='link-primary text-body'
                   to={ROUTES.employee.details.replace(
                     ROUTES.employee._params.id,
-                    employee.id.toString()
+                    employee.mainId.toString()
                   )}
                 >
                   <FaPen />
