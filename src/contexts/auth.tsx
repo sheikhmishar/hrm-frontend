@@ -55,7 +55,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     if (tokenRef.current === token) return
     tokenRef.current = token
     if (!token) return setSelf(undefined)
-  }, [token, tokenRef, setSelf])
+  }, [token, setSelf])
 
   const { isFetching: fetchingAuth, refetch: refetchAuth } = useQuery({
     enabled: tokenRef.current !== token && !!token,

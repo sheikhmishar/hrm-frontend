@@ -1,29 +1,35 @@
-const root = '/api',
-  staticRoot = '/static',
-  usersRoot = `${root}/users`,
-  employeesRoot = `${root}/employees`,
-  attendancesRoot = `${root}/attendances`,
-  leavesRoot = `${root}/leaves`,
-  loansRoot = `${root}/loans`,
-  holidaysRoot = `${root}/holidays`,
-  salariesRoot = `${root}/salaries`,
-  companiesRoot = `${root}/companies`,
-  departmentsRoot = `${root}/departments`,
-  monthlySalariesRoot = `${root}/monthly-salaries`,
-  branchesRoot = `${root}/branches`,
-  settingsRoot = `${root}/settings`,
-  dutyTypesRoot = `${root}/duty-types`,
-  salaryTypesRoot = `${root}/salary-types`,
-  designationsRoot = `${root}/designations`
+import type * as serverConfig from 'backend/configs'
 
-const rootParams = { id: ':id' }
+const root = '/api' as const,
+  staticRoot = '/static' as const,
+  usersRoot = `${root}/users` as const,
+  employeesRoot = `${root}/employees` as const,
+  attendancesRoot = `${root}/attendances` as const,
+  leavesRoot = `${root}/leaves` as const,
+  salariesRoot = `${root}/salaries` as const,
+  loansRoot = `${root}/loans` as const,
+  holidaysRoot = `${root}/holidays` as const,
+  companiesRoot = `${root}/companies` as const,
+  departmentsRoot = `${root}/departments` as const,
+  monthlySalariesRoot = `${root}/monthly-salaries` as const,
+  settingsRoot = `${root}/settings` as const,
+  branchesRoot = `${root}/branches` as const,
+  dutyTypesRoot = `${root}/duty-types` as const,
+  salaryTypesRoot = `${root}/salary-types` as const,
+  designationsRoot = `${root}/designations` as const
 
-const employeeDocumentDirName = 'employee_documents'
+const rootParams = { id: ':id' } as const
+
+const employeeDocumentDirName =
+  'employee_documents' satisfies typeof serverConfig.employeeDocumentDirName
+const employeePhotoDirName =
+  'employee_photos' satisfies typeof serverConfig.employeePhotoDirName
 
 const ServerSITEMAP = {
   static: {
     _: staticRoot,
-    employeeDocuments: `${staticRoot}/${employeeDocumentDirName}`
+    employeeDocuments: `${staticRoot}/${employeeDocumentDirName}`,
+    employeePhotos: `${staticRoot}/${employeePhotoDirName}`
   },
   users: {
     _params: rootParams,
@@ -152,5 +158,5 @@ const ServerSITEMAP = {
     getByProperty: `${settingsRoot}/:property`,
     put: `${settingsRoot}/:property`
   }
-}
+} as const
 export default ServerSITEMAP

@@ -123,7 +123,7 @@ const Select: React.FC<Props> = ({
           value={text}
           disabled={props.disabled}
           onChange={onTextChange}
-          className={`form-control ${inputFocus ? 'rounded-bottom-0' : ''}`}
+          className={`form-control ${(inputFocus || dropdownFocus) ? 'rounded-bottom-0' : ''}`}
           onFocus={onTextFocus}
           onBlur={disableInputFocusTimeout300.start}
         />

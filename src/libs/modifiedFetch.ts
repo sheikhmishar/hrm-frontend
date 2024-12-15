@@ -12,7 +12,6 @@ const modifiedFetch = async <T>(
   } = {}
 ) => {
   if (init) {
-    const contentType = init.headers?.['content-type']
     init.headers = Object.assign<HeadersInit, IncomingHttpHeaders>(
       init.headers || {},
       {
@@ -20,14 +19,11 @@ const modifiedFetch = async <T>(
         'ngrok-skip-browser-warning': 'true',
         'mode': 'cors',
         'accept': 'application/json',
-        'content-type':
-          typeof contentType === 'undefined'
-            ? 'application/json'
-            : contentType === 'multipart/form-data'
-            ? undefined
-            : contentType
+        'content-type': init.headers?.['content-type'] || 'application/json'
       }
     )
+    if (init.headers['content-type'] === 'multipart/form-data')
+      delete init.headers['content-type']
   }
   const res = await fetch((REACT_APP_BASE_URL || '') + input, init)
   if (!res.ok) throw await res.json()
