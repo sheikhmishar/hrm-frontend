@@ -47,4 +47,6 @@ const NavDropdownItem: React.FC<NavLinkProps> = ({ children, ...props }) => (
   </li>
 )
 
-export default Object.assign(NavDropdownButton, { NavDropdownItem })
+const NavbarDropdownButton = Object.assign(NavDropdownButton, { NavDropdownItem })
+
+export default NavbarDropdownButton
