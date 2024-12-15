@@ -144,7 +144,9 @@ export function downloadStringAsFile(
   link.remove()
 }
 
-export const getEmployeeId = (employee: Employee) =>
+export const getEmployeeId = (
+  employee: Pick<Employee, 'dateOfJoining' | 'id'>
+) =>
   employee.dateOfJoining.substring(2).substring(0, 5).replace('-', '') +
   (employee.id % 100).toString().padStart(2, '0')
 
@@ -157,4 +159,10 @@ export function splitGrossSalary(gross: number) {
     basic,
     houseRent: Math.ceil(basic / 2)
   }
+}
+
+export const encodeMultipartBody = (body: object) => {
+  const formData = new FormData()
+  formData.append('json', JSON.stringify(body))
+  return formData
 }

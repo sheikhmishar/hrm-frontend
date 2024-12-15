@@ -3,12 +3,20 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   type ChangeEventHandler
 } from 'react'
 import { BsArrowLeftShort } from 'react-icons/bs'
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import {
+  Link,
+  LinkProps,
+  useLocation,
+  useNavigate,
+  useParams
+} from 'react-router-dom'
 
 import Button from '../../../components/Button'
 import Input from '../../../components/Input'
@@ -31,7 +39,11 @@ import {
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
-import { capitalizeDelim, splitGrossSalary } from '../../../libs'
+import {
+  capitalizeDelim,
+  encodeMultipartBody,
+  splitGrossSalary
+} from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -54,23 +66,32 @@ import {
 } from 'backend/controllers/employees'
 import { allSalaryTypes } from 'backend/controllers/salary-types'
 
-const ScrollLink: React.FC<
-  JSX.IntrinsicElements['a'] & React.PropsWithChildren & { isFirst?: boolean }
-> = ({ isFirst, children, ...props }) => {
-  const location = useLocation()
+const ScrollLink: React.FC<LinkProps & { isFirst?: boolean }> = ({
+  isFirst,
+  children,
+  ...props
+}) => {
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (hash === props.to.toString())
+      document
+        .querySelector(hash)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [hash, props.to])
+
   return (
-    <a
+    <Link
       {...props}
       role='button'
       className={`nav-link text-nowrap user-select-none ${
-        location.hash.endsWith(props.href || '') ||
-        (isFirst && !location.hash.includes('#'))
+        hash === props.to.toString() || (isFirst && !hash)
           ? 'border-3 border-bottom border-primary'
           : ''
       }`}
     >
       {children}
-    </a>
+    </Link>
   )
 }
 
@@ -83,18 +104,20 @@ const EmployeeDetails = () => {
   const location = useLocation()
 
   useEffect(() => {
-    if (location.hash.endsWith('#noticePeriod'))
+    if (location.hash === '#noticePeriod')
       document.querySelector('#noticePeriod')?.scrollIntoView()
   }, [location])
 
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
   const navigate = useNavigate()
+  const photoRef = useRef<HTMLInputElement>(null)
 
   const [employee, setEmployee] = useState<Employee>({ ...defaultEmployee })
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
-    target: { id, value, valueAsNumber }
+    target: { id, value, valueAsNumber, files }
   }) =>
     setEmployee(employee => {
+      const file = files?.item(0)
       const isNumeric = (
         [
           'basicSalary',
@@ -112,7 +135,11 @@ const EmployeeDetails = () => {
       ).includes(id)
       const updatedEmployee: Employee = {
         ...employee,
-        [id]: isNumeric ? valueAsNumber : value
+        [id]: isNumeric
+          ? valueAsNumber
+          : id === ('photo' satisfies keyof Employee) && file
+          ? URL.createObjectURL(file)
+          : value
       }
 
       if (isNumeric) {
@@ -285,8 +312,27 @@ const EmployeeDetails = () => {
       ),
     enabled: employee.id > 0,
     onError: onErrorDisplayToast,
-    onSuccess: employee => employee && setEmployee(employee)
+    onSuccess: employee => {
+      if (employee)
+        setEmployee({
+          ...employee,
+          photo: employee.photo
+            ? employee.photo + `?dummy=${Date.now()}`
+            : undefined
+        })
+      if (photoRef.current) photoRef.current.value = ''
+    }
   })
+
+  const employeeFormData = useMemo(() => {
+    const formData = encodeMultipartBody(employee)
+    if (photoRef.current?.files?.[0])
+      formData.append(
+        'photo' satisfies keyof Employee,
+        photoRef.current.files[0]
+      )
+    return formData
+  }, [employee])
 
   const { mutate: employeeUpdate, isLoading: employeeUpdateLoading } =
     useMutation({
@@ -297,7 +343,11 @@ const EmployeeDetails = () => {
             ServerSITEMAP.employees._params.id,
             employee.id.toString()
           ),
-          { method: 'put', body: JSON.stringify(employee) }
+          {
+            method: 'put',
+            headers: { 'content-type': 'multipart/form-data' },
+            body: employeeFormData
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
@@ -318,7 +368,11 @@ const EmployeeDetails = () => {
       mutationFn: () =>
         modifiedFetch<GetResponseType<typeof addEmployee>>(
           ServerSITEMAP.employees.post,
-          { method: 'post', body: JSON.stringify(employee) }
+          {
+            method: 'post',
+            headers: { 'content-type': 'multipart/form-data' },
+            body: employeeFormData
+          }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
@@ -365,10 +419,19 @@ const EmployeeDetails = () => {
             <div className='card-body'>
               <div className='bg-primary-subtle mt-5 rounded-3 text-center w-100'>
                 <img
-                  className='bg-light border border-5 border-white img-fluid rounded-circle'
+                  className='bg-light object-fit-cover rounded-circle'
                   alt='profile-img'
-                  src='/favicon.png'
-                  style={{ marginTop: '-3rem' }}
+                  src={
+                    employee.photo
+                      ? employee.photo.startsWith('blob:')
+                        ? employee.photo
+                        : import.meta.env.REACT_APP_BASE_URL +
+                          ServerSITEMAP.static.employeePhotos +
+                          '/' +
+                          employee.photo
+                      : '/favicon.png'
+                  }
+                  style={{ marginTop: '-3rem', height: 150, width: 150 }}
                 />
                 <h4 className='my-2'>{employee.name}</h4>
                 <p className='text-muted'>Designation</p>
@@ -460,18 +523,18 @@ const EmployeeDetails = () => {
           <div className='border-0 card rounded-3'>
             <div className='card-body'>
               <div className='bg-white border-bottom d-flex gap-3 justify-content-between overflow-x-auto py-2 sticky-top w-100 z-1'>
-                <ScrollLink isFirst href='#personal-details'>
+                <ScrollLink isFirst to='#personal-details'>
                   Personal Details
                 </ScrollLink>
-                <ScrollLink href='#corporate-details'>
+                <ScrollLink to='#corporate-details'>
                   Corporate Details
                 </ScrollLink>
-                <ScrollLink href='#documents'>Documents</ScrollLink>
-                <ScrollLink href='#financial-details'>
+                <ScrollLink to='#documents'>Documents</ScrollLink>
+                <ScrollLink to='#financial-details'>
                   Bank account details
                 </ScrollLink>
-                <ScrollLink href='#contacts'>Emmergency contact</ScrollLink>
-                <ScrollLink href='#assets'>Allocated Asset</ScrollLink>
+                <ScrollLink to='#contacts'>Emmergency contact</ScrollLink>
+                <ScrollLink to='#assets'>Allocated Asset</ScrollLink>
               </div>
               <h5 className='my-4' id='personal-details'>
                 Personal details
@@ -594,6 +657,28 @@ const EmployeeDetails = () => {
                     />
                   </div>
                 ))}
+
+                {(
+                  ['photo'] satisfies KeysOfObjectOfType<
+                    Employee,
+                    string | undefined
+                  >[]
+                ).map(k => (
+                  <div key={k} className='col-12 col-lg-6'>
+                    <Input
+                      ref={photoRef}
+                      disabled={isEmployeeLoading}
+                      id={k}
+                      label={capitalizeDelim(k)}
+                      containerClass='my-3'
+                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      onChange={onEmployeeChange}
+                      type='file'
+                      accept='image/*'
+                    />
+                  </div>
+                ))}
+
                 <h5 className='my-4' id='corporate-details'>
                   Corporate details
                 </h5>
