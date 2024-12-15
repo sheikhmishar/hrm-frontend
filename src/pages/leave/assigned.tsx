@@ -32,6 +32,7 @@ import {
   stringToDate
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
+import EmployeeName from '../../components/EmployeeName'
 
 import { GetResponseType } from 'backend/@types/response'
 import Employee from 'backend/Entities/Employee'
@@ -303,18 +304,16 @@ const Assigned = () => {
               prev.concat(
                 // FIXME: undefined
                 employee.leaves?.map(leave => [
-                  <div className='align-items-center align-middle d-flex gap-3 p-3'>
-                    <img
-                      src='/favicon.png'
-                      width='50'
-                      height='50'
-                      className='object-fit-cover rounded-circle'
-                    />
-                    <div>
-                      <p className='m-0'>{employee.name}</p>
-                      {getEmployeeId(employee)}
-                    </div>
-                  </div>,
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />,
                   <>{employee.company.name}</>,
                   <>{leave.from}</>,
                   <>{leave.to}</>,

@@ -8,6 +8,7 @@ import {
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import Select, { DropDownEventHandler } from '../../components/Select'
@@ -152,18 +153,16 @@ const Assigned = () => {
               prev.concat(
                 // FIXME: undefined
                 employee.loans?.map(loan => [
-                  <div className='align-items-center align-middle d-flex gap-3 p-3'>
-                    <img
-                      src='/favicon.png'
-                      width='50'
-                      height='50'
-                      className='object-fit-cover rounded-circle'
-                    />
-                    <div>
-                      <p className='m-0'>{employee.name}</p>
-                      {getEmployeeId(employee)}
-                    </div>
-                  </div>,
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />,
                   <>{employee.company.name}</>,
                   <>{loan.date}</>,
                   <>{loan.amount}</>,

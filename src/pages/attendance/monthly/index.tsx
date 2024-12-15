@@ -9,6 +9,7 @@ import {
 import { Link } from 'react-router-dom'
 
 import CalenderSlider from '../../../components/CalenderSlider'
+import EmployeeName from '../../../components/EmployeeName'
 import ProtectedComponent from '../../../components/ProtectedComponent'
 import Select from '../../../components/Select'
 import Table from '../../../components/Table'
@@ -265,29 +266,18 @@ const MonthlyAttendance = () => {
                         month: fromDateString
                       } satisfies typeof ROUTES.attendance._queries)
                     }
-                    className='align-items-center d-flex gap-2 py-2 text-decoration-none'
+                    className='text-decoration-none'
                   >
-                    <img
-                      src='/favicon.png'
-                      width='50'
-                      height='50'
-                      className='object-fit-cover rounded-circle'
+                    <EmployeeName
+                      employee={{
+                        id: employee.id,
+                        dateOfJoining: employee.dateOfJoining,
+                        name: employee.name,
+                        designation: employee.designation.name,
+                        email: employee.email,
+                        photo: employee.photo
+                      }}
                     />
-                    <div>
-                      <p
-                        style={{ fontSize: 12 }}
-                        className='fw-lighter m-0 text-info'
-                      >
-                        {employee.email}
-                      </p>
-                      <p className='fw-bold m-0 text-nowrap'>{employee.name}</p>
-                      <p
-                        style={{ fontSize: 12 }}
-                        className='fw-lighter m-0 text-muted'
-                      >
-                        {employee.designation.name}
-                      </p>
-                    </div>
                   </Link>
                 ].concat(
                   calender.map(({ month, date }) => {

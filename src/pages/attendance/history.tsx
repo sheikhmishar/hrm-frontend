@@ -1,10 +1,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
-import { useContext, useEffect, useMemo, useState, type ChangeEventHandler } from 'react'
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEventHandler
+} from 'react'
 import { FaPen, FaTrash } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import CalenderSlider from '../../components/CalenderSlider'
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import ProtectedComponent from '../../components/ProtectedComponent'
@@ -16,11 +23,11 @@ import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
 import {
   capitalizeDelim,
+  dateToString,
   downloadStringAsFile,
   getDateRange,
-  dateToString,
-  stringToDate,
   getEmployeeId,
+  stringToDate,
   timeToLocaleString
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
@@ -100,7 +107,7 @@ const AttendanceHistory = () => {
     () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
   )
- useEffect(
+  useEffect(
     () => setCurrentDate(stringToDate(fromDateString)),
     [fromDateString]
   )
@@ -234,7 +241,6 @@ const AttendanceHistory = () => {
         columns={[
           'Date',
           'Employee',
-          'Designation',
           'Check In',
           'Office Start',
           'Late',
@@ -260,8 +266,16 @@ const AttendanceHistory = () => {
                 // FIXME: ?
                 (employee.attendances || []).map(attendance => [
                   <>{attendance.date}</>,
-                  <>{employee?.name || ''}</>,
-                  <>{employee?.designation.name || ''}</>,
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />,
                   <>{timeToLocaleString(attendance.arrivalTime)}</>,
                   <>{timeToLocaleString(employee.officeStartTime)}</>,
                   <>

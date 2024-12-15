@@ -5,13 +5,14 @@ import { FaPen, FaPlus } from 'react-icons/fa6'
 import { Link } from 'react-router-dom'
 
 import Button from '../../components/Button'
+import EmployeeName from '../../components/EmployeeName'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Table from '../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
-import { capitalize, downloadStringAsFile, getEmployeeId } from '../../libs'
+import { capitalize, downloadStringAsFile } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
@@ -22,7 +23,6 @@ import type {
 } from 'backend/controllers/employees'
 
 const visibleKeys = [
-  'id',
   'name',
   'phoneNumber',
   'company',
@@ -280,10 +280,8 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
           )
           .map(({ company, department, ...employee }) => ({
             ...employee,
-            id: getEmployeeId(employee),
             company: company.name,
-            department: department.name,
-            mainId: employee.id
+            department: department.name
           }))
           .filter(employee =>
             visibleKeys.find(key =>
@@ -297,29 +295,16 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
             visibleKeys
               .map(key =>
                 key === 'name' ? (
-                  <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
-                    <img
-                      src='/favicon.png'
-                      width='50'
-                      height='50'
-                      className='object-fit-cover rounded-circle'
-                    />
-                    <div>
-                      <p
-                        style={{ fontSize: 12 }}
-                        className='fw-lighter m-0 text-info'
-                      >
-                        {employee.email}
-                      </p>
-                      <p className='fw-bold m-0 text-nowrap'>{employee.name}</p>
-                      <p
-                        style={{ fontSize: 12 }}
-                        className='fw-lighter m-0 text-muted'
-                      >
-                        {employee.designation.name}
-                      </p>
-                    </div>
-                  </div>
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
                 ) : key === 'status' ? (
                   <span
                     className={`p-1 rounded ${
@@ -331,11 +316,11 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
                     onClick={() =>
                       approval
                         ? employeeUpdate({
-                            id: employee.mainId,
+                            id: employee.id,
                             employee: { status: 'active' }
                           })
                         : employeeUpdate({
-                            id: employee.mainId,
+                            id: employee.id,
                             employee: { status: 'inactive' }
                           })
                     }
@@ -358,7 +343,7 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
                   className='link-primary text-body'
                   to={ROUTES.employee.details.replace(
                     ROUTES.employee._params.id,
-                    employee.mainId.toString()
+                    employee.id.toString()
                   )}
                 >
                   <FaPen />

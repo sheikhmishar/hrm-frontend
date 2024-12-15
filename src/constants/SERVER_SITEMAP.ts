@@ -52,7 +52,11 @@ const ServerSITEMAP = {
   },
   attendances: {
     _params: { ...rootParams, employeeId: ':employeeId' },
-    _queries: { from: 'from', to: 'to', date: 'date' },
+    _queries: {
+      from: 'from' as string,
+      to: 'to' as string,
+      date: 'date' as string
+    },
     _: attendancesRoot,
     post: attendancesRoot,
     get: attendancesRoot,
@@ -63,7 +67,7 @@ const ServerSITEMAP = {
   },
   leaves: {
     _params: { ...rootParams, employeeId: ':employeeId' },
-    _queries: { from: 'from', to: 'to' },
+    _queries: { from: 'from' as string, to: 'to' as string },
     _: leavesRoot,
     post: leavesRoot,
     get: leavesRoot,
@@ -85,7 +89,7 @@ const ServerSITEMAP = {
   },
   monthlySalaries: {
     _params: { ...rootParams, start_date: ':start_date' },
-    _queries: { monthStartDate: 'monthStartDate' },
+    _queries: { monthStartDate: 'monthStartDate' as string },
     _: monthlySalariesRoot,
     post: monthlySalariesRoot,
     get: monthlySalariesRoot,

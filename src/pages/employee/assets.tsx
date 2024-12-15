@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useState } from 'react'
 
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -62,22 +63,16 @@ const Assets = () => {
           <div key={employee.id} className='col-12 my-2'>
             <div className='border-0 card shadow-sm'>
               <div className='card-body'>
-                <div className='align-items-center d-flex gap-3 my-3'>
-                  <img
-                    src='/favicon.png'
-                    alt=''
-                    className='cursor-pointer object-fit-cover rounded-circle'
-                    height='60'
-                    width='60'
-                  />
-                  <div>
-                    <p className='fw-bold m-0 rounded-3 text-info'>
-                      {employee.name}
-                    </p>
-                    <p className='m-0'>{employee.company.name}</p>
-                    <p className='m-0'>{getEmployeeId(employee)}</p>
-                  </div>
-                </div>
+                <EmployeeName
+                  employee={{
+                    id: employee.id,
+                    dateOfJoining: employee.dateOfJoining,
+                    name: employee.name,
+                    designation: employee.designation.name,
+                    email: employee.email,
+                    photo: employee.photo
+                  }}
+                />
                 <table className='mt-2 table table-borderless'>
                   <thead>
                     <tr>

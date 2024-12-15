@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom'
 
 import Button from '../../components/Button'
 import CalenderSlider from '../../components/CalenderSlider'
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import ProtectedComponent from '../../components/ProtectedComponent'
@@ -456,18 +457,18 @@ const MonthlyPaysheet = () => {
               ROUTE_PARAMS.id,
               salary.employee.id.toString()
             )}
-            className='align-items-center d-flex gap-2 py-2 text-decoration-none'
+            className='text-decoration-none'
           >
-            <img
-              src='/favicon.png'
-              width='50'
-              height='50'
-              className='object-fit-cover rounded-circle'
+            <EmployeeName
+              employee={{
+                id: salary.employee.id,
+                dateOfJoining: salary.employee.dateOfJoining,
+                name: salary.employee.name,
+                designation: salary.employee.designation.name,
+                email: salary.employee.email,
+                photo: salary.employee.photo
+              }}
             />
-            <div>
-              <p className='m-0'>{salary.employee.name}</p>
-              {getEmployeeId(salary.employee)}
-            </div>
           </Link>,
           <>{salary.employee.company.name}</>,
           <>{salary.basicSalary}</>,

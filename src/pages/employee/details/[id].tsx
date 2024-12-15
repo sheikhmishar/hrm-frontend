@@ -313,13 +313,7 @@ const EmployeeDetails = () => {
     enabled: employee.id > 0,
     onError: onErrorDisplayToast,
     onSuccess: employee => {
-      if (employee)
-        setEmployee({
-          ...employee,
-          photo: employee.photo
-            ? employee.photo + `?dummy=${Date.now()}`
-            : undefined
-        })
+      if (employee) setEmployee(employee)
       if (photoRef.current) photoRef.current.value = ''
     }
   })

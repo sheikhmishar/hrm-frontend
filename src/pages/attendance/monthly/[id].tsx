@@ -11,9 +11,10 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 
 import Button from '../../../components/Button'
 import CalenderSlider from '../../../components/CalenderSlider'
-import ProtectedComponent from '../../../components/ProtectedComponent'
+import EmployeeName from '../../../components/EmployeeName'
 import Input from '../../../components/Input'
 import Modal from '../../../components/Modal'
+import ProtectedComponent from '../../../components/ProtectedComponent'
 import Table from '../../../components/Table'
 import { ROUTES } from '../../../constants/CONSTANTS'
 import { defaultAttendance } from '../../../constants/DEFAULT_MODELS'
@@ -114,8 +115,8 @@ const AttendanceDetails = () => {
             to: toDateString
           } satisfies Partial<typeof ServerSITEMAP.attendances._queries>)
       ),
-    enabled: id > 0,
-    onError: onErrorDisplayToast
+    enabled: id > 0
+    // TODO: error with status handling
   })
 
   const { isLoading: updateAttendanceLoading, mutate: updateAttendance } =
@@ -210,7 +211,6 @@ const AttendanceDetails = () => {
         columns={[
           'Date',
           'Employee',
-          'Designation',
           'Check In',
           'Office Start',
           'Late',
@@ -229,8 +229,16 @@ const AttendanceDetails = () => {
           attendanceDetails
             ? attendanceDetails.attendances.map(attendance => [
                 <>{attendance.date}</>,
-                <>{attendanceDetails.name || ''}</>,
-                <>{attendanceDetails.designation.name || ''}</>,
+                <EmployeeName
+                  employee={{
+                    id: attendanceDetails.id,
+                    dateOfJoining: attendanceDetails.dateOfJoining,
+                    name: attendanceDetails.name,
+                    designation: attendanceDetails.designation.name,
+                    email: attendanceDetails.email,
+                    photo: attendanceDetails.photo
+                  }}
+                />,
                 <>{timeToLocaleString(attendance.arrivalTime)}</>,
                 <>{timeToLocaleString(attendanceDetails.officeStartTime)}</>,
                 <>
