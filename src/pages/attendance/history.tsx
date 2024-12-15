@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
-import { useContext, useMemo, useState, type ChangeEventHandler } from 'react'
+import { useContext, useEffect, useMemo, useState, type ChangeEventHandler } from 'react'
 import { FaPen, FaTrash } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
@@ -19,6 +19,7 @@ import {
   downloadStringAsFile,
   getDateRange,
   dateToString,
+  stringToDate,
   getEmployeeId,
   timeToLocaleString
 } from '../../libs'
@@ -98,6 +99,10 @@ const AttendanceHistory = () => {
   const [fromDateString, toDateString] = useMemo(
     () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
+  )
+ useEffect(
+    () => setCurrentDate(stringToDate(fromDateString)),
+    [fromDateString]
   )
 
   const [sidebar, setSidebar] = useState(false)
