@@ -12,7 +12,12 @@ import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
-import { capitalize, downloadStringAsFile } from '../../libs'
+import {
+  capitalize,
+  downloadStringAsFile,
+  encodeMultipartBody,
+  getEmployeeId
+} from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
@@ -74,10 +79,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         wordLimit
       }) =>
         ({
-          id:
-            dateOfJoining.substring(0, 7) +
-            '-' +
-            id.toString().padStart(4, '0'), // TODO: use globals
+          id: getEmployeeId({ id, dateOfJoining }), // TODO: use globals
           email,
           name,
           phoneNumber,
@@ -126,45 +128,47 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         } satisfies {
           [k in keyof OmitKey<
             Employee,
-            'attendances' | 'leaves' | 'salaries' | 'loans'
+            'attendances' | 'leaves' | 'salaries' | 'loans' | 'documents'
           >]: string | number | undefined
         })
     ),
     {
-      columns: (visibleKeys as string[]).concat([
-        'altPhoneNumber',
-        'fullAddress',
-        'gender',
-        'contacts',
-        'basicSalary',
-        'houseRent',
-        'foodCost',
-        'medicalCost',
-        'totalSalary',
-        'loanTaken',
-        'loanRemaining',
-        'taskWisePayment',
-        'wordLimit',
-        'checkedInLateFee',
-        'extraBonus',
-        'createdDate',
-        'dateOfBirth',
-        'dateOfJoining',
-        'conveyance',
-        'dutyType',
-        'designation',
-        'branch',
-        'financials',
-        'noticePeriod',
-        'officeStartTime',
-        'officeEndTime',
-        'overtime',
-        'salaryType',
-        'assets'
-      ] satisfies (keyof OmitKey<
-        Employee,
-        (typeof visibleKeys)[number] | 'attendances' | 'leaves' | 'salaries'
-      >)[])
+      columns: ['id' satisfies keyof Employee]
+        .concat(visibleKeys as string[])
+        .concat([
+          'altPhoneNumber',
+          'fullAddress',
+          'gender',
+          'contacts',
+          'basicSalary',
+          'houseRent',
+          'foodCost',
+          'medicalCost',
+          'totalSalary',
+          'loanTaken',
+          'loanRemaining',
+          'taskWisePayment',
+          'wordLimit',
+          'checkedInLateFee',
+          'extraBonus',
+          'createdDate',
+          'dateOfBirth',
+          'dateOfJoining',
+          'conveyance',
+          'dutyType',
+          'designation',
+          'branch',
+          'financials',
+          'noticePeriod',
+          'officeStartTime',
+          'officeEndTime',
+          'overtime',
+          'salaryType',
+          'assets'
+        ] satisfies (keyof OmitKey<
+          Employee,
+          (typeof visibleKeys)[number] | 'attendances' | 'leaves' | 'salaries'
+        >)[])
     }
   )
 
@@ -206,7 +210,7 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
           ),
           {
             method: 'put',
-            body: JSON.stringify(
+            body: encodeMultipartBody(
               employee satisfies GetReqBodyType<typeof updateEmployee>
             )
           }

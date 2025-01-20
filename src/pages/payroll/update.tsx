@@ -1,26 +1,26 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { type ChangeEventHandler, useContext, useState } from 'react'
+import { useContext, useState, type ChangeEventHandler } from 'react'
 
+import Button from '../../components/Button'
+import Input from '../../components/Input'
+import Select from '../../components/Select'
+import Table from '../../components/Table'
+import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { defaultEmployee } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
+import { capitalizeDelim, encodeMultipartBody, getEmployeeId, splitGrossSalary } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
-import Select from '../../components/Select'
-import { defaultEmployee } from '../../constants/DEFAULT_MODELS'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 
-import type { GetResponseType } from 'backend/@types/response'
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
+import Company from 'backend/Entities/Company'
+import Designation from 'backend/Entities/Designation'
+import Employee from 'backend/Entities/Employee'
+import { allDesignations } from 'backend/controllers/designations'
 import type {
   allEmployees,
   updateEmployee
 } from 'backend/controllers/employees'
-import Employee from 'backend/Entities/Employee'
-import { allDesignations } from 'backend/controllers/designations'
-import Input from '../../components/Input'
-import { capitalizeDelim, getEmployeeId } from '../../libs'
-import Company from 'backend/Entities/Company'
-import Designation from 'backend/Entities/Designation'
-import Table from '../../components/Table'
-import Button from '../../components/Button'
 import { employeeSalaryDetails } from 'backend/controllers/salaries'
 
 const UpdatePayroll = () => {
@@ -50,13 +50,23 @@ const UpdatePayroll = () => {
         ...employee,
         [id]: isNumeric ? valueAsNumber : value
       }
-      if (isNumeric && (id as keyof Employee) !== 'totalSalary')
-        updatedEmployee.totalSalary =
-          updatedEmployee.basicSalary +
-          updatedEmployee.conveyance +
-          updatedEmployee.foodCost +
-          updatedEmployee.houseRent +
-          updatedEmployee.medicalCost
+      if (isNumeric) {
+        if ((id as keyof Employee) === 'totalSalary') {
+          const { basic, conveyance, food, houseRent, medical } =
+            splitGrossSalary(updatedEmployee.totalSalary)
+          updatedEmployee.basicSalary = basic
+          updatedEmployee.conveyance = conveyance
+          updatedEmployee.foodCost = food
+          updatedEmployee.houseRent = houseRent
+          updatedEmployee.medicalCost = medical
+        } else
+          updatedEmployee.totalSalary =
+            updatedEmployee.basicSalary +
+            updatedEmployee.conveyance +
+            updatedEmployee.foodCost +
+            updatedEmployee.houseRent +
+            updatedEmployee.medicalCost
+      }
 
       return updatedEmployee
     })
@@ -120,7 +130,12 @@ const UpdatePayroll = () => {
             ServerSITEMAP.employees._params.id,
             employee.id.toString()
           ),
-          { method: 'put', body: JSON.stringify(employee) }
+          {
+            method: 'put',
+            body: encodeMultipartBody(
+              employee satisfies GetReqBodyType<typeof updateEmployee>
+            )
+          }
         ),
       retry: false,
       onError: onErrorDisplayToast,
