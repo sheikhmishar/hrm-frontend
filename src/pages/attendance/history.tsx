@@ -57,7 +57,8 @@ const getCsvFromAttendaces = (employees: Employee[]) =>
               tasks
             }) => ({
               date,
-              employee: getEmployeeId(employee) + ' | ' + employee.name,
+              id: getEmployeeId(employee),
+              employee: employee.name,
               designation: employee.designation.name,
               checkIn: arrivalTime, // TODO: fix
               checkOut: leaveTime,
@@ -74,6 +75,7 @@ const getCsvFromAttendaces = (employees: Employee[]) =>
     {
       columns: [
         'date',
+        'id',
         'employee',
         'designation',
         'checkIn',

@@ -51,7 +51,8 @@ const getCsvFromLeaves = (employees: Employee[]) =>
       (prev, employee) =>
         prev.concat(
           employee.leaves.map(({ from, to, duration, type, status }) => ({
-            employee: getEmployeeId(employee) + ' | ' + employee.name,
+            id: getEmployeeId(employee),
+            employee: employee.name,
             company: employee.company.name,
             from,
             to,
@@ -67,6 +68,7 @@ const getCsvFromLeaves = (employees: Employee[]) =>
     ),
     {
       columns: [
+        'id',
         'employee',
         'company',
         'from',
@@ -227,7 +229,7 @@ const Assigned = () => {
 
   return (
     <>
-      <div className='align-items-center d-flex gap-2 justify-content-between mb-3'>
+      <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
         <CalenderSlider
           monthly
           currentDate={currentDate}
@@ -387,8 +389,12 @@ const Assigned = () => {
               placeholder={'Enter ' + capitalizeDelim(k)}
               value={leave[k]}
               options={(
-                ['fullday', 'halfday'] satisfies EmployeeLeave[typeof k][]
-              ).map(name => ({ value: name, label: name }))}
+                [
+                  'fullday',
+                  'first_halfday',
+                  'second_halfday'
+                ] satisfies EmployeeLeave[typeof k][]
+              ).map(name => ({ value: name, label: capitalizeDelim(name) }))}
               onChange={onSelectChange}
             />
           ))}

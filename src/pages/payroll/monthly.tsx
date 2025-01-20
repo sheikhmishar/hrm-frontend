@@ -51,7 +51,8 @@ import {
 const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
   Papa.unparse(
     employeeMonthlySalaries.map(salary => ({
-      name: getEmployeeId(salary.employee) + ' - ' + salary.employee.name,
+      id: getEmployeeId(salary.employee),
+      name: salary.employee.name,
       company: salary.employee.company.name,
       basicSalary: salary.basicSalary,
       houseRent: salary.houseRent,
@@ -72,6 +73,7 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
     })),
     {
       columns: [
+        'id',
         'name',
         'company',
         'basicSalary',

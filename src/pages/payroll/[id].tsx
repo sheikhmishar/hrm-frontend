@@ -10,7 +10,9 @@ import { FaArrowLeft } from 'react-icons/fa6'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import Button from '../../components/Button'
+import CalenderSlider from '../../components/CalenderSlider'
 import Input from '../../components/Input'
+import ProtectedComponent from '../../components/ProtectedComponent'
 import Select from '../../components/Select'
 import Table from '../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
@@ -22,8 +24,8 @@ import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import {
   capitalizeDelim,
-  getDateRange,
   dateToString,
+  getDateRange,
   getPreviousMonth,
   splitGrossSalary,
   timeToLocaleString
@@ -34,7 +36,7 @@ import { GetResponseType } from 'backend/@types/response'
 import Employee from 'backend/Entities/Employee'
 import MonthlySalary from 'backend/Entities/MonthlySalary'
 import { employeeAttendanceDetails } from 'backend/controllers/attendances'
-import { employeeDetails, updateEmployee } from 'backend/controllers/employees'
+import { employeeDetails } from 'backend/controllers/employees'
 import { employeeLeaveDetails } from 'backend/controllers/leaves'
 import { loanByEmployee } from 'backend/controllers/loans'
 import {
@@ -42,8 +44,6 @@ import {
   updateMonthlySalary
 } from 'backend/controllers/monthly-salaries'
 import { employeeSalaryDetails } from 'backend/controllers/salaries'
-import ProtectedComponent from '../../components/ProtectedComponent'
-import CalenderSlider from '../../components/CalenderSlider'
 
 const MonthlyPaysheetById = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
@@ -215,29 +215,6 @@ const MonthlyPaysheetById = () => {
     enabled: id > 0
   })
 
-  const { mutate: employeeUpdate, isLoading: employeeUpdateLoading } =
-    useMutation({
-      mutationKey: ['employeeUpdate', ServerSITEMAP.employees.put, employee],
-      mutationFn: () =>
-        modifiedFetch<GetResponseType<typeof updateEmployee>>(
-          ServerSITEMAP.employees.put.replace(
-            ServerSITEMAP.employees._params.id,
-            employee.id.toString()
-          ),
-          { method: 'put', body: JSON.stringify(employee) }
-        ),
-      onError: onErrorDisplayToast,
-      onSuccess: data => {
-        data?.message && addToast(data.message)
-        refetchEmployee()
-        refetchEmployeeLeaves()
-        refetchEmployeeAttendance()
-        refetchEmployeeLoan()
-        refetchEmployeeMonthlySalaries()
-        refetchSalaryHistory()
-      }
-    })
-
   const {
     refetch: refetchEmployeeMonthlySalaries,
     data: employeeMonthlySalaries = BLANK_ARRAY,
@@ -362,7 +339,6 @@ const MonthlyPaysheetById = () => {
   const isFetching =
     monthlySalaryUpdateLoading ||
     employeeLoading ||
-    employeeUpdateLoading ||
     employeeMonthlySalaryLoading ||
     salaryHistoryFetching ||
     fetchingEmployeeLeaves ||
@@ -430,16 +406,7 @@ const MonthlyPaysheetById = () => {
                       </strong>
                     </div>
                     <div key={k} className='col-6'>
-                      <input
-                        disabled={isFetching}
-                        id={k}
-                        name={k}
-                        className='form-control'
-                        placeholder={'Enter ' + capitalizeDelim(k)}
-                        value={employee[k]}
-                        type='number'
-                        onChange={onEmployeeChange}
-                      />
+                      <h6>{employee[k]}</h6>
                     </div>
                   </div>
                 ))}
@@ -456,15 +423,7 @@ const MonthlyPaysheetById = () => {
                       </strong>
                     </div>
                     <div key={k} className='col-6'>
-                      <input
-                        disabled={isFetching}
-                        id={k}
-                        className='form-control'
-                        placeholder={'Enter ' + capitalizeDelim(k)}
-                        value={employee[k] || ''}
-                        type='number'
-                        onChange={onEmployeeChange}
-                      />
+                      <h6>{employee[k] || ''}</h6>
                     </div>
                   </div>
                 ))}
@@ -481,25 +440,6 @@ const MonthlyPaysheetById = () => {
                     See Profile
                   </Link>
                 </div>
-                <ProtectedComponent rolesAllowed={['HR', 'SuperAdmin']}>
-                  <Button
-                    disabled={isFetching}
-                    className='btn-primary mx-2'
-                    onClick={() => employeeUpdate()}
-                  >
-                    <span className='align-items-center d-flex'>
-                      Update
-                      {isFetching && (
-                        <div
-                          className='ms-2 spinner-border spinner-border-sm text-light'
-                          role='status'
-                        >
-                          <span className='visually-hidden'>Loading...</span>
-                        </div>
-                      )}
-                    </span>
-                  </Button>
-                </ProtectedComponent>
               </div>
             </div>
           </div>
