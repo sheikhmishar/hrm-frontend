@@ -343,9 +343,18 @@ const LeaveDetails = () => {
                               key={index}
                               className={
                                 leaveData
-                                  ? leaveData.type === 'paid'
-                                    ? 'bg-primary text-white '
-                                    : 'bg-warning text-white'
+                                  ? (leaveData.type === 'paid'
+                                      ? leaveData.duration === 'first_halfday'
+                                        ? 'bg-top-half-primary'
+                                        : leaveData.duration ===
+                                          'second_halfday'
+                                        ? 'bg-bottom-half-primary'
+                                        : 'bg-primary'
+                                      : leaveData.duration === 'first_halfday'
+                                      ? 'bg-top-half-secondary'
+                                      : leaveData.duration === 'second_halfday'
+                                      ? 'bg-bottom-half-secondary'
+                                      : 'bg-secondary') + ' text-white'
                                   : ''
                               }
                             >
@@ -413,7 +422,11 @@ const LeaveDetails = () => {
               placeholder={'Enter ' + capitalizeDelim(k)}
               value={leave[k]}
               options={(
-                ['fullday', 'halfday'] satisfies EmployeeLeave[typeof k][]
+                [
+                  'fullday',
+                  'first_halfday',
+                  'second_halfday'
+                ] satisfies EmployeeLeave[typeof k][]
               ).map(name => ({ value: name, label: name }))}
               onChange={onSelectChange}
             />

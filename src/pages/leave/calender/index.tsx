@@ -194,16 +194,50 @@ const LeaveCalender = () => {
                         stringToDate(leave.from) <= targetDate &&
                         stringToDate(leave.to) >= targetDate
                     )
-                    if (leave)
+                    if (leave?.duration === 'fullday')
                       return (
                         <div
                           className={
-                            leave.duration === 'fullday'
+                            leave.type === 'paid'
                               ? 'bg-primary'
                               : 'bg-secondary'
                           }
                           style={{ height: 50, width: 20 }}
                         />
+                      )
+                    if (leave?.duration === 'first_halfday')
+                      return (
+                        <>
+                          <div
+                            className={
+                              leave.type === 'paid'
+                                ? 'bg-primary'
+                                : 'bg-secondary'
+                            }
+                            style={{ height: 25, width: 20 }}
+                          />
+                          <div
+                            className='bg-transparent'
+                            style={{ height: 25, width: 20 }}
+                          />
+                        </>
+                      )
+                    if (leave?.duration === 'second_halfday')
+                      return (
+                        <>
+                          <div
+                            className='bg-transparent'
+                            style={{ height: 25, width: 20 }}
+                          />
+                          <div
+                            className={
+                              leave.type === 'paid'
+                                ? 'bg-primary'
+                                : 'bg-secondary'
+                            }
+                            style={{ height: 25, width: 20 }}
+                          />
+                        </>
                       )
                     return <></>
                   })

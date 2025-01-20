@@ -204,3 +204,65 @@
 .min-h-100 {
   min-height: 100% !important;
 }
+
+.bg-top-half-primary {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    transparent,
+    transparent,
+    transparent,
+    transparent,
+    transparent,
+    transparent,
+    transparent
+  ) !important;
+}
+
+.bg-bottom-half-primary {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    transparent,
+    transparent,
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb)),
+    rgb(var(--bs-primary-rgb))
+  ) !important;
+}
+
+.bg-top-half-secondary {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb)),
+    transparent,
+    transparent,
+    transparent
+  ) !important;
+}
+
+.bg-bottom-half-secondary {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    transparent,
+    transparent,
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb)),
+    rgb(var(--bs-secondary-rgb))
+  ) !important;
+}
