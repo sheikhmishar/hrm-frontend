@@ -73,6 +73,8 @@ const Select: React.FC<Props> = ({
       mE.preventDefault()
       props.onChange?.(e)
       setText('')
+      disableInputFocusTimeout300.start()
+      disableDropdownFocusTimeout300.start()
     },
     [props.onChange]
   )
@@ -123,7 +125,9 @@ const Select: React.FC<Props> = ({
           value={text}
           disabled={props.disabled}
           onChange={onTextChange}
-          className={`form-control ${(inputFocus || dropdownFocus) ? 'rounded-bottom-0' : ''}`}
+          className={`form-control ${
+            inputFocus || dropdownFocus ? 'rounded-bottom-0' : ''
+          }`}
           onFocus={onTextFocus}
           onBlur={disableInputFocusTimeout300.start}
         />
