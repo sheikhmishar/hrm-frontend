@@ -154,7 +154,7 @@ const SidebarItems: React.FC = () => {
             </NavItem>
           </ProtectedComponent>
           <NavItem to={ROUTES.attendance.holiday}>
-            <FaUsers className='me-2' /> Holidays
+            <FaUsers className='me-2' /> Offdays
           </NavItem>
         </AccordionItem>
       </div>

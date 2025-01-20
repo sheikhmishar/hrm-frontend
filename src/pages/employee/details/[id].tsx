@@ -9,7 +9,7 @@ import {
   type ChangeEventHandler
 } from 'react'
 import { BsArrowLeftShort } from 'react-icons/bs'
-import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
+import { FaDownload, FaRotateLeft, FaTrash } from 'react-icons/fa6'
 import {
   Link,
   LinkProps,
@@ -31,6 +31,7 @@ import {
   defaultContact,
   defaultDepartment,
   defaultDesignation,
+  defaultDocument,
   defaultDutyType,
   defaultEmployee,
   defaultFinancial,
@@ -46,7 +47,7 @@ import {
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
-import { GetResponseType } from 'backend/@types/response'
+import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import Branch from 'backend/Entities/Branch'
 import Company from 'backend/Entities/Company'
 import Department from 'backend/Entities/Department'
@@ -111,6 +112,7 @@ const EmployeeDetails = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
   const navigate = useNavigate()
   const photoRef = useRef<HTMLInputElement>(null)
+  const documentsRef = useRef<(HTMLInputElement | null)[]>([])
 
   const [employee, setEmployee] = useState<Employee>({ ...defaultEmployee })
   const onEmployeeChange: ChangeEventHandler<HTMLInputElement> = ({
@@ -315,16 +317,24 @@ const EmployeeDetails = () => {
     onSuccess: employee => {
       if (employee) setEmployee(employee)
       if (photoRef.current) photoRef.current.value = ''
+      documentsRef.current.forEach(elem => elem && (elem.value = ''))
     }
   })
 
   const employeeFormData = useMemo(() => {
-    const formData = encodeMultipartBody(employee)
+    const formData = encodeMultipartBody(
+      employee satisfies GetReqBodyType<typeof updateEmployee>
+    ) // TODO: drop images starting with blob:
     if (photoRef.current?.files?.[0])
       formData.append(
         'photo' satisfies keyof Employee,
         photoRef.current.files[0]
       )
+    documentsRef.current.forEach(ref => {
+      if (ref?.files?.[0])
+        formData.append('documents' satisfies keyof Employee, ref.files[0])
+    })
+
     return formData
   }, [employee])
 
@@ -362,11 +372,7 @@ const EmployeeDetails = () => {
       mutationFn: () =>
         modifiedFetch<GetResponseType<typeof addEmployee>>(
           ServerSITEMAP.employees.post,
-          {
-            method: 'post',
-            headers: { 'content-type': 'multipart/form-data' },
-            body: employeeFormData
-          }
+          { method: 'post', body: employeeFormData }
         ),
       onError: onErrorDisplayToast,
       onSuccess: data => {
@@ -875,6 +881,101 @@ const EmployeeDetails = () => {
                     />
                   </div>
                 ))}
+
+                <h5 className='my-4' id='documents'>
+                  Documents
+                </h5>
+                <div className='col-12'>
+                  <Button
+                    disabled={isEmployeeLoading}
+                    className='btn-primary'
+                    onClick={() =>
+                      setEmployee(employee => ({
+                        ...employee,
+                        documents: [
+                          ...employee.documents,
+                          { ...defaultDocument }
+                        ]
+                      }))
+                    }
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <Table
+                  contCls=' '
+                  columns={['Sl.No', 'Name', 'File', 'Action']}
+                  rows={employee.documents.map((document, idx) => [
+                    <>{idx + 1}</>,
+                    <input
+                      disabled={isEmployeeLoading}
+                      className='form-control'
+                      value={document.name}
+                      onChange={({ target: { value } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          documents: employee.documents.map((document, i) =>
+                            i === idx ? { ...document, name: value } : document
+                          )
+                        }))
+                      }
+                    />,
+                    <input
+                      disabled={isEmployeeLoading}
+                      className='form-control'
+                      type='file'
+                      ref={ref => (documentsRef.current[idx] = ref)}
+                      onChange={({ target: { files } }) =>
+                        setEmployee(employee => ({
+                          ...employee,
+                          documents: employee.documents.map((document, i) =>
+                            i === idx
+                              ? {
+                                  ...document,
+                                  path: 'blob:' + files?.item(0)?.name || ''
+                                }
+                              : document
+                          )
+                        }))
+                      }
+                    />,
+                    <>
+                      <a
+                        target='_blank'
+                        href={
+                          document.path.startsWith('blob:')
+                            ? 'javascript:void(0)'
+                            : import.meta.env.REACT_APP_BASE_URL +
+                              ServerSITEMAP.static.employeeDocuments +
+                              '/' +
+                              document.path
+                        }
+                        role='button'
+                        className={
+                          document.path.startsWith('blob:')
+                            ? 'link-dark opacity-50'
+                            : 'link-primary'
+                        }
+                      >
+                        <FaDownload />
+                      </a>
+                      <Button
+                        className='link-primary'
+                        disabled={isEmployeeLoading}
+                        onClick={() =>
+                          setEmployee(employee => ({
+                            ...employee,
+                            documents: employee.documents.filter(
+                              d => d !== document
+                            )
+                          }))
+                        }
+                      >
+                        <FaTrash />
+                      </Button>
+                    </>
+                  ])}
+                />
 
                 <h5 className='my-4' id='financial-details'>
                   Financial details

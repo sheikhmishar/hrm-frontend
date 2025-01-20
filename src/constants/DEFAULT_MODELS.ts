@@ -9,6 +9,7 @@ import Employee from 'backend/Entities/Employee'
 import EmployeeAsset from 'backend/Entities/EmployeeAsset'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import EmployeeContact from 'backend/Entities/EmployeeContacts'
+import EmployeeDocument from 'backend/Entities/EmployeeDocument'
 import EmployeeFinancial from 'backend/Entities/EmployeeFinancial'
 import EmployeeLeave from 'backend/Entities/EmployeeLeave'
 import Loan from 'backend/Entities/Loan'
@@ -70,6 +71,7 @@ export const defaultEmployee: Employee = {
   createdDate: new Date(),
   assets: [],
   contacts: [],
+  documents: [],
   financials: [],
   attendances: [],
   leaves: [],
@@ -84,6 +86,12 @@ export const defaultFinancial: EmployeeFinancial = {
   branch: '',
   holderName: '',
   medium: '',
+  employee: defaultEmployee
+}
+export const defaultDocument: EmployeeDocument = {
+  id: -1,
+  name: '',
+  path: 'blob:',
   employee: defaultEmployee
 }
 
