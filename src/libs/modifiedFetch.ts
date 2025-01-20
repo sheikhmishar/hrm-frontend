@@ -22,7 +22,10 @@ const modifiedFetch = async <T>(
         'content-type': init.headers?.['content-type'] || 'application/json'
       }
     )
-    if (init.headers['content-type'] === 'multipart/form-data')
+    if (
+      init.headers['content-type'] === 'multipart/form-data' ||
+      init.body instanceof FormData
+    )
       delete init.headers['content-type']
   }
   const res = await fetch((REACT_APP_BASE_URL || '') + input, init)
