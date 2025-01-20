@@ -43,6 +43,7 @@ import { ToastContext } from '../../../contexts/toast'
 import {
   capitalizeDelim,
   encodeMultipartBody,
+  getEmployeeId,
   splitGrossSalary
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
@@ -435,6 +436,14 @@ const EmployeeDetails = () => {
                 />
                 <h4 className='my-2'>{employee.name}</h4>
                 <p className='text-muted'>Designation</p>
+              </div>
+              <div className='mt-4 row'>
+                <div className='col-5'>
+                  <span className='me-auto text-muted'>ID</span>
+                </div>
+                <div className='col-7'>
+                  <p className='mb-0 text-end'>{getEmployeeId(employee)}</p>
+                </div>
               </div>
               <div className='mt-4 row'>
                 <div className='col-5'>

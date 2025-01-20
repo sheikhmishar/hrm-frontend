@@ -11,6 +11,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import Button from '../../components/Button'
 import CalenderSlider from '../../components/CalenderSlider'
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Select from '../../components/Select'
@@ -374,19 +375,25 @@ const MonthlyPaysheetById = () => {
           <div className='border-0 card h-100 shadow-sm'>
             <div className='card-body'>
               <div className='row'>
-                <div className='col-2'>
-                  <img
-                    src='/favicon.png'
-                    width='50'
-                    height='50'
-                    className='border border-1 border-light object-fit-cover rounded-circle'
+                <Link
+                  className='text-decoration-none'
+                  role='button'
+                  to={ROUTES.employee.details.replace(
+                    ROUTES.employee._params.id,
+                    employee.id.toString()
+                  )}
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
                   />
-                </div>
-                <div className='col-10'>
-                  <strong className='text-muted'>{employee.name}</strong>
-                  <br />
-                  <span className='text-muted'>{employee.company.name}</span>
-                </div>
+                </Link>
               </div>
               <div className='my-2'>
                 {(

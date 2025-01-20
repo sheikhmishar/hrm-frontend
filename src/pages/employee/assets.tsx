@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
@@ -63,16 +64,25 @@ const Assets = () => {
           <div key={employee.id} className='col-12 my-2'>
             <div className='border-0 card shadow-sm'>
               <div className='card-body'>
-                <EmployeeName
-                  employee={{
-                    id: employee.id,
-                    dateOfJoining: employee.dateOfJoining,
-                    name: employee.name,
-                    designation: employee.designation.name,
-                    email: employee.email,
-                    photo: employee.photo
-                  }}
-                />
+                <Link
+                  className='text-decoration-none'
+                  role='button'
+                  to={ROUTES.employee.details.replace(
+                    ROUTES.employee._params.id,
+                    employee.id.toString()
+                  )}
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>
                 <table className='mt-2 table table-borderless'>
                   <thead>
                     <tr>

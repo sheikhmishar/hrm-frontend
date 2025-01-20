@@ -299,16 +299,24 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
             visibleKeys
               .map(key =>
                 key === 'name' ? (
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <Link
+                    className='text-decoration-none'
+                    to={ROUTES.employee.details.replace(
+                      ROUTES.employee._params.id,
+                      employee.id.toString()
+                    )}
+                  >
+                    <EmployeeName
+                      employee={{
+                        id: employee.id,
+                        dateOfJoining: employee.dateOfJoining,
+                        name: employee.name,
+                        designation: employee.designation.name,
+                        email: employee.email,
+                        photo: employee.photo
+                      }}
+                    />
+                  </Link>
                 ) : key === 'status' ? (
                   <span
                     className={`p-1 rounded ${

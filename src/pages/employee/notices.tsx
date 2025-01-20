@@ -70,16 +70,26 @@ const Notices = () => {
               noticePeriodRemaining >= 0
           )
           .map(employee => [
-            <EmployeeName
-              employee={{
-                id: employee.id,
-                dateOfJoining: employee.dateOfJoining,
-                name: employee.name,
-                designation: employee.designation.name,
-                email: employee.email,
-                photo: employee.photo
-              }}
-            />,
+            <Link
+              to={
+                ROUTES.employee.details.replace(
+                  ROUTES.employee._params.id,
+                  employee.id.toString()
+                ) + '#noticePeriod'
+              }
+              className='text-decoration-none'
+            >
+              <EmployeeName
+                employee={{
+                  id: employee.id,
+                  dateOfJoining: employee.dateOfJoining,
+                  name: employee.name,
+                  designation: employee.designation.name,
+                  email: employee.email,
+                  photo: employee.photo
+                }}
+              />
+            </Link>,
             <>{employee.company.name}</>,
             <>{employee.department.name}</>,
             <>{employee.noticePeriod}</>,
