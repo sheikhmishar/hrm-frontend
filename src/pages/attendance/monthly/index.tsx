@@ -188,6 +188,9 @@ const MonthlyAttendance = () => {
             Payment,
           </span>
           <span className='text-nowrap'>
+            <strong className='text-danger'>-</strong> = Future,
+          </span>
+          <span className='text-nowrap'>
             <strong className='text-black-50'>O</strong> = Offday,
           </span>
           <span className='text-nowrap'>
@@ -312,7 +315,9 @@ const MonthlyAttendance = () => {
                       ) ? (
                       <strong className='text-black-50'>L</strong>
                     ) : (
-                      <strong className='text-danger'>A</strong>
+                      <strong className='text-danger'>
+                        {fullDate > new Date() ? '-' : 'A'}
+                      </strong>
                     )
                   })
                 )
