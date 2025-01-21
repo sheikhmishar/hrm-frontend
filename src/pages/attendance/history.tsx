@@ -8,6 +8,7 @@ import {
   type ChangeEventHandler
 } from 'react'
 import { FaPen, FaTrash } from 'react-icons/fa6'
+import { Link } from 'react-router-dom'
 
 import Button from '../../components/Button'
 import CalenderSlider from '../../components/CalenderSlider'
@@ -16,7 +17,7 @@ import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Table from '../../components/Table'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import { defaultAttendance } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
@@ -27,6 +28,7 @@ import {
   downloadStringAsFile,
   getDateRange,
   getEmployeeId,
+  mToHM,
   stringToDate,
   timeToLocaleString
 } from '../../libs'
@@ -268,44 +270,58 @@ const AttendanceHistory = () => {
                 // FIXME: ?
                 (employee.attendances || []).map(attendance => [
                   <>{attendance.date}</>,
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />,
+                  <Link
+                    to={
+                      ROUTES.attendance.details.replace(
+                        ROUTES.attendance._params.id,
+                        employee.id.toString()
+                      ) +
+                      '?' +
+                      new URLSearchParams({
+                        month: fromDateString
+                      } satisfies typeof ROUTES.attendance._queries)
+                    }
+                    className='text-decoration-none'
+                  >
+                    <EmployeeName
+                      employee={{
+                        id: employee.id,
+                        dateOfJoining: employee.dateOfJoining,
+                        name: employee.name,
+                        designation: employee.designation.name,
+                        email: employee.email,
+                        photo: employee.photo
+                      }}
+                    />
+                  </Link>,
                   <>{timeToLocaleString(attendance.arrivalTime)}</>,
                   <>{timeToLocaleString(employee.officeStartTime)}</>,
                   <>
                     {attendance.late === -1
                       ? 'N/A'
-                      : Math.max(0, attendance.late) + ' minutes'}
+                      : mToHM(Math.max(0, attendance.late))}
                   </>,
                   <>
                     {attendance.late === -1
                       ? 'N/A'
-                      : Math.abs(Math.min(0, attendance.late)) + ' minutes'}
+                      : mToHM(Math.abs(Math.min(0, attendance.late)))}
                   </>,
                   <>{timeToLocaleString(attendance.leaveTime)}</>,
                   <>{timeToLocaleString(employee.officeEndTime)}</>,
                   <>
                     {attendance.overtime === -1
                       ? 'N/A'
-                      : Math.max(0, attendance.overtime) + ' minutes'}
+                      : mToHM(Math.max(0, attendance.overtime))}
                   </>,
                   <>
                     {attendance.overtime === -1
                       ? 'N/A'
-                      : Math.abs(Math.min(0, attendance.overtime)) + ' minutes'}
+                      : mToHM(Math.abs(Math.min(0, attendance.overtime)))}
                   </>,
                   <>
                     {(employee.taskWisePayment && attendance.tasks) || 'N/A'}
                   </>,
-                  <>{attendance.totalTime} minutes</>,
+                  <>{mToHM(attendance.totalTime)}</>,
                   <>
                     <span
                       className={
