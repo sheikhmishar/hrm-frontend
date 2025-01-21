@@ -7,7 +7,9 @@ import Select from './Select'
 
 const ITEMS_PER_PAGE = new Array<number>(5)
   .fill(0)
-  .map((_, i) => (i + 1) * 5) as unknown as readonly [
+  .map((_, i) => (i + 1) * 5)
+  .concat([40]) as unknown as readonly [
+  number,
   number,
   number,
   number,
@@ -94,7 +96,9 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
   const pageNumberInputRef = useRef<HTMLInputElement>(null)
 
   const [isInput, setIsInput] = useState(false)
-  const [elementsPerPage, setElementsPerPage] = useState(ITEMS_PER_PAGE[0]!)
+  const [elementsPerPage, setElementsPerPage] = useState(
+    ITEMS_PER_PAGE[ITEMS_PER_PAGE.length - 1]!
+  )
   const { pageCount, pageIndex, elementIndexRange, setPageIndex, pageIndices } =
     usePagination(rows.length, elementsPerPage)
 
