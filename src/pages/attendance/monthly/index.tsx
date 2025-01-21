@@ -244,7 +244,7 @@ const MonthlyAttendance = () => {
                       .toString()
                       .toLowerCase()
                       .includes(search.toLowerCase())
-                  ) || getEmployeeId(employee).includes(search.toLowerCase())
+                  ) || getEmployeeId(employee).includes(search)
               )
               .filter(({ id, company: { id: cid } }) =>
                 self?.type === 'Employee' && self.employeeId

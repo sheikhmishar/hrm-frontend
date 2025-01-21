@@ -50,9 +50,7 @@ const Assets = () => {
         .filter(
           employee =>
             (employee.name.toLowerCase().includes(search.toLowerCase()) ||
-              getEmployeeId(employee)
-                .toLowerCase()
-                .includes(search.toLowerCase()) ||
+              getEmployeeId(employee).includes(search) ||
               employee.assets.find(asset =>
                 asset.name.toLowerCase().includes(search.toLowerCase())
               )) &&

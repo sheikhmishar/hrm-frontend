@@ -59,6 +59,12 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
       foodCost: salary.foodCost,
       conveyance: salary.conveyance,
       medicalCost: salary.medicalCost,
+      grossSalary:
+        salary.basicSalary +
+        salary.foodCost +
+        salary.houseRent +
+        salary.conveyance +
+        salary.medicalCost,
       overtime: salary.overtime,
       overtimePayment: salary.overtimePayment,
       bonus: salary.bonus,
@@ -81,6 +87,7 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
         'foodCost',
         'conveyance',
         'medicalCost',
+        'grossSalary',
         'overtime',
         'overtimePayment',
         'bonus',

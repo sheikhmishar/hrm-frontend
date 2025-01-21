@@ -9,7 +9,12 @@ import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import { defaultEmployee } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim, encodeMultipartBody, getEmployeeId, splitGrossSalary } from '../../libs'
+import {
+  capitalizeDelim,
+  encodeMultipartBody,
+  getEmployeeId,
+  splitGrossSalary
+} from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
@@ -223,7 +228,9 @@ const UpdatePayroll = () => {
                 <Input
                   disabled={isFetching}
                   id={k}
-                  label={capitalizeDelim(k)}
+                  label={
+                    k === 'totalSalary' ? 'Gross Salary' : capitalizeDelim(k)
+                  }
                   placeholder={'Enter ' + capitalizeDelim(k)}
                   containerClass='my-3'
                   value={employee[k]}

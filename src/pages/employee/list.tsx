@@ -112,6 +112,8 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           overtime,
           status,
           totalSalary,
+          grossSalary:
+            basicSalary + foodCost + houseRent + conveyance + medicalCost,
           loanTaken,
           loanRemaining,
           altPhoneNumber,
@@ -127,7 +129,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
             .join(', ')
         } satisfies {
           [k in keyof OmitKey<
-            Employee,
+            Employee & { grossSalary: number },
             'attendances' | 'leaves' | 'salaries' | 'loans' | 'documents'
           >]: string | number | undefined
         })
@@ -144,6 +146,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           'houseRent',
           'foodCost',
           'medicalCost',
+          'grossSalary',
           'totalSalary',
           'loanTaken',
           'loanRemaining',
@@ -165,10 +168,16 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           'overtime',
           'salaryType',
           'assets'
-        ] satisfies (keyof OmitKey<
-          Employee,
-          (typeof visibleKeys)[number] | 'attendances' | 'leaves' | 'salaries'
-        >)[])
+        ] satisfies (
+          | keyof OmitKey<
+              Employee,
+              | (typeof visibleKeys)[number]
+              | 'attendances'
+              | 'leaves'
+              | 'salaries'
+            >
+          | 'grossSalary'
+        )[])
     }
   )
 
@@ -287,13 +296,14 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
             company: company.name,
             department: department.name
           }))
-          .filter(employee =>
-            visibleKeys.find(key =>
-              employee[key]
-                .toString()
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
+          .filter(
+            employee =>
+              visibleKeys.find(key =>
+                employee[key]
+                  .toString()
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              ) || getEmployeeId(employee).includes(search)
           )
           .map(employee =>
             visibleKeys
