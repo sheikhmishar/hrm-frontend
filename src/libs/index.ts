@@ -11,6 +11,14 @@ export const capitalizeDelim = (value: string) =>
 export const timeToLocaleString = (time: string) =>
   new Date('2000-01-01T' + time).toLocaleTimeString()
 
+export const mToHM = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const remaining = minutes % 60
+  return `${hours ? `${hours} hours ` : ''}${
+    remaining ? `${remaining} minutes` : ''
+  }`
+}
+
 export const stringToDate = (str: string) => new Date(str.replace(/-/g, '/'))
 
 export const dateToString = (date: Date) =>

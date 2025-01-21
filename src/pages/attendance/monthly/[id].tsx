@@ -25,6 +25,7 @@ import {
   capitalizeDelim,
   dateToString,
   getDateRange,
+  mToHM,
   stringToDate,
   timeToLocaleString
 } from '../../../libs'
@@ -244,30 +245,30 @@ const AttendanceDetails = () => {
                 <>
                   {attendance.late === -1
                     ? 'N/A'
-                    : Math.max(0, attendance.late) + ' minutes'}
+                    : mToHM(Math.max(0, attendance.late))}
                 </>,
                 <>
                   {attendance.late === -1
                     ? 'N/A'
-                    : Math.abs(Math.min(0, attendance.late)) + ' minutes'}
+                    : mToHM(Math.abs(Math.min(0, attendance.late)))}
                 </>,
                 <>{timeToLocaleString(attendance.leaveTime)}</>,
                 <>{timeToLocaleString(attendanceDetails.officeEndTime)}</>,
                 <>
                   {attendance.overtime === -1
                     ? 'N/A'
-                    : Math.max(0, attendance.overtime) + ' minutes'}
+                    : mToHM(Math.max(0, attendance.overtime))}
                 </>,
                 <>
                   {attendance.overtime === -1
                     ? 'N/A'
-                    : Math.abs(Math.min(0, attendance.overtime)) + ' minutes'}
+                    : mToHM(Math.abs(Math.min(0, attendance.overtime)))}
                 </>,
                 <>
                   {(attendanceDetails.taskWisePayment && attendance.tasks) ||
                     'N/A'}
                 </>,
-                <>{attendance.totalTime} minutes</>,
+                <>{mToHM(attendance.totalTime)} </>,
                 <>
                   <span
                     className={
