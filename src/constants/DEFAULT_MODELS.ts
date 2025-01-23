@@ -151,6 +151,7 @@ export const defaultMonthlySalary: MonthlySalary = {
   id: -1,
   basicSalary: 0,
   bonus: 0,
+  leaveEncashment: 0,
   conveyance: 0,
   foodCost: 0,
   houseRent: 0,

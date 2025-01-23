@@ -131,6 +131,7 @@ const MonthlyPaysheetById = () => {
           'overtime',
           'overtimePayment',
           'bonus',
+          'leaveEncashment',
           'late',
           'lateDeduction',
           'penalty',
@@ -143,7 +144,7 @@ const MonthlyPaysheetById = () => {
 
       const updatedSalary = {
         ...monthlySalary,
-        [id]: isNumeric ? parseInt(value) || 0 : value
+        [id]: isNumeric ? parseFloat(value) || 0 : value
       }
       // TODO: if total < 0,  obj[k] += total and total 0
       if (isNumeric) {
@@ -155,7 +156,8 @@ const MonthlyPaysheetById = () => {
             updatedSalary.houseRent +
             updatedSalary.medicalCost +
             updatedSalary.overtimePayment +
-            updatedSalary.bonus -
+            updatedSalary.bonus +
+            updatedSalary.leaveEncashment -
             updatedSalary.lateDeduction -
             updatedSalary.leaveDeduction -
             updatedSalary.penalty -
@@ -936,6 +938,7 @@ const MonthlyPaysheetById = () => {
             'Overtime',
             'Overtime Payment',
             'Bonus',
+            'Leave Encashment',
             'Late',
             'Late Deduction',
             'Penalty',
@@ -958,6 +961,7 @@ const MonthlyPaysheetById = () => {
               <>{salary.overtime}</>,
               <>{salary.overtimePayment}</>,
               <>{salary.bonus}</>,
+              <>{salary.leaveEncashment}</>,
               <>{salary.late}</>,
               <>{salary.lateDeduction}</>,
               <>{salary.penalty}</>,
@@ -1009,7 +1013,7 @@ const MonthlyPaysheetById = () => {
           <div className='border-0 card h-100 shadow-sm'>
             <div className='card-body text-muted'>
               <div className='my-2 row'>
-                <div className='col-6'>
+                <div className='col-4'>
                   <h6>
                     <strong>Bonus</strong>
                   </h6>
@@ -1031,7 +1035,29 @@ const MonthlyPaysheetById = () => {
                     />
                   ))}
                 </div>
-                <div className='col-6'>
+                <div className='col-4'>
+                  <h6>
+                    <strong>Leave Encashment</strong>
+                  </h6>
+                  {(
+                    ['leaveEncashment'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                </div>
+                <div className='col-4'>
                   <h6>
                     <strong>Other Deduction</strong>
                   </h6>

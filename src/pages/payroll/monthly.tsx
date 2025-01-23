@@ -68,6 +68,7 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
       overtime: salary.overtime,
       overtimePayment: salary.overtimePayment,
       bonus: salary.bonus,
+      leaveEncashment: salary.leaveEncashment,
       late: salary.late,
       lateDeduction: salary.lateDeduction,
       penalty: salary.penalty,
@@ -91,6 +92,7 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
         'overtime',
         'overtimePayment',
         'bonus',
+        'leaveEncashment',
         'late',
         'lateDeduction',
         'penalty',
@@ -113,6 +115,7 @@ const numericKeys = [
   'overtime',
   'overtimePayment',
   'bonus',
+  'leaveEncashment',
   'late',
   'lateDeduction',
   'penalty',
@@ -156,21 +159,25 @@ const MonthlyPaysheet = () => {
 
       const updatedSalary = {
         ...monthlySalary,
-        [id]: isNumeric ? parseInt(value) : value
+        [id]: isNumeric ? parseFloat(value) : value
       }
       if (isNumeric && (id as keyof MonthlySalary) !== 'totalSalary')
-        updatedSalary.totalSalary =
-          updatedSalary.basicSalary +
-          updatedSalary.conveyance +
-          updatedSalary.foodCost +
-          updatedSalary.houseRent +
-          updatedSalary.medicalCost +
-          updatedSalary.overtimePayment +
-          updatedSalary.bonus -
-          updatedSalary.lateDeduction -
-          updatedSalary.leaveDeduction -
-          updatedSalary.loanDeduction -
-          updatedSalary.penalty
+        updatedSalary.totalSalary = parseFloat(
+          (
+            updatedSalary.basicSalary +
+            updatedSalary.conveyance +
+            updatedSalary.foodCost +
+            updatedSalary.houseRent +
+            updatedSalary.medicalCost +
+            updatedSalary.overtimePayment +
+            updatedSalary.bonus +
+            updatedSalary.leaveEncashment -
+            updatedSalary.lateDeduction -
+            updatedSalary.leaveDeduction -
+            updatedSalary.loanDeduction -
+            updatedSalary.penalty
+          ).toFixed(2)
+        )
 
       return updatedSalary
     })
@@ -449,6 +456,7 @@ const MonthlyPaysheet = () => {
           'Overtime',
           'Overtime Payment',
           'Bonus',
+          'Leave Encashment',
           'Late',
           'Late Deduction',
           'Penalty',
@@ -488,6 +496,7 @@ const MonthlyPaysheet = () => {
           <>{salary.overtime}</>,
           <>{salary.overtimePayment}</>,
           <>{salary.bonus}</>,
+          <>{salary.leaveEncashment}</>,
           <>{salary.late}</>,
           <>{salary.lateDeduction}</>,
           <>{salary.penalty}</>,
