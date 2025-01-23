@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { FaArrowLeft, FaPen, FaTrash } from 'react-icons/fa6'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import Papa from 'papaparse'
 
 import Button from '../../../components/Button'
 import CalenderSlider from '../../../components/CalenderSlider'
@@ -24,7 +25,9 @@ import { ToastContext } from '../../../contexts/toast'
 import {
   capitalizeDelim,
   dateToString,
+  downloadStringAsFile,
   getDateRange,
+  getEmployeeId,
   mToHM,
   stringToDate,
   timeToLocaleString
@@ -32,12 +35,56 @@ import {
 import modifiedFetch from '../../../libs/modifiedFetch'
 
 import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
+import Employee from 'backend/Entities/Employee'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
 import {
   deleteEmployeeAttendance,
   employeeAttendanceDetails,
   updateEmployeeAttendance
 } from 'backend/controllers/attendances'
+
+const getCsvFromAttendaces = (employee?: Employee) =>
+  Papa.unparse(
+    employee
+      ? employee.attendances.map(
+          ({
+            date,
+            arrivalTime,
+            leaveTime,
+            overtime,
+            late,
+            totalTime,
+            tasks
+          }) => ({
+            date,
+            id: getEmployeeId(employee),
+            employee: employee.name,
+            designation: employee.designation.name,
+            checkIn: arrivalTime, // TODO: fix
+            checkOut: leaveTime,
+            late: late === -1 ? 'N/A' : Math.max(0, late) + ' minutes',
+            overtime:
+              overtime === -1 ? 'N/A' : Math.max(0, overtime) + ' minutes',
+            tasks: tasks || 'N/A',
+            totalTime: Math.max(0, totalTime) + ' minutes'
+          })
+        )
+      : [],
+    {
+      columns: [
+        'date',
+        'id',
+        'employee',
+        'designation',
+        'checkIn',
+        'checkOut',
+        'late',
+        'overtime',
+        'tasks',
+        'totalTime'
+      ]
+    }
+  )
 
 const AttendanceDetails = () => {
   const { self } = useContext(AuthContext)
@@ -187,6 +234,20 @@ const AttendanceDetails = () => {
         >
           <FaArrowLeft /> Attendance List
         </Link>
+        <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+          <Button
+            onClick={() =>
+              downloadStringAsFile(
+                getCsvFromAttendaces(attendanceDetails),
+                'employeeAttendances.csv',
+                { type: 'text/csv' }
+              )
+            }
+            className={`btn-primary${_isFetching ? '' : ' me-auto'}`}
+          >
+            Export CSV
+          </Button>
+        </ProtectedComponent>
 
         {_isFetching && (
           <div
@@ -225,16 +286,25 @@ const AttendanceDetails = () => {
           attendanceDetails
             ? attendanceDetails.attendances.map(attendance => [
                 <>{attendance.date}</>,
-                <EmployeeName
-                  employee={{
-                    id: attendanceDetails.id,
-                    dateOfJoining: attendanceDetails.dateOfJoining,
-                    name: attendanceDetails.name,
-                    designation: attendanceDetails.designation.name,
-                    email: attendanceDetails.email,
-                    photo: attendanceDetails.photo
-                  }}
-                />,
+                <Link
+                  className='text-decoration-none'
+                  role='button'
+                  to={ROUTES.employee.details.replace(
+                    ROUTES.employee._params.id,
+                    attendanceDetails.id.toString()
+                  )}
+                >
+                  <EmployeeName
+                    employee={{
+                      id: attendanceDetails.id,
+                      dateOfJoining: attendanceDetails.dateOfJoining,
+                      name: attendanceDetails.name,
+                      designation: attendanceDetails.designation.name,
+                      email: attendanceDetails.email,
+                      photo: attendanceDetails.photo
+                    }}
+                  />
+                </Link>,
                 <>{timeToLocaleString(attendance.arrivalTime)}</>,
                 <>{timeToLocaleString(attendanceDetails.officeStartTime)}</>,
                 <>
