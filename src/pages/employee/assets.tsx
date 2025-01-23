@@ -68,7 +68,7 @@ const Assets = () => {
                   to={ROUTES.employee.details.replace(
                     ROUTES.employee._params.id,
                     employee.id.toString()
-                  )}
+                  ) + '#assets'}
                 >
                   <EmployeeName
                     employee={{
