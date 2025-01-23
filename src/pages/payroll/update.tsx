@@ -292,9 +292,25 @@ const UpdatePayroll = () => {
                 />
               </div>
             ))}
-            <div className='col-12 col-lg-6'>
-              <Input id='reason' label='Change Reason' containerClass='my-3' />
-            </div>
+            {(
+              ['remarks'] satisfies KeysOfObjectOfType<
+                GetReqBodyType<typeof updateEmployee>,
+                string | undefined
+              >[]
+            ).map(k => (
+              <div key={k} className='col-12 col-lg-6'>
+                <Input
+                  disabled={isFetching}
+                  id={k}
+                  label={capitalizeDelim(k)}
+                  placeholder={'Enter ' + capitalizeDelim(k)}
+                  containerClass='my-3'
+                  // @ts-ignore // FIXME:
+                  value={employee[k] || ''}
+                  onChange={onEmployeeChange}
+                />
+              </div>
+            ))}
 
             <hr className='mt-3' />
             <div className='col-12 d-flex my-2'>
@@ -320,6 +336,7 @@ const UpdatePayroll = () => {
           'Total Salary',
           'TaskWise Payment',
           'Word Limit',
+          'Remarks',
           'Designation',
           'Date'
         ]}
@@ -333,6 +350,7 @@ const UpdatePayroll = () => {
           <>{salary.totalSalary}</>,
           <>{salary.taskWisePayment}</>,
           <>{salary.wordLimit}</>,
+          <>{salary.remarks}</>,
           <>{salary.designation.name}</>,
           <>{new Date(salary.changedAt).toDateString()}</>
         ])}
