@@ -195,10 +195,7 @@ const LeaveDetails = () => {
         </div>
         <div className='col-4'>
           {_isFetching && (
-            <div
-              className='ms-2 spinner-border spinner-border-sm text-light'
-              role='status'
-            >
+            <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
             </div>
           )}

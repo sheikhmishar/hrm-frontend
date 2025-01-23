@@ -205,41 +205,36 @@ const AttendanceHistory = () => {
 
   return (
     <>
-      <div className='align-items-center mb-3 row'>
-        <div className='col-8 d-flex'>
-          <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
-            {' '}
-            <Button
-              onClick={() =>
-                downloadStringAsFile(
-                  getCsvFromAttendaces(attendances),
-                  'employeeAttendances.csv',
-                  { type: 'text/csv' }
-                )
-              }
-              className='btn-primary'
-            >
-              Export CSV
-            </Button>
-          </ProtectedComponent>
+      <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
+        <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+          <Button
+            onClick={() =>
+              downloadStringAsFile(
+                getCsvFromAttendaces(attendances),
+                'employeeAttendances.csv',
+                { type: 'text/csv' }
+              )
+            }
+            className='btn-primary'
+          >
+            Export CSV
+          </Button>
+        </ProtectedComponent>
 
-          {_isFetching && (
-            <div
-              className='ms-2 spinner-border spinner-border-sm text-light'
-              role='status'
-            >
-              <span className='visually-hidden'>Loading...</span>
-            </div>
-          )}
-        </div>
+        {_isFetching && (
+          <div
+            className='me-auto ms-3 spinner-border text-primary'
+            role='status'
+          >
+            <span className='visually-hidden'>Loading...</span>
+          </div>
+        )}
 
-        <div className='col-4 d-flex justify-content-end'>
-          <CalenderSlider
-            monthly
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-          />
-        </div>
+        <CalenderSlider
+          monthly
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+        />
       </div>
       <Table
         columns={[

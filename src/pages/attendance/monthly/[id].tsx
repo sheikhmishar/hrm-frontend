@@ -179,34 +179,29 @@ const AttendanceDetails = () => {
 
   return (
     <>
-      <div className='align-items-center mb-3 row'>
-        <div className='col-4'>
-          <Link
-            // TODO: add from
-            to={ROUTES.attendance.monthly}
-            className='link-primary text-decoration-none'
-          >
-            <FaArrowLeft /> Attendance List
-          </Link>
-        </div>
-        <div className='col-4'>
-          {_isFetching && (
-            <div
-              className='ms-2 spinner-border spinner-border-sm text-light'
-              role='status'
-            >
-              <span className='visually-hidden'>Loading...</span>
-            </div>
-          )}
-        </div>
+      <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
+        <Link
+          // TODO: add from
+          to={ROUTES.attendance.monthly}
+          className='link-primary text-decoration-none'
+        >
+          <FaArrowLeft /> Attendance List
+        </Link>
 
-        <div className='col-4 d-flex justify-content-end'>
-          <CalenderSlider
-            monthly
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-          />
-        </div>
+        {_isFetching && (
+          <div
+            className='me-auto ms-3 spinner-border text-primary'
+            role='status'
+          >
+            <span className='visually-hidden'>Loading...</span>
+          </div>
+        )}
+
+        <CalenderSlider
+          monthly
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+        />
       </div>
       <Table
         columns={[
