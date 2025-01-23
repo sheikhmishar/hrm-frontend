@@ -149,19 +149,22 @@ const MonthlyPaysheetById = () => {
       // TODO: if total < 0,  obj[k] += total and total 0
       if (isNumeric) {
         if ((id as keyof MonthlySalary) !== 'totalSalary')
-          updatedSalary.totalSalary =
-            updatedSalary.basicSalary +
-            updatedSalary.conveyance +
-            updatedSalary.foodCost +
-            updatedSalary.houseRent +
-            updatedSalary.medicalCost +
-            updatedSalary.overtimePayment +
-            updatedSalary.bonus +
-            updatedSalary.leaveEncashment -
-            updatedSalary.lateDeduction -
-            updatedSalary.leaveDeduction -
-            updatedSalary.penalty -
-            updatedSalary.loanDeduction
+          updatedSalary.totalSalary = parseFloat(
+            (
+              updatedSalary.basicSalary +
+              updatedSalary.conveyance +
+              updatedSalary.foodCost +
+              updatedSalary.houseRent +
+              updatedSalary.medicalCost +
+              updatedSalary.overtimePayment +
+              updatedSalary.bonus +
+              updatedSalary.leaveEncashment -
+              updatedSalary.lateDeduction -
+              updatedSalary.leaveDeduction -
+              updatedSalary.penalty -
+              updatedSalary.loanDeduction
+            ).toFixed(2)
+          )
 
         if ((id as keyof MonthlySalary) === 'loanDeduction') {
           const loanDeductiondiff =
