@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import Papa from 'papaparse'
 import {
   useContext,
   useEffect,
@@ -8,6 +9,7 @@ import {
 } from 'react'
 import { Link } from 'react-router-dom'
 
+import Button from '../../../components/Button'
 import CalenderSlider from '../../../components/CalenderSlider'
 import EmployeeName from '../../../components/EmployeeName'
 import ProtectedComponent from '../../../components/ProtectedComponent'
@@ -19,18 +21,83 @@ import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
   dateToString,
+  downloadStringAsFile,
   getDateRange,
   getEmployeeId,
   stringToDate
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
-import { GetResponseType } from 'backend/@types/response'
-import { allEmployeeAttendances } from 'backend/controllers/attendances'
-import { allCompanies } from 'backend/controllers/companies'
-import { holidaysByMonth } from 'backend/controllers/holidays'
-import { allEmployeeLeaves } from 'backend/controllers/leaves'
-import Employee from 'backend/Entities/Employee'
+import type { GetResponseType } from 'backend/@types/response'
+import type { allEmployeeAttendances } from 'backend/controllers/attendances'
+import type { allCompanies } from 'backend/controllers/companies'
+import type { holidaysByMonth } from 'backend/controllers/holidays'
+import type { allEmployeeLeaves } from 'backend/controllers/leaves'
+import type Employee from 'backend/Entities/Employee'
+import type Holiday from 'backend/Entities/Holiday'
+
+const getCsvFromAttendaces = (
+  calender: ReturnType<typeof generateCalender>,
+  fromDate: Date,
+  toDate: Date,
+  holidays: Holiday[],
+  employeeLeaves: Employee[],
+  employeeAttendances: Employee[]
+) =>
+  Papa.unparse(
+    [
+      ['id', 'name'].concat(
+        calender.map(({ date }) => (date === '01' ? ' |  01' : date))
+      )
+    ]
+      .concat([
+        ['', ''].concat(
+          calender.map(
+            ({ date, month }) =>
+              (date.endsWith('22') || date.endsWith('07')
+                ? stringToDate(`2011-${month}-01`)
+                    .toDateString()
+                    .substring(4, 7)
+                : '') + (date.endsWith('01') ? '|' : '')
+          )
+        )
+      ])
+      .concat([['', ''].concat(calender.map(({ dayName }) => dayName))])
+      .concat(
+        employeeAttendances.map(employee => {
+          const leaves = employeeLeaves.find(({ id }) => employee.id === id)
+          return [getEmployeeId(employee), employee.name].concat(
+            calender.map(({ month, date }) => {
+              const year =
+                month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+              const dateString = `${month}-${date}`
+              const fullDate = stringToDate(`${year}-${dateString}`)
+
+              // FIXME; undefined ?
+              return employee.attendances?.find(
+                attendance => attendance.date.substring(5) === dateString
+              )
+                ? holidays.find(({ date: d }) => dateString === d.substring(5))
+                  ? 'OA'
+                  : 'P'
+                : holidays.find(({ date: d }) => dateString === d.substring(5))
+                ? 'O'
+                : leaves?.leaves.find(
+                    // TODO: precompute
+                    ({ from, to, type }) =>
+                      stringToDate(from) <= fullDate &&
+                      stringToDate(to) >= fullDate &&
+                      type === 'paid'
+                  )
+                ? 'L'
+                : fullDate > new Date()
+                ? '-'
+                : 'A'
+            })
+          )
+        })
+      )
+  )
 
 const MonthlyAttendance = () => {
   const { self } = useContext(AuthContext)
@@ -74,7 +141,7 @@ const MonthlyAttendance = () => {
     })
 
   const {
-    data: employeeAttendances = BLANK_ARRAY,
+    data: _employeeAttendances = BLANK_ARRAY,
     isFetching: employeeAttendancesFetching
   } = useQuery({
     queryKey: [
@@ -130,6 +197,25 @@ const MonthlyAttendance = () => {
     [fromDate, toDate]
   )
 
+  const employeeAttendances = _employeeAttendances
+    .filter(
+      employee =>
+        (['name', 'email', 'phoneNumber'] satisfies (keyof Employee)[]).find(
+          key =>
+            employee[key]
+              .toString()
+              .toLowerCase()
+              .includes(search.toLowerCase())
+        ) || getEmployeeId(employee).includes(search)
+    )
+    .filter(({ id, company: { id: cid } }) =>
+      self?.type === 'Employee' && self.employeeId
+        ? id === self.employeeId
+        : companyId !== -1
+        ? cid === companyId
+        : true
+    )
+
   const isFetching =
     employeeAttendancesFetching ||
     fetchingCompanies ||
@@ -162,6 +248,25 @@ const MonthlyAttendance = () => {
               )}
             />
           </div>
+          <Button
+            onClick={() =>
+              downloadStringAsFile(
+                getCsvFromAttendaces(
+                  calender,
+                  fromDate,
+                  toDate,
+                  holidays,
+                  employeeLeaves,
+                  employeeAttendances
+                ),
+                'monthlyAttendanceCalendar.csv',
+                { type: 'text/csv' }
+              )
+            }
+            className='btn-primary'
+          >
+            Export CSV
+          </Button>
         </ProtectedComponent>
 
         <div className='ms-2 w-25'>
@@ -230,98 +335,73 @@ const MonthlyAttendance = () => {
             )
           ])
           .concat(
-            employeeAttendances
-              .filter(
-                employee =>
-                  (
-                    [
-                      'name',
-                      'email',
-                      'phoneNumber'
-                    ] satisfies (keyof Employee)[]
-                  ).find(key =>
-                    employee[key]
-                      .toString()
-                      .toLowerCase()
-                      .includes(search.toLowerCase())
-                  ) || getEmployeeId(employee).includes(search)
-              )
-              .filter(({ id, company: { id: cid } }) =>
-                self?.type === 'Employee' && self.employeeId
-                  ? id === self.employeeId
-                  : companyId !== -1
-                  ? cid === companyId
-                  : true
-              )
-              .map(employee => {
-                const leaves = employeeLeaves.find(
-                  ({ id }) => employee.id === id
-                )
-                return [
-                  <Link
-                    to={
-                      ROUTES.attendance.details.replace(
-                        ROUTES.attendance._params.id,
-                        employee.id.toString()
-                      ) +
-                      '?' +
-                      new URLSearchParams({
-                        month: fromDateString
-                      } satisfies typeof ROUTES.attendance._queries)
-                    }
-                    className='text-decoration-none'
-                  >
-                    <EmployeeName
-                      employee={{
-                        id: employee.id,
-                        dateOfJoining: employee.dateOfJoining,
-                        name: employee.name,
-                        designation: employee.designation.name,
-                        email: employee.email,
-                        photo: employee.photo
-                      }}
-                    />
-                  </Link>
-                ].concat(
-                  calender.map(({ month, date }) => {
-                    const year =
-                      month === '01'
-                        ? toDate.getFullYear()
-                        : fromDate.getFullYear()
-                    const dateString = `${month}-${date}`
-                    const fullDate = stringToDate(`${year}-${dateString}`)
+            employeeAttendances.map(employee => {
+              const leaves = employeeLeaves.find(({ id }) => employee.id === id)
+              return [
+                <Link
+                  to={
+                    ROUTES.attendance.details.replace(
+                      ROUTES.attendance._params.id,
+                      employee.id.toString()
+                    ) +
+                    '?' +
+                    new URLSearchParams({
+                      month: fromDateString
+                    } satisfies typeof ROUTES.attendance._queries)
+                  }
+                  className='text-decoration-none'
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>
+              ].concat(
+                calender.map(({ month, date }) => {
+                  const year =
+                    month === '01'
+                      ? toDate.getFullYear()
+                      : fromDate.getFullYear()
+                  const dateString = `${month}-${date}`
+                  const fullDate = stringToDate(`${year}-${dateString}`)
 
-                    // FIXME; undefined ?
-                    return employee.attendances?.find(
-                      attendance => attendance.date.substring(5) === dateString
+                  // FIXME; undefined ?
+                  return employee.attendances?.find(
+                    attendance => attendance.date.substring(5) === dateString
+                  ) ? (
+                    holidays.find(
+                      ({ date: d }) => dateString === d.substring(5)
                     ) ? (
-                      holidays.find(
-                        ({ date: d }) => dateString === d.substring(5)
-                      ) ? (
-                        <strong className='text-success'>OA</strong>
-                      ) : (
-                        <strong className='text-primary'>P</strong>
-                      )
-                    ) : holidays.find(
-                        ({ date: d }) => dateString === d.substring(5)
-                      ) ? (
-                      <strong className='text-black-50'>O</strong>
-                    ) : leaves?.leaves.find(
-                        // TODO: precompute
-                        ({ from, to, type }) =>
-                          stringToDate(from) <= fullDate &&
-                          stringToDate(to) >= fullDate &&
-                          type === 'paid'
-                      ) ? (
-                      <strong className='text-black-50'>L</strong>
+                      <strong className='text-success'>OA</strong>
                     ) : (
-                      <strong className='text-danger'>
-                        {fullDate > new Date() ? '-' : 'A'}
-                      </strong>
+                      <strong className='text-primary'>P</strong>
                     )
-                  })
-                )
-              })
+                  ) : holidays.find(
+                      ({ date: d }) => dateString === d.substring(5)
+                    ) ? (
+                    <strong className='text-black-50'>O</strong>
+                  ) : leaves?.leaves.find(
+                      // TODO: precompute
+                      ({ from, to, type }) =>
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        type === 'paid'
+                    ) ? (
+                    <strong className='text-black-50'>L</strong>
+                  ) : (
+                    <strong className='text-danger'>
+                      {fullDate > new Date() ? '-' : 'A'}
+                    </strong>
+                  )
+                })
+              )
+            })
           )}
       />
     </>
