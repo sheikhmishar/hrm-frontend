@@ -1,8 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import Papa from 'papaparse'
 import { useContext, useState, type ChangeEventHandler } from 'react'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
+import ProtectedComponent from '../../components/ProtectedComponent'
 import Select from '../../components/Select'
 import Table from '../../components/Table'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
@@ -11,6 +13,7 @@ import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import {
   capitalizeDelim,
+  downloadStringAsFile,
   encodeMultipartBody,
   getEmployeeId,
   splitGrossSalary
@@ -18,15 +21,72 @@ import {
 import modifiedFetch from '../../libs/modifiedFetch'
 
 import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
-import Company from 'backend/Entities/Company'
-import Designation from 'backend/Entities/Designation'
-import Employee from 'backend/Entities/Employee'
-import { allDesignations } from 'backend/controllers/designations'
+import type Company from 'backend/Entities/Company'
+import type Designation from 'backend/Entities/Designation'
+import type Employee from 'backend/Entities/Employee'
+import type EmployeeSalary from 'backend/Entities/EmployeeSalary'
+import type { allDesignations } from 'backend/controllers/designations'
 import type {
   allEmployees,
   updateEmployee
 } from 'backend/controllers/employees'
-import { employeeSalaryDetails } from 'backend/controllers/salaries'
+import type { employeeSalaryDetails } from 'backend/controllers/salaries'
+
+const getCsvFromSalaries = (
+  employee: Employee,
+  salaryHistory: EmployeeSalary[]
+) =>
+  Papa.unparse(
+    [
+      ['Salary Update History'],
+      [],
+      [
+        'Name: ' + employee.name,
+        'Designation: ' + employee.designation.name,
+        'Company: ' + employee.company.name
+      ],
+      [
+        'Id: ' + getEmployeeId(employee),
+        'Department: ' + employee.department.name,
+        'DOJ: ' + employee.dateOfJoining
+      ],
+      []
+    ].concat(
+      [
+        [
+          'Sl.No',
+          'Basic Salary',
+          'House Rent',
+          'Food Cost',
+          'Conveyance',
+          'Medical Cost',
+          'Gross Salary',
+          'TaskWise Payment',
+          'Word Limit',
+          'Remarks',
+          'Designation',
+          'Changed At'
+        ]
+      ].concat(
+        salaryHistory.map((salary, i) =>
+          [
+            i + 1,
+            salary.basicSalary,
+            salary.houseRent,
+            salary.foodCost,
+            salary.conveyance,
+            salary.medicalCost,
+            salary.totalSalary,
+            salary.taskWisePayment,
+            salary.wordLimit,
+            salary.remarks,
+            salary.designation.name,
+            new Date(salary.changedAt)
+          ].map(v => v?.toString() || '')
+        )
+      )
+    )
+  )
 
 const UpdatePayroll = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
@@ -320,6 +380,21 @@ const UpdatePayroll = () => {
               >
                 Save
               </Button>
+              <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+                <Button
+                  disabled={!salaryHistory.length}
+                  onClick={() =>
+                    downloadStringAsFile(
+                      getCsvFromSalaries(employee, salaryHistory),
+                      'employeeSalaryHistory.csv',
+                      { type: 'text/csv' }
+                    )
+                  }
+                  className='btn-primary ms-2'
+                >
+                  Export CSV
+                </Button>
+              </ProtectedComponent>
             </div>
           </div>
         </div>
@@ -333,12 +408,12 @@ const UpdatePayroll = () => {
           'Food Cost',
           'Conveyance',
           'Medical Cost',
-          'Total Salary',
+          'Gross Salary',
           'TaskWise Payment',
           'Word Limit',
           'Remarks',
           'Designation',
-          'Date'
+          'Changed At'
         ]}
         rows={salaryHistory.map((salary, i) => [
           <>{i + 1}</>,
@@ -352,7 +427,7 @@ const UpdatePayroll = () => {
           <>{salary.wordLimit}</>,
           <>{salary.remarks}</>,
           <>{salary.designation.name}</>,
-          <>{new Date(salary.changedAt).toDateString()}</>
+          <>{new Date(salary.changedAt).toString()}</>
         ])}
       />
     </>
