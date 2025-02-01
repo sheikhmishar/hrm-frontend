@@ -55,7 +55,7 @@ const Select: React.FC<Props> = ({
       disableInputFocusTimeout300.end()
       setInputFocus(true)
     }
-  }, [props.disabled, setInputFocus])
+  }, [props.disabled, disableInputFocusTimeout300, setInputFocus])
 
   const onDropdownFocus = useCallback<
     FocusEventHandler<HTMLInputElement>
@@ -64,7 +64,7 @@ const Select: React.FC<Props> = ({
       disableDropdownFocusTimeout300.end()
       setDropdownFocus(true)
     }
-  }, [props.disabled, setDropdownFocus])
+  }, [props.disabled, disableDropdownFocusTimeout300, setDropdownFocus])
 
   const onSelectChange = useCallback<
     (e: ChangeEvent<DropdownElement>) => MouseEventHandler<HTMLAnchorElement>
@@ -76,7 +76,11 @@ const Select: React.FC<Props> = ({
       disableInputFocusTimeout300.start()
       disableDropdownFocusTimeout300.start()
     },
-    [props.onChange]
+    [
+      props.onChange,
+      disableInputFocusTimeout300,
+      disableDropdownFocusTimeout300
+    ]
   )
 
   const matched20Data = useMemo(

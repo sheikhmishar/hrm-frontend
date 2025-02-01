@@ -365,7 +365,7 @@ const UpdatePayroll = () => {
                   label={capitalizeDelim(k)}
                   placeholder={'Enter ' + capitalizeDelim(k)}
                   containerClass='my-3'
-                  // @ts-ignore // FIXME:
+                  // @ts-expect-error // FIXME:
                   value={employee[k] || ''}
                   onChange={onEmployeeChange}
                 />
