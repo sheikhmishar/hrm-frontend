@@ -102,8 +102,11 @@ const getCsvFromAttendaces = (
 
           const totalPaidLeaves =
             leaves?.leaves.reduce(
-              (total, { totalDays, duration }) =>
-                total + totalDays * (duration === 'fullday' ? 1 : 2),
+              (total, { totalDays, duration, type }) =>
+                total +
+                (type === 'paid'
+                  ? totalDays * (duration === 'fullday' ? 1 : 2)
+                  : 0),
               0
             ) || 0
 
@@ -257,25 +260,22 @@ const MonthlyAttendance = () => {
 
   const employeeAttendances = useMemo(
     () =>
-      _employeeAttendances
-        .filter(
-          employee =>
-            (
-              ['name', 'email', 'phoneNumber'] satisfies (keyof Employee)[]
-            ).find(key =>
+      _employeeAttendances.filter(
+        employee =>
+          ((['name', 'email', 'phoneNumber'] satisfies (keyof Employee)[]).find(
+            key =>
               employee[key]
                 .toString()
                 .toLowerCase()
                 .includes(search.toLowerCase())
-            ) || getEmployeeId(employee).includes(search)
-        )
-        .filter(({ id, company: { id: cid } }) =>
-          self?.type === 'Employee' && self.employeeId
-            ? id === self.employeeId
+          ) ||
+            getEmployeeId(employee).includes(search)) &&
+          (self?.type === 'Employee' && self.employeeId
+            ? employee.id === self.employeeId
             : companyId !== -1
-            ? cid === companyId
-            : true
-        ),
+            ? employee.company.id === companyId
+            : true)
+      ),
     [_employeeAttendances, search, companyId, self?.employeeId, self?.type]
   )
 
@@ -404,6 +404,7 @@ const MonthlyAttendance = () => {
           .concat(
             employeeAttendances.map(employee => {
               const currentDate = new Date()
+
               const leaves = employeeLeaves.find(({ id }) => employee.id === id)
 
               const totalDays =
@@ -440,8 +441,11 @@ const MonthlyAttendance = () => {
 
               const totalPaidLeaves =
                 leaves?.leaves.reduce(
-                  (total, { totalDays, duration }) =>
-                    total + totalDays * (duration === 'fullday' ? 1 : 2),
+                  (total, { totalDays, duration, type }) =>
+                    total +
+                    (type === 'paid'
+                      ? totalDays * (duration === 'fullday' ? 1 : 2)
+                      : 0),
                   0
                 ) || 0
 
@@ -450,85 +454,82 @@ const MonthlyAttendance = () => {
                   holidays.find(({ date }) => date === attendance.date)
               ).length
 
-              return (
-                [
-                  <Link
-                    to={
-                      ROUTES.attendance.details.replace(
-                        ROUTES.attendance._params.id,
-                        employee.id.toString()
-                      ) +
-                      '?' +
-                      new URLSearchParams({
-                        month: fromDateString
-                      } satisfies typeof ROUTES.attendance._queries)
-                    }
-                    className='text-decoration-none'
-                  >
-                    <EmployeeName
-                      employee={{
-                        id: employee.id,
-                        dateOfJoining: employee.dateOfJoining,
-                        name: employee.name,
-                        designation: employee.designation.name,
-                        email: employee.email,
-                        photo: employee.photo
-                      }}
-                    />
-                  </Link>
-                ]
-                  .concat(
-                    calender.map(({ month, date }) => {
-                      const year =
-                        month === '01'
-                          ? toDate.getFullYear()
-                          : fromDate.getFullYear()
-                      const dateString = `${month}-${date}`
-                      const fullDate = stringToDate(`${year}-${dateString}`)
+              return [
+                <Link
+                  to={
+                    ROUTES.attendance.details.replace(
+                      ROUTES.attendance._params.id,
+                      employee.id.toString()
+                    ) +
+                    '?' +
+                    new URLSearchParams({
+                      month: fromDateString
+                    } satisfies typeof ROUTES.attendance._queries)
+                  }
+                  className='text-decoration-none'
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>
+              ]
+                .concat(
+                  calender.map(({ month, date }) => {
+                    const year =
+                      month === '01'
+                        ? toDate.getFullYear()
+                        : fromDate.getFullYear()
+                    const dateString = `${month}-${date}`
+                    const fullDate = stringToDate(`${year}-${dateString}`)
 
-                      // FIXME; undefined ?
-                      return employee.attendances?.find(
-                        attendance =>
-                          attendance.date.substring(5) === dateString
+                    // FIXME; undefined ?
+                    return employee.attendances?.find(
+                      attendance => attendance.date.substring(5) === dateString
+                    ) ? (
+                      holidays.find(
+                        ({ date: d }) => dateString === d.substring(5)
                       ) ? (
-                        holidays.find(
-                          ({ date: d }) => dateString === d.substring(5)
-                        ) ? (
-                          <strong className='text-success'>OA</strong>
-                        ) : (
-                          <strong className='text-primary'>P</strong>
-                        )
-                      ) : holidays.find(
-                          ({ date: d }) => dateString === d.substring(5)
-                        ) ? (
-                        <strong className='text-black-50'>O</strong>
-                      ) : leaves?.leaves.find(
-                          // TODO: precompute
-                          ({ from, to, type }) =>
-                            stringToDate(from) <= fullDate &&
-                            stringToDate(to) >= fullDate &&
-                            type === 'paid'
-                        ) ? (
-                        <strong className='text-black-50'>L</strong>
+                        <strong className='text-success'>OA</strong>
                       ) : (
-                        <strong className='text-danger'>
-                          {fullDate > currentDate ? '-' : 'A'}
-                        </strong>
+                        <strong className='text-primary'>P</strong>
                       )
-                    })
-                  )
-                  .concat([
-                    <>{totalPresent}</>,
-                    <>{totalPaidLeaves}</>,
-                    <>
-                      {totalDays -
-                        totalPresent -
-                        holidays.length -
-                        totalPaidLeaves}
-                    </>,
-                    <>{totalHolidayAttendances}</>
-                  ])
-              )
+                    ) : holidays.find(
+                        ({ date: d }) => dateString === d.substring(5)
+                      ) ? (
+                      <strong className='text-black-50'>O</strong>
+                    ) : leaves?.leaves.find(
+                        // TODO: precompute
+                        ({ from, to, type }) =>
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          type === 'paid'
+                      ) ? (
+                      <strong className='text-black-50'>L</strong>
+                    ) : (
+                      <strong className='text-danger'>
+                        {fullDate > currentDate ? '-' : 'A'}
+                      </strong>
+                    )
+                  })
+                )
+                .concat([
+                  <>{totalPresent}</>,
+                  <>{totalPaidLeaves}</>,
+                  <>
+                    {totalDays -
+                      totalPresent -
+                      holidays.length -
+                      totalPaidLeaves}
+                  </>,
+                  <>{totalHolidayAttendances}</>
+                ])
             })
           )}
       />
