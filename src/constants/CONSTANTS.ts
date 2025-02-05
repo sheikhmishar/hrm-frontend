@@ -71,7 +71,8 @@ export const ROUTES = {
     salaryType: `${approvalRoot}/salary-type`,
     designation: `${approvalRoot}/designation`,
     employee: `${approvalRoot}/employee`
-  }
+  },
+  report: `${root}/report`
 }
 
 export const BLANK_ARRAY = [] as never[]

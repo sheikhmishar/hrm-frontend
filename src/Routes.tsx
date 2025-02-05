@@ -71,6 +71,7 @@ const SalaryTypeLazy = delayedLazy(
   () => import('./pages/organization/salary-type')
 )
 const SettingsLazy = delayedLazy(() => import('./pages/organization/settings'))
+const ReportLazy = delayedLazy(() => import('./pages/report'))
 
 const placeholder = (
   <div className='placeholder-glow placeholder-wave'>
@@ -385,6 +386,14 @@ const Routes = () => (
         element={
           <ProtectedRoute rolesAllowed={['SuperAdmin']}>
             <EmployeeListLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.report}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <ReportLazy />
           </ProtectedRoute>
         }
       />

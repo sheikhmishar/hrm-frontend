@@ -8,6 +8,7 @@ import {
   FaBuildingNgo,
   FaBusinessTime,
   FaCalendar,
+  FaChartGantt,
   FaMapLocationDot,
   FaMoneyBills,
   FaUserGroup,
@@ -261,6 +262,10 @@ const SidebarItems: React.FC = () => {
           </AccordionItem>
         </div>
       </ProtectedComponent>
+
+      <NavItem to={ROUTES.report}>
+        <FaChartGantt className='me-2' /> Reports
+      </NavItem>
       <Footer />
     </>
   )
