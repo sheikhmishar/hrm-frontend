@@ -9,30 +9,31 @@ import {
   type ChangeEventHandler
 } from 'react'
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
+import { Link } from 'react-router-dom'
 
 import Button from '../../components/Button'
 import CalenderSlider from '../../components/CalenderSlider'
+import EmployeeName from '../../components/EmployeeName'
 import Input from '../../components/Input'
 import Modal from '../../components/Modal'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Select, { DropDownEventHandler } from '../../components/Select'
 import Table from '../../components/Table'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import { defaultLeave } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
 import {
   capitalizeDelim,
+  dateToString,
+  dayDifference,
   downloadStringAsFile,
   getDateRange,
-  dateToString,
   getEmployeeId,
-  dayDifference,
   stringToDate
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
-import EmployeeName from '../../components/EmployeeName'
 
 import { GetResponseType } from 'backend/@types/response'
 import Employee from 'backend/Entities/Employee'
@@ -86,6 +87,10 @@ const Assigned = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
   const [companyId, setCompanyId] = useState(-1)
+
+  const [search, setSearch] = useState('')
+  const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
+    setSearch(e.target.value)
 
   const [leave, setLeave] = useState<EmployeeLeave>({ ...defaultLeave })
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -218,13 +223,21 @@ const Assigned = () => {
   const employeeLeaves = useMemo(
     () =>
       _employeeLeaves.filter(
-        ({ id, company: { id: cid } }) =>
-          (companyId < 1 || cid === companyId) &&
+        employee =>
+          ((['name', 'email', 'phoneNumber'] satisfies (keyof Employee)[]).find(
+            key =>
+              employee[key]
+                .toString()
+                .toLowerCase()
+                .includes(search.toLowerCase())
+          ) ||
+            getEmployeeId(employee).includes(search)) &&
+          (companyId < 1 || employee.company.id === companyId) &&
           (self?.type === 'Employee' && self.employeeId
-            ? id === self.employeeId
+            ? employee.id === self.employeeId
             : true)
       ),
-    [_employeeLeaves, companyId, self]
+    [_employeeLeaves, companyId, self, search]
   )
 
   return (
@@ -249,6 +262,16 @@ const Assigned = () => {
             Export CSV
           </Button>
 
+          <div className='ms-2 w-25'>
+            <input
+              className='form-control py-2 rounded-3'
+              id='search'
+              placeholder='Search here'
+              onChange={onSearchInputChange}
+              value={search}
+            />
+          </div>
+
           <Select
             id='company'
             label=''
@@ -264,11 +287,13 @@ const Assigned = () => {
               }))
             )}
           />
-          {isFetching && (
-            <div className='ms-3 spinner-border text-primary' role='status'>
-              <span className='visually-hidden'>Loading...</span>
-            </div>
-          )}
+        </ProtectedComponent>
+        {isFetching && (
+          <div className='ms-3 spinner-border text-primary' role='status'>
+            <span className='visually-hidden'>Loading...</span>
+          </div>
+        )}
+        <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
           <Button
             onClick={() => {
               toggleSidebar()
@@ -306,16 +331,31 @@ const Assigned = () => {
               prev.concat(
                 // FIXME: undefined
                 employee.leaves?.map(leave => [
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />,
+                  <Link
+                    role='button'
+                    to={
+                      ROUTES.leave.details.replace(
+                        ROUTES.leave._params.id,
+                        employee.id.toString()
+                      ) +
+                      '?' +
+                      new URLSearchParams({
+                        month: fromDateString
+                      } satisfies typeof ROUTES.leave._queries)
+                    }
+                    className='text-decoration-none'
+                  >
+                    <EmployeeName
+                      employee={{
+                        id: employee.id,
+                        dateOfJoining: employee.dateOfJoining,
+                        name: employee.name,
+                        designation: employee.designation.name,
+                        email: employee.email,
+                        photo: employee.photo
+                      }}
+                    />
+                  </Link>,
                   <>{employee.company.name}</>,
                   <>{leave.from}</>,
                   <>{leave.to}</>,
