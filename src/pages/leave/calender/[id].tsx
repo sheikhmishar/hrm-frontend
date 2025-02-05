@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
+import Papa from 'papaparse'
 import {
-  ChangeEventHandler,
+  type ChangeEventHandler,
   useCallback,
   useContext,
   useEffect,
@@ -26,8 +27,10 @@ import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
   capitalizeDelim,
-  getDateRange,
   dateToString,
+  dayDifference,
+  downloadStringAsFile,
+  getDateRange,
   getEmployeeId,
   getWeekData,
   stringToDate
@@ -42,6 +45,54 @@ import {
   addEmployeeLeave,
   employeeLeaveDetails
 } from 'backend/controllers/leaves'
+
+const getCsvFromLeaves = (employee: Employee, leaves: EmployeeLeave[]) =>
+  Papa.unparse(
+    [
+      ['Leave History'],
+      [],
+      [
+        'Name: ' + employee.name,
+        'Designation: ' + employee.designation.name,
+        'Company: ' + employee.company.name
+      ],
+      [
+        'Id: ' + getEmployeeId(employee),
+        'Department: ' + employee.department.name,
+        'DOJ: ' + employee.dateOfJoining
+      ],
+      []
+    ].concat(
+      [
+        [
+          'id',
+          'employee',
+          'company',
+          'from',
+          'to',
+          'duration',
+          'totalDays',
+          'leaveType',
+          'leaveStatus'
+        ]
+      ].concat(
+        leaves.map(({ from, to, duration, type, status }) =>
+          [
+            getEmployeeId(employee),
+            employee.name,
+            employee.company.name,
+            from,
+            to,
+            duration,
+            dayDifference(stringToDate(to), stringToDate(from)) *
+              (duration === 'fullday' ? 1 : 0.5),
+            type,
+            status
+          ].map(v => v.toString())
+        )
+      )
+    )
+  )
 
 const LeaveDetails = () => {
   const { self } = useContext(AuthContext)
@@ -208,9 +259,29 @@ const LeaveDetails = () => {
             <div className='card-body'>
               <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
                 <div className='d-flex'>
+                  {employee && leaveDetails?.employeeLeave?.leaves && (
+                    <Button
+                      onClick={() =>
+                        downloadStringAsFile(
+                          getCsvFromLeaves(
+                            employee,
+                            leaveDetails.employeeLeave!.leaves
+                          ),
+                          `employeeLeave_${getEmployeeId(
+                            leaveDetails.employeeLeave!
+                          )}_${fromDateString.substring(0, 7)}.csv`,
+                          { type: 'text/csv' }
+                        )
+                      }
+                      className='btn-primary me-1 ms-auto my-2'
+                    >
+                      Export CSV
+                    </Button>
+                  )}
+
                   <Button
                     disabled={isFetching}
-                    className='btn-primary ms-auto my-2'
+                    className='btn-primary ms-1 my-2'
                     onClick={() => {
                       resetData()
                       toggleSidebar()
