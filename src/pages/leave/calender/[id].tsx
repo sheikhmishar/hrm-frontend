@@ -46,7 +46,11 @@ import {
   employeeLeaveDetails
 } from 'backend/controllers/leaves'
 
-const getCsvFromLeaves = (employee: Employee, leaves: EmployeeLeave[]) =>
+const getCsvFromLeaves = (
+  employee: Employee,
+  leaves: EmployeeLeave[],
+  leavesInYear: number
+) =>
   Papa.unparse(
     [
       ['Leave History'],
@@ -62,36 +66,67 @@ const getCsvFromLeaves = (employee: Employee, leaves: EmployeeLeave[]) =>
         'DOJ: ' + employee.dateOfJoining
       ],
       []
-    ].concat(
-      [
+    ]
+      .concat([
+        ['Allowed in Year', 'Allowed in Month'],
+        ['13', '3'],
+        [],
+        ['Taken in Year', 'Taken in Month'],
         [
-          'id',
-          'employee',
-          'company',
-          'from',
-          'to',
-          'duration',
-          'totalDays',
-          'leaveType',
-          'leaveStatus'
-        ]
-      ].concat(
-        leaves.map(({ from, to, duration, type, status }) =>
+          leavesInYear.toString(),
+          leaves
+            .reduce(
+              (total, { type, totalDays }) =>
+                total + (type === 'paid' ? totalDays : 0),
+              0
+            )
+            .toString()
+        ],
+        [],
+        ['Remaining in Year', 'Remaining in Month'],
+        [
+          (13 - leavesInYear).toString(),
+          (
+            3 -
+            leaves.reduce(
+              (total, { type, totalDays }) =>
+                total + (type === 'paid' ? totalDays : 0),
+              0
+            )
+          ).toString()
+        ],
+        []
+      ])
+      .concat(
+        [
           [
-            getEmployeeId(employee),
-            employee.name,
-            employee.company.name,
-            from,
-            to,
-            duration,
-            dayDifference(stringToDate(to), stringToDate(from)) *
-              (duration === 'fullday' ? 1 : 0.5),
-            type,
-            status
-          ].map(v => v.toString())
+            'id',
+            'employee',
+            'company',
+            'from',
+            'to',
+            'duration',
+            'totalDays',
+            'leaveType',
+            'leaveStatus'
+          ]
+        ].concat(
+          leaves.map(({ from, to, duration, type, status }) =>
+            [
+              getEmployeeId(employee),
+              employee.name,
+              employee.company.name,
+              from,
+              to,
+              duration,
+              dayDifference(stringToDate(to), stringToDate(from)) *
+                (duration === 'fullday' ? 1 : 0.5),
+              type,
+              status
+            ].map(v => v.toString())
+          )
         )
       )
-    )
   )
 
 const LeaveDetails = () => {
@@ -259,16 +294,17 @@ const LeaveDetails = () => {
             <div className='card-body'>
               <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
                 <div className='d-flex'>
-                  {employee && leaveDetails?.employeeLeave?.leaves && (
+                  {employee && (
                     <Button
                       onClick={() =>
                         downloadStringAsFile(
                           getCsvFromLeaves(
                             employee,
-                            leaveDetails.employeeLeave!.leaves
+                            leaveDetails?.employeeLeave?.leaves || [],
+                            leaveDetails?.employeePaidLeaveInYear || 0
                           ),
                           `employeeLeave_${getEmployeeId(
-                            leaveDetails.employeeLeave!
+                            employee
                           )}_${fromDateString.substring(0, 7)}.csv`,
                           { type: 'text/csv' }
                         )
