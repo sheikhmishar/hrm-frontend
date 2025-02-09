@@ -21,6 +21,7 @@ import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
   dateToString,
+  dayDifference,
   downloadStringAsFile,
   getDateRange,
   getEmployeeId,
@@ -66,52 +67,72 @@ const getCsvFromAttendaces = (
       .concat(
         employeeAttendances.map(employee => {
           const currentDate = new Date()
-          const leaves = employeeLeaves.find(({ id }) => employee.id === id)
+          const paidLeaves = (
+            employeeLeaves.find(({ id }) => employee.id === id)?.leaves || []
+          ).filter(({ type }) => type === 'paid')
+
+          const daysTillToday = calender.filter(
+            ({ month, date }) =>
+              stringToDate(
+                `${
+                  month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+                }-${month}-${date}`
+              ) <= currentDate
+          ).length // TODO: math
+
+          const holidaysAfterToday = holidays.filter(
+            ({ date }) => stringToDate(date) > currentDate
+          ).length
+
+          const paidLeavesAfterToday = paidLeaves.reduce(
+            (total, { from, to, duration }) => {
+              const fromDate = new Date(from)
+              const toDate = new Date(to)
+
+              return (
+                total +
+                (currentDate < fromDate && currentDate < toDate
+                  ? dayDifference(fromDate, toDate)
+                  : currentDate > toDate
+                  ? 0
+                  : dayDifference(currentDate, toDate)) *
+                  (duration === 'fullday' ? 1 : 0.5)
+              )
+            },
+            0
+          )
 
           const totalDays =
-            calender.filter(
-              ({ month, date }) =>
-                stringToDate(
-                  `${
-                    month === '01'
-                      ? toDate.getFullYear()
-                      : fromDate.getFullYear()
-                  }-${month}-${date}`
-                ) <= currentDate
-            ).length +
-            holidays.filter(({ date }) => stringToDate(date) > currentDate)
-              .length +
-            (leaves?.leaves.filter(
-              ({ from, to, type }) =>
-                type === 'paid' &&
-                currentDate >= stringToDate(from) &&
-                currentDate <= stringToDate(to) // TODO: half day leave
-            ).length || 0)
+            daysTillToday + holidaysAfterToday + paidLeavesAfterToday
 
-          const totalPresent = employee.attendances.filter(attendance => {
-            const date = stringToDate(attendance.date)
-            return (
-              !leaves?.leaves.find(
-                ({ from, to, type }) =>
-                  type === 'paid' &&
-                  date >= stringToDate(from) &&
-                  date <= stringToDate(to) // TODO: half day leave
-              ) && !holidays.find(({ date }) => date === attendance.date)
-            )
-          }).length
+          // TODO: half day attendance backend
+          const presentWithNoHolidayOrFullPaidLeave =
+            employee.attendances.reduce((total, attendance) => {
+              const date = stringToDate(attendance.date)
 
-          const totalPaidLeaves =
-            leaves?.leaves.reduce(
-              (total, { totalDays, duration, type }) =>
+              const paidLeave = paidLeaves.find(
+                ({ from, to }) =>
+                  date >= stringToDate(from) && date <= stringToDate(to)
+              )
+              return (
                 total +
-                (type === 'paid'
-                  ? totalDays * (duration === 'fullday' ? 1 : 2)
-                  : 0),
-              0
-            ) || 0
+                (holidays.find(({ date }) => date === attendance.date)
+                  ? 0
+                  : paidLeave
+                  ? paidLeave.duration === 'fullday'
+                    ? 0
+                    : 0.5
+                  : 1)
+              )
+            }, 0)
 
-          const totalHolidayAttendances = employee.attendances.filter(
-            attendance => holidays.find(({ date }) => date === attendance.date)
+          const paidLeavesTotal = paidLeaves.reduce(
+            (total, { totalDays }) => total + totalDays,
+            0
+          )
+
+          const holidayAttendances = employee.attendances.filter(attendance =>
+            holidays.find(({ date }) => date === attendance.date)
           ).length
 
           return [getEmployeeId(employee), employee.name]
@@ -130,19 +151,33 @@ const getCsvFromAttendaces = (
                       ({ date: d }) => dateString === d.substring(5)
                     )
                     ? 'OA'
+                    : paidLeaves.find(
+                        ({ from, to, duration }) =>
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration !== 'fullday'
+                      )
+                    ? 'L/2(P)'
                     : 'P'
                   : holidays.find(
                       ({ date: d }) => dateString === d.substring(5)
                     )
                   ? 'O'
-                  : leaves?.leaves.find(
+                  : paidLeaves.find(
                       // TODO: precompute
-                      ({ from, to, type }) =>
+                      ({ from, to, duration }) =>
                         stringToDate(from) <= fullDate &&
                         stringToDate(to) >= fullDate &&
-                        type === 'paid'
+                        duration === 'fullday'
                     )
                   ? 'L'
+                  : paidLeaves.find(
+                      ({ from, to, duration }) =>
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration !== 'fullday'
+                    )
+                  ? 'L/2'
                   : fullDate > new Date()
                   ? '-'
                   : 'A'
@@ -150,10 +185,13 @@ const getCsvFromAttendaces = (
             )
             .concat(
               [
-                totalPresent,
-                totalPaidLeaves,
-                totalDays - totalPresent - holidays.length - totalPaidLeaves,
-                totalHolidayAttendances
+                presentWithNoHolidayOrFullPaidLeave,
+                paidLeavesTotal,
+                totalDays -
+                  presentWithNoHolidayOrFullPaidLeave -
+                  holidays.length -
+                  paidLeavesTotal,
+                holidayAttendances
               ].map(n => n.toString())
             )
         })
@@ -362,7 +400,10 @@ const MonthlyAttendance = () => {
             <strong className='text-black-50'>O</strong> = Offday,
           </span>
           <span className='text-nowrap'>
-            <strong className='text-black-50'>L</strong> = Paid Leave,
+            <strong className='text-black-50'>L</strong>,&nbsp;
+            <strong className='text-black-50'>L</strong>
+            <strong className='text-success'>/2</strong> or&nbsp;
+            <strong className='text-black-50'>L/2</strong> = Paid Leave,
           </span>
           <span className='text-nowrap'>
             <strong className='text-success'>OA</strong> = Offday Attendance
@@ -405,51 +446,74 @@ const MonthlyAttendance = () => {
             employeeAttendances.map(employee => {
               const currentDate = new Date()
 
-              const leaves = employeeLeaves.find(({ id }) => employee.id === id)
+              const paidLeaves = (
+                employeeLeaves.find(({ id }) => employee.id === id)?.leaves ||
+                []
+              ).filter(({ type }) => type === 'paid')
+
+              const daysTillToday = calender.filter(
+                ({ month, date }) =>
+                  stringToDate(
+                    `${
+                      month === '01'
+                        ? toDate.getFullYear()
+                        : fromDate.getFullYear()
+                    }-${month}-${date}`
+                  ) <= currentDate
+              ).length // TODO: math
+
+              const holidaysAfterToday = holidays.filter(
+                ({ date }) => stringToDate(date) > currentDate
+              ).length
+
+              const paidLeavesAfterToday = paidLeaves.reduce(
+                (total, { from, to, duration }) => {
+                  const fromDate = new Date(from)
+                  const toDate = new Date(to)
+
+                  return (
+                    total +
+                    (currentDate < fromDate && currentDate < toDate
+                      ? dayDifference(fromDate, toDate)
+                      : currentDate > toDate
+                      ? 0
+                      : dayDifference(currentDate, toDate)) *
+                      (duration === 'fullday' ? 1 : 0.5)
+                  )
+                },
+                0
+              )
 
               const totalDays =
-                calender.filter(
-                  ({ month, date }) =>
-                    stringToDate(
-                      `${
-                        month === '01'
-                          ? toDate.getFullYear()
-                          : fromDate.getFullYear()
-                      }-${month}-${date}`
-                    ) <= currentDate
-                ).length +
-                holidays.filter(({ date }) => stringToDate(date) > currentDate)
-                  .length +
-                (leaves?.leaves.filter(
-                  ({ from, to, type }) =>
-                    type === 'paid' &&
-                    currentDate >= stringToDate(from) &&
-                    currentDate <= stringToDate(to) // TODO: half day leave
-                ).length || 0)
+                daysTillToday + holidaysAfterToday + paidLeavesAfterToday
 
-              const totalPresent = employee.attendances.filter(attendance => {
-                const date = stringToDate(attendance.date)
-                return (
-                  !leaves?.leaves.find(
-                    ({ from, to, type }) =>
-                      type === 'paid' &&
-                      date >= stringToDate(from) &&
-                      date <= stringToDate(to) // TODO: half day leave
-                  ) && !holidays.find(({ date }) => date === attendance.date)
-                )
-              }).length
+              // TODO: half day attendance backend
+              const presentWithNoHolidayOrFullPaidLeave =
+                employee.attendances.reduce((total, attendance) => {
+                  const date = stringToDate(attendance.date)
 
-              const totalPaidLeaves =
-                leaves?.leaves.reduce(
-                  (total, { totalDays, duration, type }) =>
+                  const paidLeave = paidLeaves.find(
+                    ({ from, to }) =>
+                      date >= stringToDate(from) && date <= stringToDate(to)
+                  )
+                  return (
                     total +
-                    (type === 'paid'
-                      ? totalDays * (duration === 'fullday' ? 1 : 2)
-                      : 0),
-                  0
-                ) || 0
+                    (holidays.find(({ date }) => date === attendance.date)
+                      ? 0
+                      : paidLeave
+                      ? paidLeave.duration === 'fullday'
+                        ? 0
+                        : 0.5
+                      : 1)
+                  )
+                }, 0)
 
-              const totalHolidayAttendances = employee.attendances.filter(
+              const paidLeavesTotal = paidLeaves.reduce(
+                (total, { totalDays }) => total + totalDays,
+                0
+              )
+
+              const holidayAttendances = employee.attendances.filter(
                 attendance =>
                   holidays.find(({ date }) => date === attendance.date)
               ).length
@@ -490,6 +554,7 @@ const MonthlyAttendance = () => {
                     const fullDate = stringToDate(`${year}-${dateString}`)
 
                     // FIXME; undefined ?
+                    // TODO: update csv
                     return employee.attendances?.find(
                       attendance => attendance.date.substring(5) === dateString
                     ) ? (
@@ -497,6 +562,16 @@ const MonthlyAttendance = () => {
                         ({ date: d }) => dateString === d.substring(5)
                       ) ? (
                         <strong className='text-success'>OA</strong>
+                      ) : paidLeaves.find(
+                          ({ from, to, duration }) =>
+                            stringToDate(from) <= fullDate &&
+                            stringToDate(to) >= fullDate &&
+                            duration !== 'fullday'
+                        ) ? (
+                        <>
+                          <strong className='text-black-50'>L</strong>
+                          <strong className='text-success'>/2</strong>
+                        </>
                       ) : (
                         <strong className='text-primary'>P</strong>
                       )
@@ -504,14 +579,21 @@ const MonthlyAttendance = () => {
                         ({ date: d }) => dateString === d.substring(5)
                       ) ? (
                       <strong className='text-black-50'>O</strong>
-                    ) : leaves?.leaves.find(
+                    ) : paidLeaves.find(
                         // TODO: precompute
-                        ({ from, to, type }) =>
+                        ({ from, to, duration }) =>
                           stringToDate(from) <= fullDate &&
                           stringToDate(to) >= fullDate &&
-                          type === 'paid'
+                          duration === 'fullday'
                       ) ? (
                       <strong className='text-black-50'>L</strong>
+                    ) : paidLeaves.find(
+                        ({ from, to, duration }) =>
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration !== 'fullday'
+                      ) ? (
+                      <strong className='text-black-50'>L/2</strong>
                     ) : (
                       <strong className='text-danger'>
                         {fullDate > currentDate ? '-' : 'A'}
@@ -520,15 +602,15 @@ const MonthlyAttendance = () => {
                   })
                 )
                 .concat([
-                  <>{totalPresent}</>,
-                  <>{totalPaidLeaves}</>,
+                  <>{presentWithNoHolidayOrFullPaidLeave}</>,
+                  <>{paidLeavesTotal}</>,
                   <>
                     {totalDays -
-                      totalPresent -
+                      presentWithNoHolidayOrFullPaidLeave -
                       holidays.length -
-                      totalPaidLeaves}
+                      paidLeavesTotal}
                   </>,
-                  <>{totalHolidayAttendances}</>
+                  <>{holidayAttendances}</>
                 ])
             })
           )}
