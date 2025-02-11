@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import Button from '../components/Button'
 import CalenderSlider from '../components/CalenderSlider'
@@ -8,7 +9,7 @@ import EmployeeName from '../components/EmployeeName'
 import ProtectedComponent from '../components/ProtectedComponent'
 import Select from '../components/Select'
 import Table from '../components/Table'
-import { BLANK_ARRAY } from '../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../constants/CONSTANTS'
 import ServerSITEMAP from '../constants/SERVER_SITEMAP'
 import { AuthContext } from '../contexts/auth'
 import { ToastContext } from '../contexts/toast'
@@ -274,16 +275,30 @@ const Report: React.FC = () => {
         columns={overtimeColumns}
         rows={attendances.map(employee =>
           [
-            <EmployeeName
-              employee={{
-                id: employee.id,
-                dateOfJoining: employee.dateOfJoining,
-                name: employee.name,
-                designation: employee.designation.name,
-                email: employee.email,
-                photo: employee.photo
-              }}
-            />,
+            <Link
+              to={
+                ROUTES.attendance.details.replace(
+                  ROUTES.attendance._params.id,
+                  employee.id.toString()
+                ) +
+                '?' +
+                new URLSearchParams({
+                  month: fromDateString
+                } satisfies typeof ROUTES.attendance._queries)
+              }
+              className='text-decoration-none'
+            >
+              <EmployeeName
+                employee={{
+                  id: employee.id,
+                  dateOfJoining: employee.dateOfJoining,
+                  name: employee.name,
+                  designation: employee.designation.name,
+                  email: employee.email,
+                  photo: employee.photo
+                }}
+              />
+            </Link>,
             <>{employee.department.name}</>
           ]
             .concat(
@@ -354,16 +369,24 @@ const Report: React.FC = () => {
             prev.concat(
               // FIXME: ?.
               (employee.salaries || []).map(salary => [
-                <EmployeeName
-                  employee={{
-                    id: employee.id,
-                    dateOfJoining: employee.dateOfJoining,
-                    name: employee.name,
-                    designation: employee.designation.name,
-                    email: employee.email,
-                    photo: employee.photo
-                  }}
-                />,
+                <Link
+                  to={ROUTES.payroll.updateById.replace(
+                    ROUTES.payroll._params.id,
+                    employee.id.toString()
+                  )}
+                  className='text-decoration-none'
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>,
                 <>{salary.basicSalary}</>,
                 <>{salary.houseRent}</>,
                 <>{salary.foodCost}</>,
