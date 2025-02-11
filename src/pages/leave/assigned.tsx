@@ -318,62 +318,54 @@ const Assigned = () => {
           'Leave status',
           'Action'
         ]}
-        rows={employeeLeaves
-          .filter(
-            ({ id, company: { id: cid } }) =>
-              (companyId < 1 || cid === companyId) &&
-              (self?.type === 'Employee' && self.employeeId
-                ? id === self.employeeId
-                : true)
-          )
-          .reduce(
-            (prev, employee) =>
-              prev.concat(
-                // FIXME: undefined
-                employee.leaves?.map(leave => [
-                  <Link
-                    role='button'
-                    to={
-                      ROUTES.leave.details.replace(
-                        ROUTES.leave._params.id,
-                        employee.id.toString()
-                      ) +
-                      '?' +
-                      new URLSearchParams({
-                        month: fromDateString
-                      } satisfies typeof ROUTES.leave._queries)
-                    }
-                    className='text-decoration-none'
-                  >
-                    <EmployeeName
-                      employee={{
-                        id: employee.id,
-                        dateOfJoining: employee.dateOfJoining,
-                        name: employee.name,
-                        designation: employee.designation.name,
-                        email: employee.email,
-                        photo: employee.photo
-                      }}
-                    />
-                  </Link>,
-                  <>{employee.company.name}</>,
-                  <>{leave.from}</>,
-                  <>{leave.to}</>,
-                  <>{leave.duration}</>,
-                  <>{leave.totalDays}</>,
-                  <>{leave.type}</>,
-                  <>{leave.status}</>,
-                  <Button
-                    disabled={isLoading || self?.type === 'Employee'}
-                    onClick={() => mutate(leave.id)}
-                    className='link-primary text-body'
-                  >
-                    <FaTrash />
-                  </Button>
-                ])
-              ),
-            [] as JSX.Element[][]
-          )}
+        rows={employeeLeaves.reduce(
+          (prev, employee) =>
+            prev.concat(
+              // FIXME: undefined
+              employee.leaves?.map(leave => [
+                <Link
+                  role='button'
+                  to={
+                    ROUTES.leave.details.replace(
+                      ROUTES.leave._params.id,
+                      employee.id.toString()
+                    ) +
+                    '?' +
+                    new URLSearchParams({
+                      month: fromDateString
+                    } satisfies typeof ROUTES.leave._queries)
+                  }
+                  className='text-decoration-none'
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>,
+                <>{employee.company.name}</>,
+                <>{leave.from}</>,
+                <>{leave.to}</>,
+                <>{leave.duration}</>,
+                <>{leave.totalDays}</>,
+                <>{leave.type}</>,
+                <>{leave.status}</>,
+                <Button
+                  disabled={isLoading || self?.type === 'Employee'}
+                  onClick={() => mutate(leave.id)}
+                  className='link-primary text-body'
+                >
+                  <FaTrash />
+                </Button>
+              ])
+            ),
+          [] as JSX.Element[][]
+        )}
       />
 
       <Modal isOpen={sidebar} setIsOpen={setSidebar}>

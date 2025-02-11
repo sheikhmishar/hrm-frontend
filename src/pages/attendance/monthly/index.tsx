@@ -105,14 +105,13 @@ const getCsvFromAttendaces = (
           const totalDays =
             daysTillToday + holidaysAfterToday + paidLeavesAfterToday
 
-          // TODO: half day attendance backend
           const presentWithNoHolidayOrFullPaidLeave =
             employee.attendances.reduce((total, attendance) => {
               const date = stringToDate(attendance.date)
 
               const paidLeave = paidLeaves.find(
                 ({ from, to }) =>
-                  date >= stringToDate(from) && date <= stringToDate(to)
+                  stringToDate(from) <= date && date <= stringToDate(to)
               )
               return (
                 total +

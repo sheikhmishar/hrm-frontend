@@ -85,6 +85,7 @@ const ServerSITEMAP = {
   salaries: {
     _params: { ...rootParams, employeeId: ':employeeId' },
     _: salariesRoot,
+    get: salariesRoot,
     getByEmployeeId: `${salariesRoot}/:employeeId`
   },
   monthlySalaries: {
