@@ -50,7 +50,8 @@ export const ROUTES = {
     loan: `${payrollRoot}/loan`,
     monthly: `${payrollRoot}/monthly`,
     cost: `${payrollRoot}/cost`,
-    update: `${payrollRoot}/update`
+    update: `${payrollRoot}/update`,
+    updateById: `${payrollRoot}/update/:id`
   },
   organization: {
     _: organizationRoot,

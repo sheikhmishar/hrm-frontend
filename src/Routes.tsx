@@ -246,6 +246,14 @@ const Routes = () => (
         }
       />
       <Route
+        path={ROUTES.payroll.updateById}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
+            <PayrollUpdateLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.payroll.id}
         element={
           <ProtectedRoute authenticatedOnly>

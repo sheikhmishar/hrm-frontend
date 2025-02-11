@@ -1,13 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
-import { useContext, useState, type ChangeEventHandler } from 'react'
+import { useContext, useEffect, useState, type ChangeEventHandler } from 'react'
+import { useParams } from 'react-router-dom'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Select from '../../components/Select'
 import Table from '../../components/Table'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
 import { defaultEmployee } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
@@ -135,6 +136,13 @@ const UpdatePayroll = () => {
 
       return updatedEmployee
     })
+
+  const { id: idFromParam = '-1' } =
+    useParams<(typeof ROUTES)['payroll']['_params']>()
+
+  useEffect(() => {
+    setEmployee(employee => ({ ...employee, id: parseInt(idFromParam) || -1 }))
+  }, [idFromParam])
 
   const {
     refetch: refetchEmployees,
