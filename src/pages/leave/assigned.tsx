@@ -458,6 +458,8 @@ const Assigned = () => {
               label={capitalizeDelim(k)}
               containerClass='my-3'
               placeholder={'Enter ' + capitalizeDelim(k)}
+              autoComplete='true'
+              options={['Casual', 'Sick']}
               value={leave[k]}
               onChange={onLeaveChange}
             />
