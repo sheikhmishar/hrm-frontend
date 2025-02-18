@@ -128,7 +128,7 @@ const SidebarItems: React.FC = () => {
             <FaUsers className='me-2' /> Leave Assigned
           </NavItem>
           <NavItem to={ROUTES.leave.calender}>
-            <FaCalendar className='me-2' /> Calender
+            <FaCalendar className='me-2' /> LV Calender
           </NavItem>
         </AccordionItem>
       </div>
