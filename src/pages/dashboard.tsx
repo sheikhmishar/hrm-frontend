@@ -11,18 +11,20 @@ import {
 } from 'chart.js'
 import { useContext, useMemo, useState } from 'react'
 import { Bar, Pie } from 'react-chartjs-2'
+import { Link } from 'react-router-dom'
 
 import iconAbsentEmployee from '../assets/img/dashboard/absent_employees.png' // TODO: iconify
 import iconLeaveEmployee from '../assets/img/dashboard/leave_employees.png'
 import iconPresentEmployee from '../assets/img/dashboard/present_employees.png'
 import iconTotalEmployee from '../assets/img/dashboard/total_employees.png'
 import CalenderDropdown from '../components/CalenderSlider'
+import EmployeeName from '../components/EmployeeName'
 import Select, { type DropDownEventHandler } from '../components/Select'
 import Table from '../components/Table'
-import { BLANK_ARRAY } from '../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../constants/CONSTANTS'
 import ServerSITEMAP from '../constants/SERVER_SITEMAP'
 import { ToastContext } from '../contexts/toast'
-import { getDateRange, dateToString, stringToDate } from '../libs'
+import { dateToString, getDateRange, stringToDate } from '../libs'
 import modifiedFetch from '../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
@@ -349,30 +351,32 @@ const Dashboard: React.FC = () => {
                             ),
                           [] as Employee[]
                         )
-                        .map(({ email, name, designation }) => [
-                          <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
-                            <img
-                              src='/favicon.png'
-                              width='50'
-                              height='50'
-                              className='object-fit-cover rounded-circle'
+                        .map(employee => [
+                          <Link
+                            role='button'
+                            to={
+                              ROUTES.leave.details.replace(
+                                ROUTES.leave._params.id,
+                                employee.id.toString()
+                              ) +
+                              '?' +
+                              new URLSearchParams({
+                                month: fromDateString
+                              } satisfies typeof ROUTES.leave._queries)
+                            }
+                            className='text-decoration-none'
+                          >
+                            <EmployeeName
+                              employee={{
+                                id: employee.id,
+                                dateOfJoining: employee.dateOfJoining,
+                                name: employee.name,
+                                designation: employee.designation.name,
+                                email: employee.email,
+                                photo: employee.photo
+                              }}
                             />
-                            <div>
-                              <p
-                                style={{ fontSize: 12 }}
-                                className='fw-lighter m-0 text-info'
-                              >
-                                {email}
-                              </p>
-                              <p className='fw-bold m-0 text-nowrap'>{name}</p>
-                              <p
-                                style={{ fontSize: 12 }}
-                                className='fw-lighter m-0 text-muted'
-                              >
-                                {designation.name}
-                              </p>
-                            </div>
-                          </div>
+                          </Link>
                         ])}
                     />
                   </div>
@@ -445,30 +449,31 @@ const Dashboard: React.FC = () => {
                         ),
                       [] as Employee[]
                     )
-                    .map(({ email, name, designation }) => [
-                      <div className='align-items-center d-flex gap-2 py-2 text-decoration-none'>
-                        <img
-                          src='/favicon.png'
-                          width='50'
-                          height='50'
-                          className='object-fit-cover rounded-circle'
+                    .map(employee => [
+                      <Link
+                        to={
+                          ROUTES.attendance.details.replace(
+                            ROUTES.attendance._params.id,
+                            employee.id.toString()
+                          ) +
+                          '?' +
+                          new URLSearchParams({
+                            month: fromDateString
+                          } satisfies typeof ROUTES.attendance._queries)
+                        }
+                        className='text-decoration-none'
+                      >
+                        <EmployeeName
+                          employee={{
+                            id: employee.id,
+                            dateOfJoining: employee.dateOfJoining,
+                            name: employee.name,
+                            designation: employee.designation.name,
+                            email: employee.email,
+                            photo: employee.photo
+                          }}
                         />
-                        <div>
-                          <p
-                            style={{ fontSize: 12 }}
-                            className='fw-lighter m-0 text-info'
-                          >
-                            {email}
-                          </p>
-                          <p className='fw-bold m-0 text-nowrap'>{name}</p>
-                          <p
-                            style={{ fontSize: 12 }}
-                            className='fw-lighter m-0 text-muted'
-                          >
-                            {designation.name}
-                          </p>
-                        </div>
-                      </div>
+                      </Link>
                     ])}
                 />
               </div>
