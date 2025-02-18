@@ -325,7 +325,7 @@ const EmployeeDetails = () => {
   const employeeFormData = useMemo(() => {
     const formData = encodeMultipartBody(
       employee satisfies GetReqBodyType<typeof updateEmployee>
-    ) // TODO: drop images starting with blob:
+    ) // TODO: drop images starting with blob: // TODO: make required
     if (photoRef.current?.files?.[0])
       formData.append(
         'photo' satisfies keyof Employee,
@@ -778,9 +778,18 @@ const EmployeeDetails = () => {
                       disabled={isEmployeeLoading || employee.id > 0}
                       id={k}
                       required
-                      label={capitalizeDelim(k)}
+                      label={
+                        k === 'totalSalary'
+                          ? 'Gross Salary'
+                          : capitalizeDelim(k)
+                      }
                       containerClass='my-3'
-                      placeholder={'Enter ' + capitalizeDelim(k)}
+                      placeholder={
+                        'Enter ' +
+                        (k === 'totalSalary'
+                          ? 'Gross Salary'
+                          : capitalizeDelim(k))
+                      }
                       value={employee[k]}
                       type='number'
                       onChange={onEmployeeChange}
