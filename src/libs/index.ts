@@ -138,6 +138,11 @@ export const getWeekData = (
   return data
 }
 
+export const getYearRange = (date: Date) => {
+  const year = date.getFullYear()
+  return [`${year}-01-15`, `${year + 1}-01-14`] as const
+}
+
 export function downloadStringAsFile(
   data: string,
   filename: string,
