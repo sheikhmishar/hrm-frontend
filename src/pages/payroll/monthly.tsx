@@ -453,6 +453,7 @@ const MonthlyPaysheet = () => {
           'Food Cost',
           'Conveyance',
           'Medical Cost',
+          'Gross Salary',
           'Overtime',
           'Overtime Payment',
           'Bonus',
@@ -493,6 +494,13 @@ const MonthlyPaysheet = () => {
           <>{salary.foodCost}</>,
           <>{salary.conveyance}</>,
           <>{salary.medicalCost}</>,
+          <>
+            {salary.basicSalary +
+              salary.foodCost +
+              salary.houseRent +
+              salary.conveyance +
+              salary.medicalCost}
+          </>,
           <>{salary.overtime}</>,
           <>{salary.overtimePayment}</>,
           <>{salary.bonus}</>,
