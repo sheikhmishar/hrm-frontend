@@ -19,6 +19,7 @@ import {
   downloadStringAsFile,
   getDateRange,
   getEmployeeId,
+  getYearRange,
   stringToDate
 } from '../libs'
 import modifiedFetch from '../libs/modifiedFetch'
@@ -127,6 +128,9 @@ const Report: React.FC = () => {
     () => [fromDate, toDate].map(dateToString) as [string, string],
     [fromDate, toDate]
   )
+
+  const [yearStart, yearEnd] = useMemo(() => getYearRange(fromDate), [fromDate])
+
   const dayCount = useMemo(
     () => dayDifference(toDate, fromDate),
     [toDate, fromDate]
@@ -177,10 +181,18 @@ const Report: React.FC = () => {
     data: _salaryHistory = BLANK_ARRAY,
     isFetching: isSalaryHistoryFetching
   } = useQuery({
-    queryKey: ['allSalaryDetails', ServerSITEMAP.salaries.get],
+    queryKey: [
+      'allSalaryDetails',
+      ServerSITEMAP.salaries.get,
+      yearStart,
+      yearEnd
+    ],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allSalaryDetails>>(
-        ServerSITEMAP.salaries.get
+        ServerSITEMAP.salaries.get +
+          new URLSearchParams({ from: yearStart, to: yearEnd } satisfies {
+            [k in keyof typeof ServerSITEMAP.salaries._queries]: string
+          })
       )
   })
 
