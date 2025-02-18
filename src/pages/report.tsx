@@ -28,7 +28,8 @@ import type { GetResponseType } from 'backend/@types/response'
 import type Employee from 'backend/Entities/Employee'
 import type { allEmployeeAttendances } from 'backend/controllers/attendances'
 import type { allCompanies } from 'backend/controllers/companies'
-import { allSalaryDetails } from 'backend/controllers/salaries'
+import type { allSalaryDetails } from 'backend/controllers/salaries'
+import type { allEmployeeLeaves } from 'backend/controllers/leaves'
 
 const getOvertimeCsv = (
   columns: string[],
@@ -112,6 +113,43 @@ const getPromotionCsv = (employees: Employee[]) =>
       )
     )
   )
+
+const getCsvFromLeaves = (employees: Employee[]) =>
+  Papa.unparse(
+    employees.reduce(
+      (prev, employee) =>
+        prev.concat(
+          employee.leaves.map(({ from, to, duration, type, status }) => ({
+            id: getEmployeeId(employee),
+            employee: employee.name,
+            company: employee.company.name,
+            from,
+            to,
+            duration,
+            totalDays:
+              dayDifference(stringToDate(to), stringToDate(from)) *
+              (duration === 'fullday' ? 1 : 0.5),
+            leaveType: type,
+            leaveStatus: status
+          }))
+        ),
+      [] as { [x: string]: number | string }[]
+    ),
+    {
+      columns: [
+        'id',
+        'employee',
+        'company',
+        'from',
+        'to',
+        'duration',
+        'totalDays',
+        'leaveType',
+        'leaveStatus'
+      ]
+    }
+  )
+
 const Report: React.FC = () => {
   const { self } = useContext(AuthContext)
   const { onErrorDisplayToast } = useContext(ToastContext)
@@ -177,6 +215,26 @@ const Report: React.FC = () => {
     onError: onErrorDisplayToast
   })
 
+  const { data: _leaves = BLANK_ARRAY, isFetching: fetchingEmployeeLeaves } =
+    useQuery({
+      queryKey: [
+        'allEmployeeLeaves',
+        ServerSITEMAP.leaves.get,
+        fromDateString,
+        toDateString
+      ],
+      queryFn: () =>
+        modifiedFetch<GetResponseType<typeof allEmployeeLeaves>>(
+          ServerSITEMAP.leaves.get +
+            '?' +
+            new URLSearchParams({
+              from: fromDateString,
+              to: toDateString
+            } satisfies Partial<typeof ServerSITEMAP.leaves._queries>)
+        ),
+      onError: onErrorDisplayToast
+    })
+
   const {
     data: _salaryHistory = BLANK_ARRAY,
     isFetching: isSalaryHistoryFetching
@@ -207,7 +265,10 @@ const Report: React.FC = () => {
     })
 
   const isFetching =
-    fetchingCompanies || fetchingEmployeeAttendances || isSalaryHistoryFetching
+    fetchingCompanies ||
+    fetchingEmployeeAttendances ||
+    isSalaryHistoryFetching ||
+    fetchingEmployeeLeaves
 
   const attendances = useMemo(
     () =>
@@ -219,6 +280,17 @@ const Report: React.FC = () => {
             : true)
       ),
     [_attendances, companyId, self]
+  )
+  const leaves = useMemo(
+    () =>
+      _leaves.filter(
+        ({ id, company: { id: cid } }) =>
+          (companyId < 1 || cid === companyId) &&
+          (self?.type === 'Employee' && self.employeeId
+            ? id === self.employeeId
+            : true)
+      ),
+    [_leaves, companyId, self]
   )
   const salaryHistory = useMemo(
     () =>
@@ -345,7 +417,9 @@ const Report: React.FC = () => {
 
       <div className='align-items-center d-flex my-2'>
         <h5 className='mb-0'>
-          <strong className='text-muted'>Promotion History</strong>
+          <strong className='text-muted'>
+            Yearly Promotion History ({yearStart.substring(0, 4)})
+          </strong>
         </h5>
 
         <Button
@@ -410,6 +484,80 @@ const Report: React.FC = () => {
                 <>{salary.remarks}</>,
                 <>{salary.designation.name}</>,
                 <>{new Date(salary.changedAt).toString()}</>
+              ])
+            ),
+          [] as JSX.Element[][]
+        )}
+      />
+
+      <div className='align-items-center d-flex my-2'>
+        <h5 className='mb-0'>
+          <strong className='text-muted'>
+            Yearly Leave History ({yearStart.substring(0, 4)})
+          </strong>
+        </h5>
+
+        <Button
+          onClick={() =>
+            downloadStringAsFile(
+              getCsvFromLeaves(leaves),
+              'employeeLeaveHistory.csv',
+              { type: 'text/csv' }
+            )
+          }
+          className='btn-primary ms-auto'
+        >
+          Export CSV
+        </Button>
+      </div>
+      <Table
+        columns={[
+          'Employee',
+          'Company',
+          'From',
+          'To',
+          'Duration',
+          'Total days',
+          'Leave Type',
+          'Leave status'
+        ]}
+        rows={leaves.reduce(
+          (prev, employee) =>
+            prev.concat(
+              // FIXME: undefined
+              employee.leaves?.map(leave => [
+                <Link
+                  role='button'
+                  to={
+                    ROUTES.leave.details.replace(
+                      ROUTES.leave._params.id,
+                      employee.id.toString()
+                    ) +
+                    '?' +
+                    new URLSearchParams({
+                      month: fromDateString
+                    } satisfies typeof ROUTES.leave._queries)
+                  }
+                  className='text-decoration-none'
+                >
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
+                </Link>,
+                <>{employee.company.name}</>,
+                <>{leave.from}</>,
+                <>{leave.to}</>,
+                <>{leave.duration}</>,
+                <>{leave.totalDays}</>,
+                <>{leave.type}</>,
+                <>{leave.status}</>
               ])
             ),
           [] as JSX.Element[][]
