@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
-import { useContext, useState, type ChangeEventHandler } from 'react'
+import { useContext, useMemo, useState, type ChangeEventHandler } from 'react'
 import { FaPen, FaPlus } from 'react-icons/fa6'
 import { Link } from 'react-router-dom'
 
@@ -74,6 +74,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
         loanRemaining,
         altPhoneNumber,
         noticePeriod,
+        noticePeriodRemark,
         photo,
         taskWisePayment,
         wordLimit
@@ -96,12 +97,19 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           dateOfJoining,
           designation,
           extraBonus,
-          financials: financials
-            .map(
-              ({ accountNumber, bankName, branch, holderName, medium }) =>
-                `${accountNumber} | ${bankName} | ${branch} | ${holderName} | ${medium}`
-            )
-            .join(', '),
+          // financials: financials
+          //   .map(
+          //     ({ accountNumber, bankName, branch, holderName, medium }) =>
+          //       `${accountNumber} | ${bankName} | ${branch} | ${holderName} | ${medium}`
+          //   )
+          //   .join(', '),
+          financialHolderName:
+            financials[financials.length - 1]?.holderName || '',
+          financialMedium: financials[financials.length - 1]?.medium || '',
+          financialAccountNumber:
+            financials[financials.length - 1]?.accountNumber || '',
+          financialBankName: financials[financials.length - 1]?.bankName || '',
+          financialBranch: financials[financials.length - 1]?.branch || '',
           foodCost,
           fullAddress,
           gender,
@@ -118,6 +126,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           loanRemaining,
           altPhoneNumber,
           noticePeriod,
+          noticePeriodRemark,
           photo,
           taskWisePayment,
           wordLimit,
@@ -129,8 +138,20 @@ const getCsvFromEmployees = (employees: Employee[]) =>
             .join(', ')
         } satisfies {
           [k in keyof OmitKey<
-            Employee & { grossSalary: number },
-            'attendances' | 'leaves' | 'salaries' | 'loans' | 'documents'
+            Employee & {
+              grossSalary: number
+              financialHolderName: string
+              financialMedium: string
+              financialAccountNumber: string
+              financialBankName: string
+              financialBranch: string
+            },
+            | 'attendances'
+            | 'leaves'
+            | 'salaries'
+            | 'loans'
+            | 'documents'
+            | 'financials'
           >]: string | number | undefined
         })
     ),
@@ -161,8 +182,13 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           'dutyType',
           'designation',
           'branch',
-          'financials',
+          'financialHolderName',
+          'financialMedium',
+          'financialAccountNumber',
+          'financialBankName',
+          'financialBranch',
           'noticePeriod',
+          'noticePeriodRemark',
           'officeStartTime',
           'officeEndTime',
           'overtime',
@@ -175,8 +201,14 @@ const getCsvFromEmployees = (employees: Employee[]) =>
               | 'attendances'
               | 'leaves'
               | 'salaries'
+              | 'financials'
             >
           | 'grossSalary'
+          | 'financialHolderName'
+          | 'financialMedium'
+          | 'financialAccountNumber'
+          | 'financialBankName'
+          | 'financialBranch'
         )[])
     }
   )
@@ -191,7 +223,7 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
 
   const {
     refetch,
-    data: employees = BLANK_ARRAY,
+    data: _employees = BLANK_ARRAY,
     isFetching: fetchingEmployees
   } = useQuery({
     queryKey: ['employees', ServerSITEMAP.employees.get],
@@ -230,6 +262,30 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
         refetch()
       }
     })
+
+  const employees = useMemo(
+    () =>
+      _employees.filter(
+        employee =>
+          (approval
+            ? employee.status === 'inactive'
+            : employee.status === 'active') &&
+          (self?.type === 'Employee' && self.employeeId
+            ? employee.id === self.employeeId
+            : true) &&
+          (visibleKeys.find(key =>
+            (key === 'company' || key === 'department'
+              ? employee[key].name
+              : employee[key]
+            )
+              .toString()
+              .toLowerCase()
+              .includes(search.toLowerCase())
+          ) ||
+            getEmployeeId(employee).includes(search))
+      ),
+    [_employees]
+  )
 
   const isFetching = fetchingEmployees || employeeUpdateLoading
 
@@ -283,95 +339,73 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
       </div>
       <Table
         columns={columns}
-        rows={employees
-          .filter(
-            ({ id, status }) =>
-              (approval ? status === 'inactive' : status === 'active') &&
-              (self?.type === 'Employee' && self.employeeId
-                ? id === self.employeeId
-                : true)
-          )
-          .map(({ company, department, ...employee }) => ({
-            ...employee,
-            company: company.name,
-            department: department.name
-          }))
-          .filter(
-            employee =>
-              visibleKeys.find(key =>
-                employee[key]
-                  .toString()
-                  .toLowerCase()
-                  .includes(search.toLowerCase())
-              ) || getEmployeeId(employee).includes(search)
-          )
-          .map(employee =>
-            visibleKeys
-              .map(key =>
-                key === 'name' ? (
-                  <Link
-                    className='text-decoration-none'
-                    to={ROUTES.employee.details.replace(
-                      ROUTES.employee._params.id,
-                      employee.id.toString()
-                    )}
-                  >
-                    <EmployeeName
-                      employee={{
-                        id: employee.id,
-                        dateOfJoining: employee.dateOfJoining,
-                        name: employee.name,
-                        designation: employee.designation.name,
-                        email: employee.email,
-                        photo: employee.photo
-                      }}
-                    />
-                  </Link>
-                ) : key === 'status' ? (
-                  <span
-                    className={`p-1 rounded ${
-                      approval
-                        ? 'text-bg-danger bg-opacity-50'
-                        : 'text-bg-primary'
-                    }`}
-                    role='button'
-                    onClick={() =>
-                      approval
-                        ? employeeUpdate({
-                            id: employee.id,
-                            employee: { status: 'active' }
-                          })
-                        : employeeUpdate({
-                            id: employee.id,
-                            employee: { status: 'inactive' }
-                          })
-                    }
-                  >
-                    {employee[key]}
-                  </span>
-                ) : (
-                  // TODO: global
-                  <>
-                    {employee[key]?.toString().substring(0, 50) +
-                      ((employee[key]?.toString().length || 0) > 50
-                        ? '...'
-                        : '')}
-                  </>
-                )
-              )
-              .concat(
+        rows={employees.map(employee =>
+          visibleKeys
+            .map(key =>
+              key === 'name' ? (
                 <Link
-                  role='button'
-                  className='link-primary text-body'
+                  className='text-decoration-none'
                   to={ROUTES.employee.details.replace(
                     ROUTES.employee._params.id,
                     employee.id.toString()
                   )}
                 >
-                  <FaPen />
+                  <EmployeeName
+                    employee={{
+                      id: employee.id,
+                      dateOfJoining: employee.dateOfJoining,
+                      name: employee.name,
+                      designation: employee.designation.name,
+                      email: employee.email,
+                      photo: employee.photo
+                    }}
+                  />
                 </Link>
+              ) : key === 'department' || key === 'company' ? (
+                <>{employee[key].name}</>
+              ) : key === 'status' ? (
+                <span
+                  className={`p-1 rounded ${
+                    approval
+                      ? 'text-bg-danger bg-opacity-50'
+                      : 'text-bg-primary'
+                  }`}
+                  role='button'
+                  onClick={() =>
+                    approval
+                      ? employeeUpdate({
+                          id: employee.id,
+                          employee: { status: 'active' }
+                        })
+                      : employeeUpdate({
+                          id: employee.id,
+                          employee: { status: 'inactive' }
+                        })
+                  }
+                >
+                  {employee[key]}
+                </span>
+              ) : (
+                // TODO: global
+                <>
+                  {employee[key]?.toString().substring(0, 50) +
+                    ((employee[key]?.toString().length || 0) > 50 ? '...' : '')}
+                </>
               )
-          )}
+            )
+            .concat(
+              <Link
+                role='button'
+                className='link-primary text-body'
+                to={ROUTES.employee.details.replace(
+                  ROUTES.employee._params.id,
+                  employee.id.toString()
+                )}
+              >
+                <FaPen />
+              </Link>
+            )
+        )}
       />
     </>
   )
