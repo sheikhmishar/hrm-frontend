@@ -55,6 +55,7 @@ const HolidayManagementLazy = delayedLazy(
 const PayrollUpdateLazy = delayedLazy(() => import('./pages/payroll/update'))
 const PayrollMonthlyLazy = delayedLazy(() => import('./pages/payroll/monthly'))
 const LoanLazy = delayedLazy(() => import('./pages/payroll/loan'))
+const LoanByIdLazy = delayedLazy(() => import('./pages/payroll/loan/[id]'))
 const SalaryCostLazy = delayedLazy(() => import('./pages/payroll/cost'))
 const PayrollByIdLazy = delayedLazy(() => import('./pages/payroll/[id]'))
 
@@ -274,6 +275,14 @@ const Routes = () => (
         element={
           <ProtectedRoute authenticatedOnly>
             <LoanLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.payroll.loanById}
+        element={
+          <ProtectedRoute authenticatedOnly>
+            <LoanByIdLazy />
           </ProtectedRoute>
         }
       />

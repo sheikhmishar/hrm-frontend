@@ -48,6 +48,7 @@ export const ROUTES = {
     _params: ROUTE_PARAMS,
     id: `${payrollRoot}/:id`,
     loan: `${payrollRoot}/loan`,
+    loanById: `${payrollRoot}/loan/:id`,
     monthly: `${payrollRoot}/monthly`,
     cost: `${payrollRoot}/cost`,
     update: `${payrollRoot}/update`,

@@ -7,25 +7,26 @@ import {
 } from 'react'
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 
-import Button from '../../components/Button'
-import EmployeeName from '../../components/EmployeeName'
-import Input from '../../components/Input'
-import Modal from '../../components/Modal'
-import Select, { DropDownEventHandler } from '../../components/Select'
-import Table from '../../components/Table'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
-import { defaultLoan } from '../../constants/DEFAULT_MODELS'
-import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
-import { AuthContext } from '../../contexts/auth'
-import { ToastContext } from '../../contexts/toast'
-import { capitalizeDelim, getEmployeeId } from '../../libs'
-import modifiedFetch from '../../libs/modifiedFetch'
+import Button from '../../../components/Button'
+import EmployeeName from '../../../components/EmployeeName'
+import Input from '../../../components/Input'
+import Modal from '../../../components/Modal'
+import Select, { DropDownEventHandler } from '../../../components/Select'
+import Table from '../../../components/Table'
+import { BLANK_ARRAY, ROUTES } from '../../../constants/CONSTANTS'
+import { defaultLoan } from '../../../constants/DEFAULT_MODELS'
+import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
+import { AuthContext } from '../../../contexts/auth'
+import { ToastContext } from '../../../contexts/toast'
+import { capitalizeDelim, getEmployeeId } from '../../../libs'
+import modifiedFetch from '../../../libs/modifiedFetch'
 
 import { GetResponseType } from 'backend/@types/response'
 import Employee from 'backend/Entities/Employee'
 import Loan from 'backend/Entities/Loan'
 import { allEmployees } from 'backend/controllers/employees'
 import { addLoan, allLoans, deleteLoan } from 'backend/controllers/loans'
+import { Link } from 'react-router-dom'
 
 const Assigned = () => {
   const { self } = useContext(AuthContext)
@@ -153,16 +154,24 @@ const Assigned = () => {
               prev.concat(
                 // FIXME: undefined
                 employee.loans?.map(loan => [
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />,
+                  <Link
+                    to={ROUTES.payroll.loanById.replace(
+                      ROUTES.payroll._params.id,
+                      employee.id.toString()
+                    )}
+                    className='text-decoration-none'
+                  >
+                    <EmployeeName
+                      employee={{
+                        id: employee.id,
+                        dateOfJoining: employee.dateOfJoining,
+                        name: employee.name,
+                        designation: employee.designation.name,
+                        email: employee.email,
+                        photo: employee.photo
+                      }}
+                    />
+                  </Link>,
                   <>{employee.company.name}</>,
                   <>{loan.date}</>,
                   <>{loan.amount}</>,
