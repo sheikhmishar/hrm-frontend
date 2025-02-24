@@ -97,12 +97,6 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           dateOfJoining,
           designation,
           extraBonus,
-          // financials: financials
-          //   .map(
-          //     ({ accountNumber, bankName, branch, holderName, medium }) =>
-          //       `${accountNumber} | ${bankName} | ${branch} | ${holderName} | ${medium}`
-          //   )
-          //   .join(', '),
           financialHolderName:
             financials[financials.length - 1]?.holderName || '',
           financialMedium: financials[financials.length - 1]?.medium || '',
@@ -167,6 +161,7 @@ const getCsvFromEmployees = (employees: Employee[]) =>
           'houseRent',
           'foodCost',
           'medicalCost',
+          'conveyance',
           'grossSalary',
           'totalSalary',
           'loanTaken',
