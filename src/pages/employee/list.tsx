@@ -265,9 +265,8 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
           (approval
             ? employee.status === 'inactive'
             : employee.status === 'active') &&
-          (self?.type === 'Employee' && self.employeeId
-            ? employee.id === self.employeeId
-            : true) &&
+          (!(self?.type === 'Employee' && self.employeeId) ||
+            employee.id === self.employeeId) &&
           (visibleKeys.find(key =>
             (key === 'company' || key === 'department'
               ? employee[key].name
@@ -279,7 +278,7 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
           ) ||
             getEmployeeId(employee).includes(search))
       ),
-    [_employees]
+    [_employees, approval, search, self?.employeeId, self?.type]
   )
 
   const isFetching = fetchingEmployees || employeeUpdateLoading
