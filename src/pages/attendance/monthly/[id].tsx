@@ -17,12 +17,12 @@ import Input from '../../../components/Input'
 import Modal from '../../../components/Modal'
 import ProtectedComponent from '../../../components/ProtectedComponent'
 import Table from '../../../components/Table'
-import { ROUTES } from '../../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../../constants/CONSTANTS'
 import { defaultAttendance } from '../../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
-import {
+import generateCalender, {
   capitalizeDelim,
   dateToString,
   downloadStringAsFile,
@@ -34,57 +34,151 @@ import {
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
-import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
-import Employee from 'backend/Entities/Employee'
-import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
-import {
+import type { GetReqBodyType, GetResponseType } from 'backend/@types/response'
+import type Employee from 'backend/Entities/Employee'
+import type EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
+import type {
   deleteEmployeeAttendance,
   employeeAttendanceDetails,
   updateEmployeeAttendance
 } from 'backend/controllers/attendances'
+import type { employeeLeaveDetails } from 'backend/controllers/leaves'
+import type { holidaysByMonth } from 'backend/controllers/holidays'
+import type Holiday from 'backend/Entities/Holiday'
 
-const getCsvFromAttendaces = (employee?: Employee) =>
-  Papa.unparse(
-    employee
-      ? employee.attendances.map(
-          ({
-            date,
-            arrivalTime,
-            leaveTime,
-            overtime,
-            late,
-            totalTime,
-            tasks
-          }) => ({
-            date,
-            id: getEmployeeId(employee),
-            employee: employee.name,
-            designation: employee.designation.name,
-            checkIn: arrivalTime, // TODO: fix
-            checkOut: leaveTime,
-            late: late === -1 ? 'N/A' : Math.max(0, late) + ' minutes',
-            overtime:
-              overtime === -1 ? 'N/A' : Math.max(0, overtime) + ' minutes',
-            tasks: tasks || 'N/A',
-            totalTime: Math.max(0, totalTime) + ' minutes'
-          })
-        )
-      : [],
-    {
-      columns: [
+const getCsvFromAttendaces = (
+  employee: Employee | undefined,
+  leaveDetailsOfEmployee: GetResponseType<typeof employeeLeaveDetails>,
+  holidays: Holiday[],
+  calender: ReturnType<typeof generateCalender>,
+  fromDate: Date,
+  toDate: Date
+) => {
+  const runningDate = new Date()
+
+  if (!employee || !leaveDetailsOfEmployee) return ''
+  return Papa.unparse(
+    [
+      [
         'date',
         'id',
         'employee',
         'designation',
+        'attendance',
         'checkIn',
-        'checkOut',
+        'officeStart',
         'late',
+        'earlyIn',
+        'checkOut',
+        'officeEnd',
         'overtime',
+        'earlyOut',
         'tasks',
-        'totalTime'
+        'totalTime',
+        'status'
       ]
-    }
+    ].concat(
+      calender.map(({ month, date }) => {
+        const year =
+          month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+        const dateString = `${month}-${date}`
+        const fullDateString = `${year}-${dateString}`
+        const fullDate = stringToDate(fullDateString)
+
+        const attendance = employee.attendances?.find(
+          attendance => attendance.date.substring(5) === dateString
+        )
+        const attendanceRow = attendance
+          ? [
+              timeToLocaleString(attendance.arrivalTime),
+              timeToLocaleString(employee.officeStartTime),
+
+              attendance.late === -1
+                ? 'N/A'
+                : mToHM(Math.max(0, attendance.late)),
+              attendance.late === -1
+                ? 'N/A'
+                : mToHM(Math.abs(Math.min(0, attendance.late))),
+              timeToLocaleString(attendance.leaveTime),
+              timeToLocaleString(employee.officeEndTime),
+
+              attendance.overtime === -1
+                ? 'N/A'
+                : mToHM(Math.max(0, attendance.overtime)),
+              attendance.overtime === -1
+                ? 'N/A'
+                : mToHM(Math.abs(Math.min(0, attendance.overtime))),
+              (employee.taskWisePayment && attendance.tasks) || 'N/A',
+              mToHM(attendance.totalTime),
+
+              (attendance.late === -1
+                ? 'N/A'
+                : attendance.late === 0
+                ? 'In time'
+                : attendance.late < 0
+                ? 'Early In'
+                : 'Late In') +
+                '|' +
+                (attendance.overtime === -1
+                  ? 'N/A'
+                  : attendance.overtime === 0
+                  ? 'On time'
+                  : attendance.overtime < 0
+                  ? 'Early Out'
+                  : 'Overtime')
+            ]
+          : []
+
+        return [
+          fullDateString,
+          getEmployeeId(employee),
+          employee.name,
+          employee.designation.name
+        ].concat(
+          // FIXME; undefined ?
+          attendance
+            ? [
+                holidays.find(({ date: d }) => dateString === d.substring(5))
+                  ? 'OA'
+                  : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                      ({ from, to, duration, type }) =>
+                        type === 'paid' &&
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration !== 'fullday'
+                    )
+                  ? 'L/2(P)'
+                  : 'P'
+              ].concat(attendanceRow)
+            : [
+                holidays.find(({ date: d }) => dateString === d.substring(5))
+                  ? 'O'
+                  : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                      // TODO: precompute
+                      ({ from, to, duration, type }) =>
+                        type === 'paid' &&
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration === 'fullday'
+                    )
+                  ? 'L'
+                  : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                      ({ from, to, duration, type }) =>
+                        type === 'paid' &&
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration !== 'fullday'
+                    )
+                  ? 'L/2'
+                  : fullDate > runningDate
+                  ? '-'
+                  : 'A'
+              ].concat(new Array<string>(12).fill(''))
+        )
+      })
+    )
   )
+}
 
 const AttendanceDetails = () => {
   const { self } = useContext(AuthContext)
@@ -133,6 +227,11 @@ const AttendanceDetails = () => {
     [fromDate, toDate]
   )
 
+  const calender = useMemo(
+    () => generateCalender(fromDate, toDate),
+    [fromDate, toDate]
+  )
+
   const [sidebar, setSidebar] = useState(false)
   const toggleSidebar = () =>
     setSidebar(sidebar => {
@@ -167,6 +266,49 @@ const AttendanceDetails = () => {
     // TODO: error with status handling
   })
 
+  const {
+    data: leaveDetailsOfEmployee,
+    isFetching: fetchingEmployeeLeaves,
+    refetch: refetchEmployeeLeaves
+  } = useQuery({
+    queryKey: [
+      'employeeLeaveDetails',
+      ServerSITEMAP.leaves.getByEmployeeId,
+      fromDateString,
+      toDateString
+    ],
+    queryFn: () =>
+      modifiedFetch<GetResponseType<typeof employeeLeaveDetails>>(
+        ServerSITEMAP.leaves.getByEmployeeId.replace(
+          ServerSITEMAP.leaves._params.employeeId,
+          id.toString()
+        ) +
+          '?' +
+          new URLSearchParams({
+            from: fromDateString,
+            to: toDateString
+          } satisfies Partial<typeof ServerSITEMAP.leaves._queries>)
+      ),
+    enabled: id > 0
+  })
+
+  const { data: holidays = BLANK_ARRAY, isFetching: holidaysLoading } =
+    useQuery({
+      queryKey: [
+        'holidays',
+        ServerSITEMAP.holidays.getByMonthStart,
+        fromDateString
+      ],
+      queryFn: () =>
+        modifiedFetch<GetResponseType<typeof holidaysByMonth>>(
+          ServerSITEMAP.holidays.getByMonthStart.replace(
+            ServerSITEMAP.holidays._params.monthStart,
+            fromDateString
+          )
+        ),
+      onError: onErrorDisplayToast
+    })
+
   const { isLoading: updateAttendanceLoading, mutate: updateAttendance } =
     useMutation({
       mutationFn: () =>
@@ -194,6 +336,7 @@ const AttendanceDetails = () => {
         data?.message && addToast(data.message)
         toggleSidebar()
         refetch()
+        refetchEmployeeLeaves()
       },
       onError: onErrorDisplayToast,
       retry: false
@@ -216,13 +359,20 @@ const AttendanceDetails = () => {
       onSuccess: data => {
         data?.message && addToast(data.message)
         refetch()
+        refetchEmployeeLeaves()
       },
       onError: onErrorDisplayToast,
       retry: false
     })
 
   const isFetching =
-    _isFetching || updateAttendanceLoading || deleteAttendanceLoading
+    _isFetching ||
+    updateAttendanceLoading ||
+    deleteAttendanceLoading ||
+    fetchingEmployeeLeaves ||
+    holidaysLoading
+
+  const runningDate = new Date()
 
   return (
     <>
@@ -238,7 +388,14 @@ const AttendanceDetails = () => {
           <Button
             onClick={() =>
               downloadStringAsFile(
-                getCsvFromAttendaces(attendanceDetails),
+                getCsvFromAttendaces(
+                  attendanceDetails,
+                  leaveDetailsOfEmployee,
+                  holidays,
+                  calender,
+                  fromDate,
+                  toDate
+                ),
                 'employeeAttendances.csv',
                 { type: 'text/csv' }
               )
@@ -264,10 +421,35 @@ const AttendanceDetails = () => {
           setCurrentDate={setCurrentDate}
         />
       </div>
+
+      {attendanceDetails && (
+        <div className='mb-3'>
+          <Link
+            className='text-decoration-none'
+            role='button'
+            to={ROUTES.employee.details.replace(
+              ROUTES.employee._params.id,
+              attendanceDetails.id.toString()
+            )}
+          >
+            <EmployeeName
+              employee={{
+                id: attendanceDetails.id,
+                dateOfJoining: attendanceDetails.dateOfJoining,
+                name: attendanceDetails.name,
+                designation: attendanceDetails.designation.name,
+                email: attendanceDetails.email,
+                photo: attendanceDetails.photo
+              }}
+            />
+          </Link>
+        </div>
+      )}
+
       <Table
         columns={[
           'Date',
-          'Employee',
+          'Attendance',
           'Check In',
           'Office Start',
           'Late',
@@ -281,129 +463,194 @@ const AttendanceDetails = () => {
           'Status',
           'Action'
         ]}
-        // FIXME: not clearing after deletion
         rows={
           attendanceDetails
-            ? attendanceDetails.attendances.map(attendance => [
-                <>{attendance.date}</>,
-                <Link
-                  className='text-decoration-none'
-                  role='button'
-                  to={ROUTES.employee.details.replace(
-                    ROUTES.employee._params.id,
-                    attendanceDetails.id.toString()
-                  )}
-                >
-                  <EmployeeName
-                    employee={{
-                      id: attendanceDetails.id,
-                      dateOfJoining: attendanceDetails.dateOfJoining,
-                      name: attendanceDetails.name,
-                      designation: attendanceDetails.designation.name,
-                      email: attendanceDetails.email,
-                      photo: attendanceDetails.photo
-                    }}
-                  />
-                </Link>,
-                <>{timeToLocaleString(attendance.arrivalTime)}</>,
-                <>{timeToLocaleString(attendanceDetails.officeStartTime)}</>,
-                <>
-                  {attendance.late === -1
-                    ? 'N/A'
-                    : mToHM(Math.max(0, attendance.late))}
-                </>,
-                <>
-                  {attendance.late === -1
-                    ? 'N/A'
-                    : mToHM(Math.abs(Math.min(0, attendance.late)))}
-                </>,
-                <>{timeToLocaleString(attendance.leaveTime)}</>,
-                <>{timeToLocaleString(attendanceDetails.officeEndTime)}</>,
-                <>
-                  {attendance.overtime === -1
-                    ? 'N/A'
-                    : mToHM(Math.max(0, attendance.overtime))}
-                </>,
-                <>
-                  {attendance.overtime === -1
-                    ? 'N/A'
-                    : mToHM(Math.abs(Math.min(0, attendance.overtime)))}
-                </>,
-                <>
-                  {(attendanceDetails.taskWisePayment && attendance.tasks) ||
-                    'N/A'}
-                </>,
-                <>{mToHM(attendance.totalTime)} </>,
-                <>
-                  <span
-                    className={
-                      attendance.late === -1
-                        ? ''
-                        : attendance.late === 0
-                        ? 'text-bg-warning'
-                        : attendance.late < 0
-                        ? 'text-bg-success'
-                        : 'text-bg-danger'
-                    }
-                  >
-                    {attendance.late === -1
-                      ? 'N/A'
-                      : attendance.late === 0
-                      ? 'In time'
-                      : attendance.late < 0
-                      ? 'Early In'
-                      : 'Late In'}
-                  </span>
-                  |
-                  <span
-                    className={
-                      attendance.overtime === -1
-                        ? ''
-                        : attendance.overtime === 0
-                        ? 'text-bg-warning'
-                        : attendance.overtime < 0
-                        ? 'text-bg-danger'
-                        : 'text-bg-success'
-                    }
-                  >
-                    {attendance.overtime === -1
-                      ? 'N/A'
-                      : attendance.overtime === 0
-                      ? 'On time'
-                      : attendance.overtime < 0
-                      ? 'Early Out'
-                      : 'Overtime'}
-                  </span>
-                </>,
-                <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
-                  <Button
-                    disabled={isFetching}
-                    onClick={() => {
-                      // FIXME ||[]
-                      const foundAttendance = (
-                        attendanceDetails.attendances || []
-                      ).find(att => att.id === attendance.id)
-                      console.log(foundAttendance)
+            ? calender.map(({ month, date }) => {
+                const year =
+                  month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+                const dateString = `${month}-${date}`
+                const fullDateString = `${year}-${dateString}`
+                const fullDate = stringToDate(fullDateString)
 
-                      if (foundAttendance) {
-                        // FIXME: not changing
-                        setAttendance(foundAttendance)
-                        toggleSidebar()
-                      } else addToast('Invalid Entry', 'ERROR')
-                    }}
-                    className='border-0 link-primary text-body'
-                  >
-                    <FaPen />
-                  </Button>
-                  <Button
-                    disabled={isFetching}
-                    onClick={() => deleteAttendance(attendance.id)}
-                    className='border-0 link-primary text-body'
-                  >
-                    <FaTrash />
-                  </Button>
-                </ProtectedComponent>
-              ])
+                const attendance = attendanceDetails.attendances?.find(
+                  attendance => attendance.date.substring(5) === dateString
+                )
+                const attendanceRow = attendance
+                  ? [
+                      <>{timeToLocaleString(attendance.arrivalTime)}</>,
+                      <>
+                        {timeToLocaleString(attendanceDetails.officeStartTime)}
+                      </>,
+                      <>
+                        {attendance.late === -1
+                          ? 'N/A'
+                          : mToHM(Math.max(0, attendance.late))}
+                      </>,
+                      <>
+                        {attendance.late === -1
+                          ? 'N/A'
+                          : mToHM(Math.abs(Math.min(0, attendance.late)))}
+                      </>,
+                      <>{timeToLocaleString(attendance.leaveTime)}</>,
+                      <>
+                        {timeToLocaleString(attendanceDetails.officeEndTime)}
+                      </>,
+                      <>
+                        {attendance.overtime === -1
+                          ? 'N/A'
+                          : mToHM(Math.max(0, attendance.overtime))}
+                      </>,
+                      <>
+                        {attendance.overtime === -1
+                          ? 'N/A'
+                          : mToHM(Math.abs(Math.min(0, attendance.overtime)))}
+                      </>,
+                      <>
+                        {(attendanceDetails.taskWisePayment &&
+                          attendance.tasks) ||
+                          'N/A'}
+                      </>,
+                      <>{mToHM(attendance.totalTime)}</>,
+                      <>
+                        <span
+                          className={
+                            attendance.late === -1
+                              ? ''
+                              : attendance.late === 0
+                              ? 'text-bg-warning'
+                              : attendance.late < 0
+                              ? 'text-bg-success'
+                              : 'text-bg-danger'
+                          }
+                        >
+                          {attendance.late === -1
+                            ? 'N/A'
+                            : attendance.late === 0
+                            ? 'In time'
+                            : attendance.late < 0
+                            ? 'Early In'
+                            : 'Late In'}
+                        </span>
+                        |
+                        <span
+                          className={
+                            attendance.overtime === -1
+                              ? ''
+                              : attendance.overtime === 0
+                              ? 'text-bg-warning'
+                              : attendance.overtime < 0
+                              ? 'text-bg-danger'
+                              : 'text-bg-success'
+                          }
+                        >
+                          {attendance.overtime === -1
+                            ? 'N/A'
+                            : attendance.overtime === 0
+                            ? 'On time'
+                            : attendance.overtime < 0
+                            ? 'Early Out'
+                            : 'Overtime'}
+                        </span>
+                      </>,
+                      <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
+                        <Button
+                          disabled={isFetching}
+                          onClick={() => {
+                            // FIXME ||[]
+                            const foundAttendance = (
+                              attendanceDetails.attendances || []
+                            ).find(att => att.id === attendance.id)
+                            console.log(foundAttendance)
+
+                            if (foundAttendance) {
+                              // FIXME: not changing
+                              setAttendance(foundAttendance)
+                              toggleSidebar()
+                            } else addToast('Invalid Entry', 'ERROR')
+                          }}
+                          className='border-0 link-primary text-body'
+                        >
+                          <FaPen />
+                        </Button>
+                        <Button
+                          disabled={isFetching}
+                          onClick={() => deleteAttendance(attendance.id)}
+                          className='border-0 link-primary text-body'
+                        >
+                          <FaTrash />
+                        </Button>
+                      </ProtectedComponent>
+                    ]
+                  : []
+
+                return [
+                  <span className='text-nowrap'>{fullDateString}</span>
+                ].concat(
+                  // FIXME; undefined ?
+                  attendance
+                    ? [
+                        holidays.find(
+                          ({ date: d }) => dateString === d.substring(5)
+                        ) ? (
+                          <strong className='text-success'>OA</strong>
+                        ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                            ({ from, to, duration, type }) =>
+                              type === 'paid' &&
+                              stringToDate(from) <= fullDate &&
+                              stringToDate(to) >= fullDate &&
+                              duration !== 'fullday'
+                          ) ? (
+                          <>
+                            <strong className='text-black-50'>L</strong>
+                            <strong className='text-success'>/2</strong>
+                          </>
+                        ) : (
+                          <strong className='text-primary'>P</strong>
+                        )
+                      ].concat(attendanceRow)
+                    : [
+                        holidays.find(
+                          ({ date: d }) => dateString === d.substring(5)
+                        ) ? (
+                          <strong className='text-black-50'>O</strong>
+                        ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                            // TODO: precompute
+                            ({ from, to, duration, type }) =>
+                              type === 'paid' &&
+                              stringToDate(from) <= fullDate &&
+                              stringToDate(to) >= fullDate &&
+                              duration === 'fullday'
+                          ) ? (
+                          <strong className='text-black-50'>L</strong>
+                        ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                            ({ from, to, duration, type }) =>
+                              type === 'paid' &&
+                              stringToDate(from) <= fullDate &&
+                              stringToDate(to) >= fullDate &&
+                              duration !== 'fullday'
+                          ) ? (
+                          <strong className='text-black-50'>L/2</strong>
+                        ) : (
+                          <strong className='text-danger'>
+                            {fullDate > runningDate ? '-' : 'A'}
+                          </strong>
+                        )
+                      ].concat([
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>,
+                        <></>
+                      ])
+                )
+              })
             : []
         }
       />
