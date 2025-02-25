@@ -32,7 +32,7 @@ if (import.meta.env.PROD) {
     k => (k as string).includes('_REACT_') && delete window[k]
   )
 
-  if (import.meta.env.CONTEXT_MENU_DISABLE)
+  if (import.meta.env.REACT_APP_CONTEXT_MENU_DISABLE === 'true')
     document.addEventListener('contextmenu', e => e.preventDefault())
 }
 
