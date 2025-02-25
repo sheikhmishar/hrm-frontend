@@ -23,28 +23,31 @@ import {
 } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
-import {
+import generateCalender, {
   capitalizeDelim,
   dateToString,
   getDateRange,
   getPreviousMonth,
+  mToHM,
   splitGrossSalary,
+  stringToDate,
   timeToLocaleString
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import { GetResponseType } from 'backend/@types/response'
-import Employee from 'backend/Entities/Employee'
-import MonthlySalary from 'backend/Entities/MonthlySalary'
-import { employeeAttendanceDetails } from 'backend/controllers/attendances'
-import { employeeDetails } from 'backend/controllers/employees'
-import { employeeLeaveDetails } from 'backend/controllers/leaves'
-import { loanByEmployee } from 'backend/controllers/loans'
-import {
+import type { GetResponseType } from 'backend/@types/response'
+import type Employee from 'backend/Entities/Employee'
+import type MonthlySalary from 'backend/Entities/MonthlySalary'
+import type { employeeAttendanceDetails } from 'backend/controllers/attendances'
+import type { employeeDetails } from 'backend/controllers/employees'
+import type { employeeLeaveDetails } from 'backend/controllers/leaves'
+import type { loanByEmployee } from 'backend/controllers/loans'
+import type {
   allSalariesByEmployee,
   updateMonthlySalary
 } from 'backend/controllers/monthly-salaries'
-import { employeeSalaryDetails } from 'backend/controllers/salaries'
+import type { employeeSalaryDetails } from 'backend/controllers/salaries'
+import type { holidaysByMonth } from 'backend/controllers/holidays'
 
 const MonthlyPaysheetById = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
@@ -114,6 +117,11 @@ const MonthlyPaysheetById = () => {
   )
   const [fromDateString, toDateString] = useMemo(
     () => [fromDate, toDate].map(dateToString) as [string, string],
+    [fromDate, toDate]
+  )
+
+  const calender = useMemo(
+    () => generateCalender(fromDate, toDate),
     [fromDate, toDate]
   )
 
@@ -194,6 +202,23 @@ const MonthlyPaysheetById = () => {
     onError: onErrorDisplayToast,
     onSuccess: data => data && setEmployee(data)
   })
+
+  const { data: holidays = BLANK_ARRAY, isFetching: holidaysLoading } =
+    useQuery({
+      queryKey: [
+        'holidays',
+        ServerSITEMAP.holidays.getByMonthStart,
+        fromDateString
+      ],
+      queryFn: () =>
+        modifiedFetch<GetResponseType<typeof holidaysByMonth>>(
+          ServerSITEMAP.holidays.getByMonthStart.replace(
+            ServerSITEMAP.holidays._params.monthStart,
+            fromDateString
+          )
+        ),
+      onError: onErrorDisplayToast
+    })
 
   const {
     data: employeeAttendance,
@@ -349,7 +374,10 @@ const MonthlyPaysheetById = () => {
     salaryHistoryFetching ||
     fetchingEmployeeLeaves ||
     fetchingEmployeeLoan ||
-    fetchingEmployeeAttendance
+    fetchingEmployeeAttendance ||
+    holidaysLoading
+
+  const currentDate = new Date()
 
   return (
     <>
@@ -600,6 +628,7 @@ const MonthlyPaysheetById = () => {
         <Table
           columns={[
             'Date',
+            'Attendance',
             'Check In',
             'Office Start',
             'Late',
@@ -612,79 +641,157 @@ const MonthlyPaysheetById = () => {
             'Total Time',
             'Status'
           ]}
-          rows={
-            // FIXME: ||[]
-            (employeeAttendance?.attendances || []).map(attendance => [
-              <>{attendance.date}</>,
-              <>{timeToLocaleString(attendance.arrivalTime)}</>,
-              <>{timeToLocaleString(employee.officeStartTime)}</>,
-              <>
-                {attendance.late === -1
-                  ? 'N/A'
-                  : Math.max(0, attendance.late) + ' minutes'}
-              </>,
-              <>
-                {attendance.late === -1
-                  ? 'N/A'
-                  : Math.abs(Math.min(0, attendance.late)) + ' minutes'}
-              </>,
-              <>{timeToLocaleString(attendance.leaveTime)}</>,
-              <>{timeToLocaleString(employee.officeEndTime)}</>,
-              <>
-                {attendance.overtime === -1
-                  ? 'N/A'
-                  : Math.max(0, attendance.overtime) + ' minutes'}
-              </>,
-              <>
-                {attendance.overtime === -1
-                  ? 'N/A'
-                  : Math.abs(Math.min(0, attendance.overtime)) + ' minutes'}
-              </>,
-              <>{(employee.taskWisePayment && attendance.tasks) || 'N/A'}</>,
-              <>{attendance.totalTime} minutes</>,
-              <>
-                <span
-                  className={
-                    attendance.late === -1
-                      ? ''
-                      : attendance.late === 0
-                      ? 'text-bg-warning'
-                      : attendance.late < 0
-                      ? 'text-bg-success'
-                      : 'text-bg-danger'
-                  }
-                >
-                  {attendance.late === -1
-                    ? 'N/A'
-                    : attendance.late === 0
-                    ? 'In time'
-                    : attendance.late < 0
-                    ? 'Early In'
-                    : 'Late In'}
-                </span>
-                |
-                <span
-                  className={
-                    attendance.overtime === -1
-                      ? ''
-                      : attendance.overtime === 0
-                      ? 'text-bg-warning'
-                      : attendance.overtime < 0
-                      ? 'text-bg-danger'
-                      : 'text-bg-success'
-                  }
-                >
-                  {attendance.overtime === -1
-                    ? 'N/A'
-                    : attendance.overtime === 0
-                    ? 'On time'
-                    : attendance.overtime < 0
-                    ? 'Early Out'
-                    : 'Overtime'}
-                </span>
-              </>
-            ])
-          }
+          rows={calender.map(({ month, date }) => {
+            const year =
+              month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+            const dateString = `${month}-${date}`
+            const fullDateString = `${year}-${dateString}`
+            const fullDate = stringToDate(fullDateString)
+
+            const attendance = employeeAttendance?.attendances?.find(
+              attendance => attendance.date.substring(5) === dateString
+            )
+            const attendanceRow = attendance
+              ? [
+                  <>{timeToLocaleString(attendance.arrivalTime)}</>,
+                  <>{timeToLocaleString(employee.officeStartTime)}</>,
+                  <>
+                    {attendance.late === -1
+                      ? 'N/A'
+                      : mToHM(Math.max(0, attendance.late))}
+                  </>,
+                  <>
+                    {attendance.late === -1
+                      ? 'N/A'
+                      : mToHM(Math.abs(Math.min(0, attendance.late)))}
+                  </>,
+                  <>{timeToLocaleString(attendance.leaveTime)}</>,
+                  <>{timeToLocaleString(employee.officeEndTime)}</>,
+                  <>
+                    {attendance.overtime === -1
+                      ? 'N/A'
+                      : mToHM(Math.max(0, attendance.overtime))}
+                  </>,
+                  <>
+                    {attendance.overtime === -1
+                      ? 'N/A'
+                      : mToHM(Math.abs(Math.min(0, attendance.overtime)))}
+                  </>,
+                  <>
+                    {(employee.taskWisePayment && attendance.tasks) || 'N/A'}
+                  </>,
+                  <>{mToHM(attendance.totalTime)}</>,
+                  <>
+                    <span
+                      className={
+                        attendance.late === -1
+                          ? ''
+                          : attendance.late === 0
+                          ? 'text-bg-warning'
+                          : attendance.late < 0
+                          ? 'text-bg-success'
+                          : 'text-bg-danger'
+                      }
+                    >
+                      {attendance.late === -1
+                        ? 'N/A'
+                        : attendance.late === 0
+                        ? 'In time'
+                        : attendance.late < 0
+                        ? 'Early In'
+                        : 'Late In'}
+                    </span>
+                    |
+                    <span
+                      className={
+                        attendance.overtime === -1
+                          ? ''
+                          : attendance.overtime === 0
+                          ? 'text-bg-warning'
+                          : attendance.overtime < 0
+                          ? 'text-bg-danger'
+                          : 'text-bg-success'
+                      }
+                    >
+                      {attendance.overtime === -1
+                        ? 'N/A'
+                        : attendance.overtime === 0
+                        ? 'On time'
+                        : attendance.overtime < 0
+                        ? 'Early Out'
+                        : 'Overtime'}
+                    </span>
+                  </>
+                ]
+              : []
+
+            return [
+              <span className='text-nowrap'>{fullDateString}</span>
+            ].concat(
+              // FIXME; undefined ?
+              attendance
+                ? [
+                    holidays.find(
+                      ({ date: d }) => dateString === d.substring(5)
+                    ) ? (
+                      <strong className='text-success'>OA</strong>
+                    ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                        ({ from, to, duration, type }) =>
+                          type === 'paid' &&
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration !== 'fullday'
+                      ) ? (
+                      <>
+                        <strong className='text-black-50'>L</strong>
+                        <strong className='text-success'>/2</strong>
+                      </>
+                    ) : (
+                      <strong className='text-primary'>P</strong>
+                    )
+                  ].concat(attendanceRow)
+                : [
+                    holidays.find(
+                      ({ date: d }) => dateString === d.substring(5)
+                    ) ? (
+                      <strong className='text-black-50'>O</strong>
+                    ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                        // TODO: precompute
+                        ({ from, to, duration, type }) =>
+                          type === 'paid' &&
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration === 'fullday'
+                      ) ? (
+                      <strong className='text-black-50'>L</strong>
+                    ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                        ({ from, to, duration, type }) =>
+                          type === 'paid' &&
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration !== 'fullday'
+                      ) ? (
+                      <strong className='text-black-50'>L/2</strong>
+                    ) : (
+                      <strong className='text-danger'>
+                        {fullDate > currentDate ? '-' : 'A'}
+                      </strong>
+                    )
+                  ].concat([
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>,
+                    <></>
+                  ])
+            )
+          })}
         />
       </div>
 
