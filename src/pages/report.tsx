@@ -95,6 +95,8 @@ const getPromotionCsv = (employees: Employee[]) =>
             (employee.salaries || []).map(salary =>
               [
                 getEmployeeId(employee),
+                employee.name,
+                employee.designation.name,
                 salary.basicSalary,
                 salary.houseRent,
                 salary.foodCost,
@@ -186,7 +188,7 @@ const Report: React.FC = () => {
           )
       )
       .concat('Total OT')
-  }, [dayCount])
+  }, [dayCount, fromDate])
 
   useEffect(
     () => setCurrentDate(stringToDate(fromDateString)),
@@ -228,8 +230,8 @@ const Report: React.FC = () => {
           ServerSITEMAP.leaves.get +
             '?' +
             new URLSearchParams({
-              from: fromDateString,
-              to: toDateString
+              from: yearStart,
+              to: yearEnd
             } satisfies Partial<typeof ServerSITEMAP.leaves._queries>)
         ),
       onError: onErrorDisplayToast
@@ -247,7 +249,7 @@ const Report: React.FC = () => {
     ],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allSalaryDetails>>(
-        ServerSITEMAP.salaries.get +
+        ServerSITEMAP.salaries.get + '?' +
           new URLSearchParams({ from: yearStart, to: yearEnd } satisfies {
             [k in keyof typeof ServerSITEMAP.salaries._queries]: string
           })

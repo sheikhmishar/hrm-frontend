@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from 'react'
 declare global {
   interface ImportMetaEnv {
     readonly REACT_APP_BASE_URL?: string
+    readonly REACT_APP_CONTEXT_MENU_DISABLE?: 'true'
   }
   namespace React {
     interface HTMLAttributes {
