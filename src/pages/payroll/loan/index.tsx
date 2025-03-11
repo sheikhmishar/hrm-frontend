@@ -161,16 +161,7 @@ const Assigned = () => {
                     )}
                     className='text-decoration-none'
                   >
-                    <EmployeeName
-                      employee={{
-                        id: employee.id,
-                        dateOfJoining: employee.dateOfJoining,
-                        name: employee.name,
-                        designation: employee.designation.name,
-                        email: employee.email,
-                        photo: employee.photo
-                      }}
-                    />
+                    <EmployeeName employee={employee} />
                   </Link>,
                   <>{employee.company.name}</>,
                   <>{loan.date}</>,
@@ -202,10 +193,12 @@ const Assigned = () => {
                 containerClass='my-3'
                 placeholder={'Enter ' + capitalizeDelim(k)}
                 value={loan[k].id}
-                options={employees.map(employee => ({
-                  value: employee.id,
-                  label: `${getEmployeeId(employee)} - ${employee.name}`
-                }))}
+                options={employees
+                  .filter(({ status }) => status === 'active')
+                  .map(employee => ({
+                    value: employee.id,
+                    label: `${getEmployeeId(employee)} - ${employee.name}`
+                  }))}
                 onChange={onSelectChange}
               />
             )

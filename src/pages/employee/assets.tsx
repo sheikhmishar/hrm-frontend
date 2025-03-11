@@ -65,21 +65,14 @@ const Assets = () => {
                 <Link
                   className='text-decoration-none'
                   role='button'
-                  to={ROUTES.employee.details.replace(
-                    ROUTES.employee._params.id,
-                    employee.id.toString()
-                  ) + '#assets'}
+                  to={
+                    ROUTES.employee.details.replace(
+                      ROUTES.employee._params.id,
+                      employee.id.toString()
+                    ) + '#assets'
+                  }
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>
                 <table className='mt-2 table table-borderless'>
                   <thead>

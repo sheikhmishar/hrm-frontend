@@ -490,10 +490,12 @@ const LeaveDetails = () => {
               containerClass='my-3'
               placeholder={'Enter ' + capitalizeDelim(k)}
               value={leave[k].id}
-              options={[employee || defaultEmployee].map(employee => ({
-                value: employee.id,
-                label: `${getEmployeeId(employee)} - ${employee.name}`
-              }))}
+              options={[employee || defaultEmployee]
+                .filter(({ status }) => status === 'active')
+                .map(employee => ({
+                  value: employee.id,
+                  label: `${getEmployeeId(employee)} - ${employee.name}`
+                }))}
             />
           ))}
           {(

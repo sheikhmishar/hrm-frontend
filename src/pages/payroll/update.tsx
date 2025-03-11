@@ -239,10 +239,12 @@ const UpdatePayroll = () => {
             required
             placeholder='Enter Employee ID'
             value={employee.id}
-            options={employees.map(employee => ({
-              label: `${getEmployeeId(employee)}-${employee.name}`,
-              value: employee.id
-            }))}
+            options={employees
+              .filter(({ status }) => status === 'active')
+              .map(employee => ({
+                label: `${getEmployeeId(employee)}-${employee.name}`,
+                value: employee.id
+              }))}
             onChange={({ target: { value } }) => {
               const newEmployee = employees.find(
                 employee => employee.id === parseInt(value)

@@ -251,12 +251,14 @@ const ImportAttendance = () => {
                           disabled={isLoading}
                           label='Employee'
                           autoComplete='true'
-                          options={employees.map(employee => ({
-                            label: `${getEmployeeId(employee)} - ${
-                              employee.name
-                            }`,
-                            value: employee.id
-                          }))}
+                          options={employees
+                            .filter(({ status }) => status === 'active')
+                            .map(employee => ({
+                              label: `${getEmployeeId(employee)} - ${
+                                employee.name
+                              }`,
+                              value: employee.id
+                            }))}
                           value={attendance.employee.id}
                           onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
