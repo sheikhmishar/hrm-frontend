@@ -344,16 +344,7 @@ const EmployeePage: React.FC<{ approval?: boolean }> = ({ approval }) => {
                     employee.id.toString()
                   )}
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>
               ) : key === 'department' || key === 'company' ? (
                 <>{employee[key].name}</>

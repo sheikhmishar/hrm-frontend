@@ -432,16 +432,7 @@ const AttendanceDetails = () => {
               attendanceDetails.id.toString()
             )}
           >
-            <EmployeeName
-              employee={{
-                id: attendanceDetails.id,
-                dateOfJoining: attendanceDetails.dateOfJoining,
-                name: attendanceDetails.name,
-                designation: attendanceDetails.designation.name,
-                email: attendanceDetails.email,
-                photo: attendanceDetails.photo
-              }}
-            />
+            <EmployeeName employee={attendanceDetails} />
           </Link>
         </div>
       )}

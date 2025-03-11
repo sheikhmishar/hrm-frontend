@@ -477,16 +477,7 @@ const MonthlyPaysheet = () => {
             )}
             className='text-decoration-none'
           >
-            <EmployeeName
-              employee={{
-                id: salary.employee.id,
-                dateOfJoining: salary.employee.dateOfJoining,
-                name: salary.employee.name,
-                designation: salary.employee.designation.name,
-                email: salary.employee.email,
-                photo: salary.employee.photo
-              }}
-            />
+            <EmployeeName employee={salary.employee} />
           </Link>,
           <>{salary.employee.company.name}</>,
           <>{salary.basicSalary}</>,

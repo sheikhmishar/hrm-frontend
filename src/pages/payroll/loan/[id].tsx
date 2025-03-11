@@ -163,16 +163,7 @@ const Assigned = () => {
       {loanEmployee && (
         <div className='mb-3 row text-muted'>
           <div className='col-6 my-1'>
-            <EmployeeName
-              employee={{
-                id: loanEmployee.id,
-                dateOfJoining: loanEmployee.dateOfJoining,
-                name: loanEmployee.name,
-                designation: loanEmployee.designation.name,
-                email: loanEmployee.email,
-                photo: loanEmployee.photo
-              }}
-            />
+            <EmployeeName employee={loanEmployee} />
           </div>
           <div className='align-items-end col-6 d-flex flex-column my-1'>
             <h6>

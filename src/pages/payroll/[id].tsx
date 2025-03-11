@@ -416,16 +416,7 @@ const MonthlyPaysheetById = () => {
                     employee.id.toString()
                   )}
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>
               </div>
               <div className='my-2'>

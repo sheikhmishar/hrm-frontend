@@ -531,16 +531,7 @@ const MonthlyAttendance = () => {
                   }
                   className='text-decoration-none'
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>
               ]
                 .concat(

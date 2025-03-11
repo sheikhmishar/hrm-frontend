@@ -249,7 +249,8 @@ const Report: React.FC = () => {
     ],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allSalaryDetails>>(
-        ServerSITEMAP.salaries.get + '?' +
+        ServerSITEMAP.salaries.get +
+          '?' +
           new URLSearchParams({ from: yearStart, to: yearEnd } satisfies {
             [k in keyof typeof ServerSITEMAP.salaries._queries]: string
           })
@@ -374,16 +375,7 @@ const Report: React.FC = () => {
               }
               className='text-decoration-none'
             >
-              <EmployeeName
-                employee={{
-                  id: employee.id,
-                  dateOfJoining: employee.dateOfJoining,
-                  name: employee.name,
-                  designation: employee.designation.name,
-                  email: employee.email,
-                  photo: employee.photo
-                }}
-              />
+              <EmployeeName employee={employee} />
             </Link>,
             <>{employee.department.name}</>
           ]
@@ -464,16 +456,7 @@ const Report: React.FC = () => {
                   )}
                   className='text-decoration-none'
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>,
                 <>{salary.basicSalary}</>,
                 <>{salary.houseRent}</>,
@@ -542,16 +525,7 @@ const Report: React.FC = () => {
                   }
                   className='text-decoration-none'
                 >
-                  <EmployeeName
-                    employee={{
-                      id: employee.id,
-                      dateOfJoining: employee.dateOfJoining,
-                      name: employee.name,
-                      designation: employee.designation.name,
-                      email: employee.email,
-                      photo: employee.photo
-                    }}
-                  />
+                  <EmployeeName employee={employee} />
                 </Link>,
                 <>{employee.company.name}</>,
                 <>{leave.from}</>,
