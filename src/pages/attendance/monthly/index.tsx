@@ -49,7 +49,7 @@ const getCsvFromAttendaces = (
     [
       ['Id', 'Name']
         .concat(calender.map(({ date }) => (date === '01' ? ' |  01' : date)))
-        .concat(['Total P', 'Total L', 'Total A', 'Total OA'])
+        .concat(['Total P', 'Total L', 'Total A', 'Total OA', 'Total O'])
     ]
       .concat([
         ['', ''].concat(
@@ -190,7 +190,8 @@ const getCsvFromAttendaces = (
                   presentWithNoHolidayOrFullPaidLeave -
                   holidays.length -
                   paidLeavesTotal,
-                holidayAttendances
+                holidayAttendances,
+                holidays.length
               ].map(n => n.toString())
             )
         })
@@ -413,7 +414,7 @@ const MonthlyAttendance = () => {
       <Table
         columns={['Employee']
           .concat(calender.map(({ date }) => (date === '01' ? ' |  01' : date)))
-          .concat(['Total P', 'Total L', 'Total A', 'Total OA'])}
+          .concat(['Total P', 'Total L', 'Total A', 'Total OA', 'Total O'])}
         rows={[
           [<></>]
             .concat(
@@ -428,7 +429,7 @@ const MonthlyAttendance = () => {
                 </strong>
               ))
             )
-            .concat([<></>, <></>, <></>, <></>])
+            .concat([<></>, <></>, <></>, <></>, <></>])
         ]
           .concat([
             [<></>]
@@ -439,7 +440,7 @@ const MonthlyAttendance = () => {
                   </span>
                 ))
               )
-              .concat([<></>, <></>, <></>, <></>])
+              .concat([<></>, <></>, <></>, <></>, <></>])
           ])
           .concat(
             employeeAttendances.map(employee => {
@@ -600,7 +601,8 @@ const MonthlyAttendance = () => {
                       holidays.length -
                       paidLeavesTotal}
                   </>,
-                  <>{holidayAttendances}</>
+                  <>{holidayAttendances}</>,
+                  <>{holidays.length}</>
                 ])
             })
           )}
