@@ -311,7 +311,7 @@ const MonthlyAttendance = () => {
             ? employee.id === self.employeeId
             : companyId !== -1
             ? employee.company.id === companyId
-            : true)
+            : employee.status !== 'inactive' || employee.attendances.length)
       ),
     [_employeeAttendances, search, companyId, self?.employeeId, self?.type]
   )
