@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEventHandler
+} from 'react'
 import { Link } from 'react-router-dom'
 
 import CalenderSlider from '../../../components/CalenderSlider'
@@ -14,13 +20,15 @@ import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
   dateToString,
   getDateRange,
+  getEmployeeId,
   stringToDate
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
 
-import { GetResponseType } from 'backend/@types/response'
-import { allCompanies } from 'backend/controllers/companies'
-import { allEmployeeLeaves } from 'backend/controllers/leaves'
+import type { GetResponseType } from 'backend/@types/response'
+import type { allCompanies } from 'backend/controllers/companies'
+import type { allEmployeeLeaves } from 'backend/controllers/leaves'
+import type Employee from 'backend/Entities/Employee'
 
 const LeaveCalender = () => {
   const { self } = useContext(AuthContext)
@@ -42,6 +50,10 @@ const LeaveCalender = () => {
     () => setCurrentDate(stringToDate(fromDateString)),
     [fromDateString]
   )
+
+  const [search, setSearch] = useState('')
+  const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
+    setSearch(e.target.value)
 
   const { data: employeeLeaves = BLANK_ARRAY, isFetching } = useQuery({
     queryKey: [
@@ -79,39 +91,43 @@ const LeaveCalender = () => {
 
   return (
     <>
-      <div className='mb-3 row'>
-        <div className='col-4'>
-          <CalenderSlider
-            monthly
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-          />
-        </div>
+      <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
+        <CalenderSlider
+          monthly
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+        />
         <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
-          <div className='col-2'>
-            <Select
-              id='company'
-              label=''
-              value={companyId}
-              onChange={({ target: { value } }) =>
-                setCompanyId(parseInt(value) || -1)
-              }
-              options={[{ label: 'All', value: -1 }].concat(
-                companies.map(company => ({
-                  label: company.name,
-                  value: company.id
-                }))
-              )}
+          <Select
+            id='company'
+            label=''
+            value={companyId}
+            onChange={({ target: { value } }) =>
+              setCompanyId(parseInt(value) || -1)
+            }
+            className='w-25'
+            options={[{ label: 'All', value: -1 }].concat(
+              companies.map(company => ({
+                label: company.name,
+                value: company.id
+              }))
+            )}
+          />
+          <div className='ms-2 w-25'>
+            <input
+              className='form-control py-2 rounded-3'
+              id='search'
+              placeholder='Search here'
+              onChange={onSearchInputChange}
+              value={search}
             />
           </div>
         </ProtectedComponent>
-        <div className='col-2'>
-          {(isFetching || fetchingCompanies) && (
-            <div className='ms-3 spinner-border text-primary' role='status'>
-              <span className='visually-hidden'>Loading...</span>
-            </div>
-          )}
-        </div>
+        {(isFetching || fetchingCompanies) && (
+          <div className='ms-auto spinner-border text-primary' role='status'>
+            <span className='visually-hidden'>Loading...</span>
+          </div>
+        )}
       </div>
       <Table
         columns={['Employee'].concat(
@@ -148,10 +164,24 @@ const LeaveCalender = () => {
           ])
           .concat(
             employeeLeaves
-              .filter(({ id }) =>
+              .filter(employee =>
                 self?.type === 'Employee' && self.employeeId
-                  ? id === self.employeeId
-                  : true
+                  ? employee.id === self.employeeId
+                  : (
+                      [
+                        'name',
+                        'email',
+                        'phoneNumber',
+                        'altPhoneNumber'
+                      ] satisfies KeysOfObjectOfType<
+                        Employee,
+                        string | undefined
+                      >[]
+                    ).find(key =>
+                      employee[key]
+                        ?.toLowerCase()
+                        .includes(search.toLowerCase())
+                    ) || getEmployeeId(employee).includes(search.toLowerCase())
               )
               .map(employee =>
                 [
