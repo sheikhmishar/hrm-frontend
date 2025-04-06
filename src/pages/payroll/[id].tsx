@@ -731,12 +731,17 @@ const MonthlyPaysheetById = () => {
                           type === 'paid' &&
                           stringToDate(from) <= fullDate &&
                           stringToDate(to) >= fullDate &&
-                          duration !== 'fullday'
+                          duration === 'first_halfday'
                       ) ? (
-                      <>
-                        <strong className='text-black-50'>L</strong>
-                        <strong className='text-success'>/2</strong>
-                      </>
+                      <strong className='text-success'>L/1</strong>
+                    ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                        ({ from, to, duration, type }) =>
+                          type === 'paid' &&
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration === 'second_halfday'
+                      ) ? (
+                      <strong className='text-success'>L/2</strong>
                     ) : (
                       <strong className='text-primary'>P</strong>
                     )
@@ -760,9 +765,17 @@ const MonthlyPaysheetById = () => {
                           type === 'paid' &&
                           stringToDate(from) <= fullDate &&
                           stringToDate(to) >= fullDate &&
-                          duration !== 'fullday'
+                          duration === 'first_halfday'
                       ) ? (
-                      <strong className='text-black-50'>L/2</strong>
+                      <strong className='text-danger'>L/1</strong>
+                    ) : leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+                        ({ from, to, duration, type }) =>
+                          type === 'paid' &&
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration !== 'second_halfday'
+                      ) ? (
+                      <strong className='text-danger'>L/2</strong>
                     ) : (
                       <strong className='text-danger'>
                         {fullDate > currentDate ? '-' : 'A'}

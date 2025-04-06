@@ -401,9 +401,10 @@ const MonthlyAttendance = () => {
           </span>
           <span className='text-nowrap'>
             <strong className='text-black-50'>L</strong>,&nbsp;
-            <strong className='text-black-50'>L</strong>
-            <strong className='text-success'>/2</strong> or&nbsp;
-            <strong className='text-black-50'>L/2</strong> = Paid Leave,
+            <strong className='text-success'>L/1</strong>,&nbsp;
+            <strong className='text-success'>L/2</strong>, &nbsp;
+            <strong className='text-danger'>L/1</strong> or&nbsp;
+            <strong className='text-danger'>L/2</strong> = Paid Leave,
           </span>
           <span className='text-nowrap'>
             <strong className='text-success'>OA</strong> = Offday Attendance
@@ -557,12 +558,16 @@ const MonthlyAttendance = () => {
                           ({ from, to, duration }) =>
                             stringToDate(from) <= fullDate &&
                             stringToDate(to) >= fullDate &&
-                            duration !== 'fullday'
+                            duration === 'first_halfday'
                         ) ? (
-                        <>
-                          <strong className='text-black-50'>L</strong>
-                          <strong className='text-success'>/2</strong>
-                        </>
+                        <strong className='text-success'>L/1</strong>
+                      ) : paidLeaves.find(
+                          ({ from, to, duration }) =>
+                            stringToDate(from) <= fullDate &&
+                            stringToDate(to) >= fullDate &&
+                            duration === 'second_halfday'
+                        ) ? (
+                        <strong className='text-success'>L/2</strong>
                       ) : (
                         <strong className='text-primary'>P</strong>
                       )
@@ -582,9 +587,16 @@ const MonthlyAttendance = () => {
                         ({ from, to, duration }) =>
                           stringToDate(from) <= fullDate &&
                           stringToDate(to) >= fullDate &&
-                          duration !== 'fullday'
+                          duration === 'first_halfday'
                       ) ? (
-                      <strong className='text-black-50'>L/2</strong>
+                      <strong className='text-danger'>L/1</strong>
+                    ) : paidLeaves.find(
+                        ({ from, to, duration }) =>
+                          stringToDate(from) <= fullDate &&
+                          stringToDate(to) >= fullDate &&
+                          duration === 'second_halfday'
+                      ) ? (
+                      <strong className='text-danger'>L/2</strong>
                     ) : (
                       <strong className='text-danger'>
                         {fullDate > currentDate ? '-' : 'A'}
