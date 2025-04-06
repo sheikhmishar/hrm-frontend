@@ -2,9 +2,9 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   useCallback,
   useContext,
+  useEffect,
   useState,
-  type ChangeEventHandler,
-  useEffect
+  type ChangeEventHandler
 } from 'react'
 import { FaRotateLeft, FaTrash } from 'react-icons/fa6'
 import { useParams } from 'react-router-dom'
@@ -15,7 +15,7 @@ import Input from '../../../components/Input'
 import Modal from '../../../components/Modal'
 import Select, { DropDownEventHandler } from '../../../components/Select'
 import Table from '../../../components/Table'
-import { ROUTES } from '../../../constants/CONSTANTS'
+import { BLANK_ARRAY, ROUTES } from '../../../constants/CONSTANTS'
 import { defaultLoan } from '../../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
@@ -28,9 +28,10 @@ import type Employee from 'backend/Entities/Employee'
 import type Loan from 'backend/Entities/Loan'
 import type {
   addLoan,
-  loanByEmployee,
-  deleteLoan
+  deleteLoan,
+  loanByEmployee
 } from 'backend/controllers/loans'
+import type { allSalariesByEmployee } from 'backend/controllers/monthly-salaries'
 
 const Assigned = () => {
   const { self } = useContext(AuthContext)
@@ -101,6 +102,26 @@ const Assigned = () => {
     onError: onErrorDisplayToast
   })
 
+  const {
+    refetch: refetchEmployeeMonthlySalaries,
+    data: employeeMonthlySalaries = BLANK_ARRAY,
+    isFetching: employeeMonthlySalaryLoading
+  } = useQuery({
+    queryKey: [
+      'employeeMonthlySalaries',
+      ServerSITEMAP.monthlySalaries.getAllByEmployeeId,
+      id
+    ],
+    queryFn: () =>
+      modifiedFetch<GetResponseType<typeof allSalariesByEmployee>>(
+        ServerSITEMAP.monthlySalaries.getAllByEmployeeId.replace(
+          ServerSITEMAP.monthlySalaries._params.id,
+          id.toString()
+        )
+      ),
+    enabled: id > 0
+  })
+
   const { isLoading: loanDeleteLoading, mutate: loanDelete } = useMutation({
     mutationFn: (id: number) =>
       modifiedFetch<GetResponseType<typeof deleteLoan>>(
@@ -114,6 +135,7 @@ const Assigned = () => {
     onSuccess: data => {
       data?.message && addToast(data.message)
       refetch()
+      refetchEmployeeMonthlySalaries()
     },
     onError: onErrorDisplayToast,
     retry: false
@@ -131,11 +153,16 @@ const Assigned = () => {
       data?.message && addToast(data.message)
       toggleSidebar()
       refetch()
+      refetchEmployeeMonthlySalaries()
     },
     retry: false
   })
 
-  const isFetching = fetchingLoans || loanCreateLoading || loanDeleteLoading
+  const isFetching =
+    fetchingLoans ||
+    loanCreateLoading ||
+    loanDeleteLoading ||
+    employeeMonthlySalaryLoading
 
   return (
     <>
@@ -183,13 +210,16 @@ const Assigned = () => {
           </div>
         </div>
       )}
+
+      <h5 className='mb-3 text-muted'>
+        <strong>Loan History:</strong>
+      </h5>
       <Table
-        columns={['Company', 'Date', 'Amount', 'Action']}
+        columns={['Date', 'Amount', 'Action']}
         rows={
           loanEmployee
             ? // FIXME: || []
               (loanEmployee.loans || []).map(loan => [
-                <>{loanEmployee.company.name}</>,
                 <>{loan.date}</>,
                 <>{loan.amount}</>,
                 <Button
@@ -197,11 +227,25 @@ const Assigned = () => {
                   onClick={() => loanDelete(loan.id)}
                   className='link-primary text-body'
                 >
+                  {/* TODO: onclick delete previous payments */}
                   <FaTrash />
                 </Button>
               ])
             : []
         }
+      />
+
+      <h5 className='my-3 text-muted'>
+        <strong>Loan Installment History:</strong>
+      </h5>
+      <Table
+        columns={['Date', 'Amount']}
+        rows={employeeMonthlySalaries
+          .filter(salary => salary.loanDeduction > 0)
+          .map(salary => [
+            <>{salary.monthStartDate}</>,
+            <>{salary.loanDeduction}</>
+          ])}
       />
 
       <Modal isOpen={sidebar} setIsOpen={setSidebar}>
