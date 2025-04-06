@@ -74,6 +74,7 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
       penalty: salary.penalty,
       leave: salary.leave,
       leaveDeduction: salary.leaveDeduction,
+      loanDeduction: salary.loanDeduction,
       totalSalary: salary.totalSalary,
       paymentMethod: salary.paymentMethod,
       status: salary.status
