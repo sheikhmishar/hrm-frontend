@@ -66,14 +66,19 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
         salary.conveyance +
         salary.medicalCost,
       overtime: salary.overtime,
+      unitOvertimePayment: salary.unitOvertimePayment,
       overtimePayment: salary.overtimePayment,
       bonus: salary.bonus,
       leaveEncashment: salary.leaveEncashment,
       late: salary.late,
+      unitLateDeduction: salary.unitLateDeduction,
       lateDeduction: salary.lateDeduction,
       penalty: salary.penalty,
       leave: salary.leave,
+      absence: salary.absence,
+      unitAbsenceDeduction: salary.unitAbsenceDeduction,
       leaveDeduction: salary.leaveDeduction,
+      absenceDeduction: salary.absenceDeduction,
       loanDeduction: salary.loanDeduction,
       totalSalary: salary.totalSalary,
       paymentMethod: salary.paymentMethod,
@@ -91,14 +96,19 @@ const getCsvFromSalaries = (employeeMonthlySalaries: MonthlySalary[]) =>
         'medicalCost',
         'grossSalary',
         'overtime',
+        'unitOvertimePayment',
         'overtimePayment',
         'bonus',
         'leaveEncashment',
         'late',
+        'unitLateDeduction',
         'lateDeduction',
         'penalty',
         'leave',
+        'absence',
+        'unitAbsenceDeduction',
         'leaveDeduction',
+        'absenceDeduction',
         'loanDeduction',
         'totalSalary',
         'paymentMethod',
@@ -114,14 +124,18 @@ const numericKeys = [
   'conveyance',
   'medicalCost',
   'overtime',
+  'unitOvertimePayment',
   'overtimePayment',
   'bonus',
   'leaveEncashment',
   'late',
+  'unitLateDeduction',
   'lateDeduction',
   'penalty',
   'leave',
+  'unitAbsenceDeduction',
   'leaveDeduction',
+  'absenceDeduction',
   'loanDeduction',
   'totalSalary'
 ] satisfies KeysOfObjectOfType<MonthlySalary, number>[]
@@ -162,7 +176,45 @@ const MonthlyPaysheet = () => {
         ...monthlySalary,
         [id]: isNumeric ? parseFloat(value) : value
       }
-      if (isNumeric && (id as keyof MonthlySalary) !== 'totalSalary')
+      if (isNumeric && (id as keyof MonthlySalary) !== 'totalSalary') {
+        if (
+          (
+            ['overtime', 'unitOvertimePayment'] as (keyof MonthlySalary)[]
+          ).includes(id as keyof MonthlySalary)
+        )
+          updatedSalary.overtimePayment = parseFloat(
+            (
+              updatedSalary.unitOvertimePayment * updatedSalary.overtime
+            ).toFixed(2)
+          )
+        else if (
+          (['late', 'unitLateDeduction'] as (keyof MonthlySalary)[]).includes(
+            id as keyof MonthlySalary
+          )
+        )
+          updatedSalary.lateDeduction = parseFloat(
+            (updatedSalary.unitLateDeduction * updatedSalary.late).toFixed(2)
+          )
+        else if (
+          (
+            [
+              'leave',
+              'absence',
+              'unitAbsenceDeduction'
+            ] as (keyof MonthlySalary)[]
+          ).includes(id as keyof MonthlySalary)
+        ) {
+          updatedSalary.leaveDeduction = parseFloat(
+            (
+              updatedSalary.unitAbsenceDeduction * updatedSalary.leave
+            ).toFixed(2)
+          )
+          updatedSalary.absenceDeduction = parseFloat(
+            (
+              updatedSalary.unitAbsenceDeduction * updatedSalary.absence
+            ).toFixed(2)
+          )
+        }
         updatedSalary.totalSalary = parseFloat(
           (
             updatedSalary.basicSalary +
@@ -175,10 +227,12 @@ const MonthlyPaysheet = () => {
             updatedSalary.leaveEncashment -
             updatedSalary.lateDeduction -
             updatedSalary.leaveDeduction -
+            updatedSalary.absenceDeduction -
             updatedSalary.loanDeduction -
             updatedSalary.penalty
           ).toFixed(2)
         )
+      }
 
       return updatedSalary
     })
@@ -456,14 +510,19 @@ const MonthlyPaysheet = () => {
           'Medical Cost',
           'Gross Salary',
           'Overtime',
+          'Unit Overtime Payment',
           'Overtime Payment',
           'Bonus',
           'Leave Encashment',
           'Late',
+          'Unit Late Deduction',
           'Late Deduction',
           'Penalty',
           'Leave',
+          'Absence',
+          'Unit Absence Deduction',
           'Leave Deduction',
+          'Absence Deduction',
           'Loan Deduction',
           'Total Salary',
           'Payment Method',
@@ -494,14 +553,19 @@ const MonthlyPaysheet = () => {
               salary.medicalCost}
           </>,
           <>{salary.overtime}</>,
+          <>{salary.unitOvertimePayment}</>,
           <>{salary.overtimePayment}</>,
           <>{salary.bonus}</>,
           <>{salary.leaveEncashment}</>,
           <>{salary.late}</>,
+          <>{salary.unitLateDeduction}</>,
           <>{salary.lateDeduction}</>,
           <>{salary.penalty}</>,
           <>{salary.leave}</>,
+          <>{salary.absence}</>,
+          <>{salary.unitAbsenceDeduction}</>,
           <>{salary.leaveDeduction}</>,
+          <>{salary.absenceDeduction}</>,
           <>{salary.loanDeduction}</>,
           <>{salary.totalSalary}</>,
           <>{salary.paymentMethod}</>,

@@ -137,14 +137,18 @@ const MonthlyPaysheetById = () => {
           'conveyance',
           'medicalCost',
           'overtime',
+          'unitOvertimePayment',
           'overtimePayment',
           'bonus',
           'leaveEncashment',
           'late',
+          'unitLateDeduction',
           'lateDeduction',
           'penalty',
           'leave',
+          'unitAbsenceDeduction',
           'leaveDeduction',
+          'absenceDeduction',
           'loanDeduction',
           'totalSalary'
         ] satisfies KeysOfObjectOfType<MonthlySalary, number>[] as string[]
@@ -156,7 +160,45 @@ const MonthlyPaysheetById = () => {
       }
       // TODO: if total < 0,  obj[k] += total and total 0
       if (isNumeric) {
-        if ((id as keyof MonthlySalary) !== 'totalSalary')
+        if ((id as keyof MonthlySalary) !== 'totalSalary') {
+          if (
+            (
+              ['overtime', 'unitOvertimePayment'] as (keyof MonthlySalary)[]
+            ).includes(id as keyof MonthlySalary)
+          )
+            updatedSalary.overtimePayment = parseFloat(
+              (
+                updatedSalary.unitOvertimePayment * updatedSalary.overtime
+              ).toFixed(2)
+            )
+          else if (
+            (['late', 'unitLateDeduction'] as (keyof MonthlySalary)[]).includes(
+              id as keyof MonthlySalary
+            )
+          )
+            updatedSalary.lateDeduction = parseFloat(
+              (updatedSalary.unitLateDeduction * updatedSalary.late).toFixed(2)
+            )
+          else if (
+            (
+              [
+                'leave',
+                'absence',
+                'unitAbsenceDeduction'
+              ] as (keyof MonthlySalary)[]
+            ).includes(id as keyof MonthlySalary)
+          ) {
+            updatedSalary.leaveDeduction = parseFloat(
+              (
+                updatedSalary.unitAbsenceDeduction * updatedSalary.leave
+              ).toFixed(2)
+            )
+            updatedSalary.absenceDeduction = parseFloat(
+              (
+                updatedSalary.unitAbsenceDeduction * updatedSalary.absence
+              ).toFixed(2)
+            )
+          }
           updatedSalary.totalSalary = parseFloat(
             (
               updatedSalary.basicSalary +
@@ -169,10 +211,12 @@ const MonthlyPaysheetById = () => {
               updatedSalary.leaveEncashment -
               updatedSalary.lateDeduction -
               updatedSalary.leaveDeduction -
-              updatedSalary.penalty -
-              updatedSalary.loanDeduction
+              updatedSalary.absenceDeduction -
+              updatedSalary.loanDeduction -
+              updatedSalary.penalty
             ).toFixed(2)
           )
+        }
 
         if ((id as keyof MonthlySalary) === 'loanDeduction') {
           const loanDeductiondiff =
@@ -379,6 +423,43 @@ const MonthlyPaysheetById = () => {
 
   const currentDate = new Date()
 
+  const presentWithNoHolidayOrFullPaidLeave = useMemo(
+    () =>
+      (employeeAttendance?.attendances || []).reduce((total, attendance) => {
+        const date = stringToDate(attendance.date)
+
+        const paidLeave = leaveDetailsOfEmployee?.employeeLeave?.leaves.find(
+          ({ from, to, type }) =>
+            type === 'paid' &&
+            date >= stringToDate(from) &&
+            date <= stringToDate(to)
+        )
+        return (
+          total +
+          (holidays.find(({ date }) => date === attendance.date)
+            ? 0
+            : paidLeave
+            ? paidLeave.duration === 'fullday'
+              ? 0
+              : 0.5
+            : 1)
+        )
+      }, 0),
+    [
+      employeeAttendance?.attendances,
+      holidays,
+      leaveDetailsOfEmployee?.employeeLeave?.leaves
+    ]
+  )
+
+  const holidayAttendances = useMemo(
+    () =>
+      (employeeAttendance?.attendances || []).filter(attendance =>
+        holidays.find(({ date }) => date === attendance.date)
+      ).length,
+    [employeeAttendance?.attendances, holidays]
+  )
+
   return (
     <>
       <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
@@ -481,7 +562,7 @@ const MonthlyPaysheetById = () => {
           <div className='border-0 card h-100 shadow-sm'>
             <div className='card-body text-muted'>
               <div className='my-2 row'>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
                     <strong>Present</strong>
                   </h6>
@@ -489,13 +570,27 @@ const MonthlyPaysheetById = () => {
                     className='d-inline form-control me-2 w-50'
                     type='number'
                     disabled
-                    value={employeeAttendance?.attendances.length || 0}
+                    value={presentWithNoHolidayOrFullPaidLeave}
                   />
                   Days
                 </div>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
-                    <strong>Absent</strong>
+                    <strong>Holiday Attendances</strong>
+                  </h6>
+                  <input
+                    className='d-inline form-control me-2 w-50'
+                    type='number'
+                    disabled
+                    value={holidayAttendances}
+                  />
+                  Days
+                </div>
+              </div>
+              <div className='my-2 row'>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>LWP</strong>
                   </h6>
                   {(
                     ['leave'] satisfies KeysOfObjectOfType<
@@ -516,7 +611,101 @@ const MonthlyPaysheetById = () => {
                   ))}
                   Days
                 </div>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>Absent</strong>
+                  </h6>
+                  {(
+                    ['absence'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                  Days
+                </div>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>Unit Absence/LWP Deduction</strong>
+                  </h6>
+                  {(
+                    ['unitAbsenceDeduction'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                  <br />
+                  {/* TODO: info icon hover */}
+                  [Employee Basic Salary / TotalDays] 
+                </div>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>LWP Deduction</strong>
+                  </h6>
+                  {(
+                    ['leaveDeduction'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                </div>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>Absence Deduction</strong>
+                  </h6>
+                  {(
+                    ['absenceDeduction'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className='my-2 row'>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
                     <strong>Overtime</strong>
                   </h6>
@@ -539,7 +728,31 @@ const MonthlyPaysheetById = () => {
                   ))}
                   Minutes
                 </div>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>Unit Overtime Payment</strong>
+                  </h6>
+                  {(
+                    ['unitOvertimePayment'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                  <br />
+                  [Employee Basic Salary / 208 * 3 / 60]
+                </div>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
                     <strong>Overtime Payment</strong>
                   </h6>
@@ -562,7 +775,7 @@ const MonthlyPaysheetById = () => {
                     />
                   ))}
                 </div>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
                     <strong>Late time</strong>
                   </h6>
@@ -585,7 +798,31 @@ const MonthlyPaysheetById = () => {
                   ))}
                   Minutes
                 </div>
-                <div className='col-6 col-lg-2'>
+                <div className='col-6 col-lg-2 my-1'>
+                  <h6>
+                    <strong>Unit Late Deduction Payment</strong>
+                  </h6>
+                  {(
+                    ['unitLateDeduction'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                  <br />
+                  [10]
+                </div>
+                <div className='col-6 col-lg-2 my-1'>
                   <h6>
                     <strong>Late Deduction Payment</strong>
                   </h6>
@@ -616,6 +853,31 @@ const MonthlyPaysheetById = () => {
 
       <div className='my-2'>
         <h5>Attendance Table</h5>
+        <div className='d-flex flex-column ms-auto pb-2'>
+          <span className='text-nowrap'>
+            <strong className='text-primary'>P</strong> = Present,
+          </span>
+          <span className='text-nowrap'>
+            <strong className='text-danger'>A</strong> = Absent / Leave Without
+            Payment,
+          </span>
+          <span className='text-nowrap'>
+            <strong className='text-danger'>-</strong> = Future,
+          </span>
+          <span className='text-nowrap'>
+            <strong className='text-black-50'>O</strong> = Offday,
+          </span>
+          <span className='text-nowrap'>
+            <strong className='text-black-50'>L</strong>,&nbsp;
+            <strong className='text-success'>L/1</strong>,&nbsp;
+            <strong className='text-success'>L/2</strong>, &nbsp;
+            <strong className='text-danger'>L/1</strong> or&nbsp;
+            <strong className='text-danger'>L/2</strong> = Paid Leave,
+          </span>
+          <span className='text-nowrap'>
+            <strong className='text-success'>OA</strong> = Offday Attendance
+          </span>
+        </div>
         <Table
           columns={[
             'Date',
@@ -850,12 +1112,12 @@ const MonthlyPaysheetById = () => {
             <div className='card-body text-muted'>
               <div className='my-2 row'>
                 <div className='col-12'>
-                  <h5 className='text-center'>Unpaid Leaves/Absense</h5>
+                  <h5 className='text-center'>LWPs</h5>
                   <hr />
                 </div>
-                <div className='col-6'>
+                <div className='col-4'>
                   <h6>
-                    <strong>Leave Taken / Absense</strong>
+                    <strong>Leave Taken</strong>
                   </h6>
                   {(
                     ['leave'] satisfies KeysOfObjectOfType<
@@ -876,9 +1138,31 @@ const MonthlyPaysheetById = () => {
                   ))}
                   Days
                 </div>
-                <div className='col-6 text-warning'>
+                <div className='col-4'>
                   <h6>
-                    <strong>Leave/Absence Deduction</strong>
+                    <strong>Unit Leave Deduction</strong>
+                  </h6>
+                  {(
+                    ['unitAbsenceDeduction'] satisfies KeysOfObjectOfType<
+                      MonthlySalary,
+                      number
+                    >[]
+                  ).map(k => (
+                    <input
+                      key={k}
+                      id={k}
+                      name={k}
+                      className='d-inline form-control me-2 w-50'
+                      type='number'
+                      disabled={isFetching}
+                      value={monthlySalary[k]}
+                      onChange={onMonthlySalaryChange}
+                    />
+                  ))}
+                </div>
+                <div className='col-4 text-warning'>
+                  <h6>
+                    <strong>Leave Deduction</strong>
                   </h6>
                   {(
                     ['leaveDeduction'] satisfies KeysOfObjectOfType<
@@ -1038,6 +1322,7 @@ const MonthlyPaysheetById = () => {
           ])}
         />
       </div>
+      {/* TODO: loan payment */}
 
       <div className='my-2'>
         <h5>Salary Payment History</h5>
