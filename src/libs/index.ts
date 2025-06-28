@@ -1,4 +1,5 @@
-import Employee from 'backend/Entities/Employee'
+import type Employee from 'backend/Entities/Employee'
+import type { SETTING_KEYS as SK } from 'backend/utils/misc'
 
 export const capitalize = (value: string) =>
   `${(value[0] || '').toUpperCase()}${value.substring(1)}`
@@ -26,6 +27,16 @@ export const dateToString = (date: Date) =>
     .toString()
     .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
 
+export const SETTING_KEYS = {
+  ATTENDANCE_ENTRY_GRACE_PERIOD: 'ATTENDANCE_ENTRY_GRACE_PERIOD',
+  ATTENDANCE_LEAVE_GRACE_PERIOD: 'ATTENDANCE_LEAVE_GRACE_PERIOD',
+  PAYROLL_CYCLE_START_DATE: 'PAYROLL_CYCLE_START_DATE'
+} as const satisfies typeof SK
+
+export const SETTINGS = { PAYROLL_CYCLE_START_DATE: 1 } satisfies {
+  [k in keyof typeof SETTING_KEYS]?: string | number
+}
+
 export const getPreviousMonth = (date: Date) => {
   const newDate = new Date(date)
   newDate.setMonth((newDate.getMonth() + 12 - 1) % 12)
@@ -48,15 +59,11 @@ export const getNextMonth = (date: Date) => {
 
 export const getDateRange = (date: Date) => {
   let [from, to] = [new Date(date), new Date(date)]
-  if (from.getDate() < 15) {
+  if (from.getDate() < SETTINGS.PAYROLL_CYCLE_START_DATE)
     from = getPreviousMonth(from)
-    from.setDate(15)
-    to.setDate(14)
-  } else {
-    from.setDate(15)
-    to = getNextMonth(to)
-    to.setDate(14)
-  }
+  else to = getNextMonth(to)
+  from.setDate(SETTINGS.PAYROLL_CYCLE_START_DATE)
+  to.setDate(SETTINGS.PAYROLL_CYCLE_START_DATE - 1)
   return [from, to] as const
 }
 
@@ -75,16 +82,18 @@ export default function generateCalender(from: Date, to: Date) {
 
   const date = new Date(from)
   date.setDate(date.getDate() - 1)
-  const daysInMonth = new Array(dayDifference(from, to)).fill(null).map(() => {
-    date.setTime(date.getTime() + 24 * 3600000)
-    return dateToString(date).substring(5)
-  })
 
-  return daysInMonth.map((date, i) => ({
-    dayName: nameOfDays[(firstDay + i) % 7] as (typeof nameOfDays)[number],
-    date: date.substring(3),
-    month: date.substring(0, 2)
-  }))
+  return new Array(dayDifference(from, to))
+    .fill(null)
+    .map(() => {
+      date.setTime(date.getTime() + 24 * 3600000)
+      return dateToString(date).substring(5)
+    })
+    .map((date, i) => ({
+      dayName: nameOfDays[(firstDay + i) % 7] as (typeof nameOfDays)[number],
+      date: date.substring(3),
+      month: date.substring(0, 2)
+    }))
 }
 
 type Enumerate<
@@ -115,13 +124,17 @@ export const getWeekData = (
     0
   ).getDate() as IntRange<28, 32>
 
-  let day = 15 as Exclude<MonthDay, -1>
-  for (let row = 0; day - 15 < totalDays; row++) {
+  let day = SETTINGS.PAYROLL_CYCLE_START_DATE as Exclude<MonthDay, -1>
+  for (
+    let row = 0;
+    day - SETTINGS.PAYROLL_CYCLE_START_DATE < totalDays;
+    row++
+  ) {
     const week: MonthDay[] = []
     for (let col = 0; col < 7; col++) {
       if (row === 0 && col < firstDay) {
         week.push(-1)
-      } else if (day - 15 >= totalDays) {
+      } else if (day - SETTINGS.PAYROLL_CYCLE_START_DATE >= totalDays) {
         week.push(-1)
       } else {
         week.push(
@@ -140,7 +153,12 @@ export const getWeekData = (
 
 export const getYearRange = (date: Date) => {
   const year = date.getFullYear()
-  return [`${year}-01-15`, `${year + 1}-01-14`] as const
+  return [
+    `${year}-01-${SETTINGS.PAYROLL_CYCLE_START_DATE}`,
+    new Date(year + 1, 0, SETTINGS.PAYROLL_CYCLE_START_DATE - 1)
+      .toISOString()
+      .split('T')[0]!
+  ] as const
 }
 
 export function downloadStringAsFile(
