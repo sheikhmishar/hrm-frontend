@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ChangeEventHandler, useContext, useState } from 'react'
-import { FaPen, FaRotateLeft } from 'react-icons/fa6'
+import { FaPen } from 'react-icons/fa6'
 
 import Button from '../../components/Button'
 import Input from '../../components/Input'
@@ -11,21 +11,19 @@ import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { ToastContext } from '../../contexts/toast'
 import { capitalize, capitalizeDelim } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
+import { SettingContext } from '../../contexts/setting'
 
 import { GetResponseType } from 'backend/@types/response'
 import Setting from 'backend/Entities/Setting'
-import {
-  allSettings,
-  settingDetails,
-  updateSetting
-} from 'backend/controllers/settings'
-import { BLANK_ARRAY } from '../../constants/CONSTANTS'
+import { settingDetails, updateSetting } from 'backend/controllers/settings'
 
 const visibleKeys = Object.keys(defaultSetting) as (keyof Setting)[]
 const columns = visibleKeys.map(capitalize).concat('Action')
 
 const OrganizationSettings = () => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
+  const { fetchingSettings, refetchSettings, settings } =
+    useContext(SettingContext)
 
   const [setting, setSetting] = useState<Setting>({ ...defaultSetting })
   const onSettingChange: ChangeEventHandler<HTMLInputElement> = ({
@@ -42,21 +40,6 @@ const OrganizationSettings = () => {
   const [search, setSearch] = useState('')
   const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
     setSearch(e.target.value)
-
-  const resetData = () => setSetting({ ...defaultSetting })
-
-  const {
-    refetch: refetchSettings,
-    data: settings = BLANK_ARRAY,
-    isFetching
-  } = useQuery({
-    queryKey: ['settings', ServerSITEMAP.settings.get],
-    queryFn: () =>
-      modifiedFetch<GetResponseType<typeof allSettings>>(
-        ServerSITEMAP.settings.get
-      ),
-    onError: onErrorDisplayToast
-  })
 
   const { isFetching: settingLoading } = useQuery({
     queryKey: [
@@ -105,7 +88,7 @@ const OrganizationSettings = () => {
             </h4>
             <span className='text-primary'>Details</span>
           </div>
-          {isFetching && (
+          {fetchingSettings && (
             <div className='ms-3 spinner-border text-primary' role='status'>
               <span className='visually-hidden'>Loading...</span>
             </div>
@@ -178,22 +161,17 @@ const OrganizationSettings = () => {
         </Modal.Body>
         <Modal.Footer>
           <div className='d-flex justify-content-end mt-3'>
-            {setting.property && (
-              <Button className='btn-light mx-2' onClick={resetData}>
-                <FaRotateLeft />
-              </Button>
-            )}
             <Button className='btn-light mx-2' onClick={toggleSidebar}>
               Cancel
             </Button>
             <Button
-              disabled={isFetching || settingUpdateLoading}
+              disabled={fetchingSettings || settingUpdateLoading}
               className='btn-primary mx-2'
               onClick={() => settingUpdate()}
             >
               <span className='align-items-center d-flex'>
                 Update
-                {(isFetching || settingUpdateLoading) && (
+                {(fetchingSettings || settingUpdateLoading) && (
                   <div
                     className='ms-2 spinner-border spinner-border-sm text-light'
                     role='status'
