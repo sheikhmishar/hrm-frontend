@@ -10,6 +10,7 @@ import generateCalender, {
   dateToString,
   getDateRange,
   getWeekData,
+  SETTINGS,
   stringToDate
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
@@ -144,7 +145,9 @@ const HolidayManagement = () => {
               <tr key={i}>
                 {week.map((date, index) => {
                   const month =
-                    (date < 15 ? toDate.getMonth() : fromDate.getMonth()) + 1
+                    (date < SETTINGS.PAYROLL_CYCLE_START_DATE
+                      ? toDate.getMonth()
+                      : fromDate.getMonth()) + 1
                   const year =
                     month === 1 ? toDate.getFullYear() : fromDate.getFullYear()
                   const targetDateString = dateToString(

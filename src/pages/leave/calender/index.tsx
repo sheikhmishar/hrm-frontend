@@ -89,6 +89,17 @@ const LeaveCalender = () => {
     [fromDate, toDate]
   )
 
+  const monthMarker = useMemo(() => {
+    const midIndex = calender.findIndex(({ date }) => date === '01')
+
+    const leftMidIndex = Math.floor(midIndex / 2)
+    const rightMidIndex = Math.floor(
+      midIndex - 1 + (calender.length - midIndex) / 2
+    )
+
+    return [leftMidIndex, rightMidIndex] as [number, number]
+  }, [calender])
+
   return (
     <>
       <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
@@ -137,9 +148,9 @@ const LeaveCalender = () => {
         )}
         rows={[
           [<></>].concat(
-            calender.map(({ date, month }, i) => (
+            calender.map(({ month }, i) => (
               <strong className='text-primary'>
-                {date.endsWith('22') || date.endsWith('07')
+                {monthMarker.includes(i)
                   ? stringToDate(`2011-${month}-01`)
                       .toDateString()
                       .substring(4, 7)

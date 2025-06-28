@@ -430,7 +430,7 @@ const EmployeeDetails = () => {
                           ServerSITEMAP.static.employeePhotos +
                           '/' +
                           employee.photo
-                      : '/favicon.png'
+                      : `/favicon-${import.meta.env.REACT_APP_VARIANT}.png`
                   }
                   style={{ marginTop: '-3rem', height: 150, width: 150 }}
                 />
@@ -837,28 +837,22 @@ const EmployeeDetails = () => {
                 ))}
                 {(
                   [
-                    'checkedInLateFee',
-                    'overtime',
-                    'extraBonus'
-                  ] satisfies KeysOfObjectOfType<Employee, string>[]
+                    'absenseDeductionPerDay',
+                    'lateDeductionPerMinute',
+                    'overtimeBonusPerMinute'
+                  ] satisfies KeysOfObjectOfType<Employee, number>[]
                 ).map(k => (
                   <div key={k} className='col-12 col-lg-6'>
-                    <Select
-                      id={k}
+                    <Input
                       disabled={isEmployeeLoading}
-                      autoComplete='true'
+                      id={k}
                       label={capitalizeDelim(k)}
                       containerClass='my-3'
-                      required
                       placeholder={'Enter ' + capitalizeDelim(k)}
                       value={employee[k]}
-                      options={(
-                        [
-                          'applicable',
-                          'inApplicable'
-                        ] satisfies Employee[typeof k][]
-                      ).map(name => ({ value: name, label: name }))}
-                      onChange={onSelectChange}
+                      type='number'
+                      min={0}
+                      onChange={onEmployeeChange}
                     />
                   </div>
                 ))}

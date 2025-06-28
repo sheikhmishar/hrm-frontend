@@ -26,6 +26,7 @@ import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
 import generateCalender, {
+  SETTINGS,
   capitalizeDelim,
   dateToString,
   dayDifference,
@@ -423,7 +424,7 @@ const LeaveDetails = () => {
                       <tr key={i}>
                         {week.map((date, index) => {
                           const month =
-                            (date < 15
+                            (date < SETTINGS.PAYROLL_CYCLE_START_DATE
                               ? toDate.getMonth()
                               : fromDate.getMonth()) + 1
                           const year =
@@ -449,15 +450,15 @@ const LeaveDetails = () => {
                                 leaveData
                                   ? (leaveData.type === 'paid'
                                       ? leaveData.duration === 'first_halfday'
-                                        ? 'bg-top-half-primary'
+                                        ? 'bg-left-half-primary'
                                         : leaveData.duration ===
                                           'second_halfday'
-                                        ? 'bg-bottom-half-primary'
+                                        ? 'bg-right-half-primary'
                                         : 'bg-primary'
                                       : leaveData.duration === 'first_halfday'
-                                      ? 'bg-top-half-secondary'
+                                      ? 'bg-left-half-secondary'
                                       : leaveData.duration === 'second_halfday'
-                                      ? 'bg-bottom-half-secondary'
+                                      ? 'bg-right-half-secondary'
                                       : 'bg-secondary') + ' text-white'
                                   : ''
                               }

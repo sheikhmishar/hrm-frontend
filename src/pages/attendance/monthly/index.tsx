@@ -296,6 +296,17 @@ const MonthlyAttendance = () => {
     [fromDate, toDate]
   )
 
+  const monthMarker = useMemo(() => {
+    const midIndex = calender.findIndex(({ date }) => date === '01')
+
+    const leftMidIndex = Math.floor(midIndex / 2)
+    const rightMidIndex = Math.floor(
+      midIndex - 1 + (calender.length - midIndex) / 2
+    )
+
+    return [leftMidIndex, rightMidIndex] as [number, number]
+  }, [calender])
+
   const employeeAttendances = useMemo(
     () =>
       _employeeAttendances.filter(
@@ -419,9 +430,9 @@ const MonthlyAttendance = () => {
         rows={[
           [<></>]
             .concat(
-              calender.map(({ date, month }) => (
+              calender.map(({ date, month }, i) => (
                 <strong className='text-primary'>
-                  {date.endsWith('22') || date.endsWith('07')
+                  {monthMarker.includes(i)
                     ? stringToDate(`2011-${month}-01`)
                         .toDateString()
                         .substring(4, 7)
@@ -601,6 +612,7 @@ const MonthlyAttendance = () => {
                       <strong className='text-danger'>
                         {fullDate > currentDate ? '-' : 'A'}
                       </strong>
+                      // TODO: add - after lastWorkingDay
                     )
                   })
                 )
@@ -608,10 +620,13 @@ const MonthlyAttendance = () => {
                   <>{presentWithNoHolidayOrFullPaidLeave}</>,
                   <>{paidLeavesTotal}</>,
                   <>
-                    {totalDays -
-                      presentWithNoHolidayOrFullPaidLeave -
-                      holidays.length -
-                      paidLeavesTotal}
+                    {Math.max(
+                      0,
+                      totalDays -
+                        presentWithNoHolidayOrFullPaidLeave -
+                        holidays.length -
+                        paidLeavesTotal
+                    )}
                   </>,
                   <>{holidayAttendances}</>,
                   <>{holidays.length}</>
