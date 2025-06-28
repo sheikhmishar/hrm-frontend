@@ -1,7 +1,7 @@
 import ServerSITEMAP from '../constants/SERVER_SITEMAP'
 import { getEmployeeId } from '../libs'
 
-import Employee from 'backend/Entities/Employee'
+import type Employee from 'backend/Entities/Employee'
 
 //  TODO: add Id
 
@@ -32,7 +32,7 @@ const EmployeeName: React.FC<{
                 ServerSITEMAP.static.employeePhotos +
                 '/' +
                 photo
-            : '/favicon.png'
+            : `/favicon-${import.meta.env.REACT_APP_VARIANT}.png`
         }
         width='50'
         height='50'

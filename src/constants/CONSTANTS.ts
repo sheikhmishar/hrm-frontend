@@ -29,7 +29,7 @@ export const ROUTES = {
     _: attendanceRoot,
     _params: ROUTE_PARAMS,
     _queries: { month: 'month' },
-    history: `${attendanceRoot}/history`,
+    timesheet: `${attendanceRoot}/timesheet`,
     monthly: `${attendanceRoot}/monthly`,
     details: `${attendanceRoot}/monthly/:id`,
     import: `${attendanceRoot}/import`,
@@ -39,8 +39,8 @@ export const ROUTES = {
     _: leaveRoot,
     _params: ROUTE_PARAMS,
     _queries: { month: 'month' },
-    assigned: `${leaveRoot}/assigned/`,
-    details: `${leaveRoot}/details/:id`,
+    assigned: `${leaveRoot}/assigned`,
+    details: `${leaveRoot}/calender/:id`,
     calender: `${leaveRoot}/calender`
   },
   payroll: {

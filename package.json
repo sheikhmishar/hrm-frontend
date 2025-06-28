@@ -1,5 +1,5 @@
 {
-  "name": "skylane-hrm-frontend",
+  "name": "hrm-frontend",
   "version": "1.0.0",
   "homepage": "/",
   "private": true,
@@ -43,6 +43,7 @@
     "run:fontmin:global": "node ./src/libs/fontmin/index.cjs",
     "typecheck": "tsc -p ./tsconfig.json --watch",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:watch": "nodemon -w src -e ts,tsx -x \"npm run lint\"",
     "preview": "vite preview"
   },
   "eslintConfig": {

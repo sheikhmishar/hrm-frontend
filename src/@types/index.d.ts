@@ -6,6 +6,7 @@ declare global {
   interface ImportMetaEnv {
     readonly REACT_APP_BASE_URL?: string
     readonly REACT_APP_CONTEXT_MENU_DISABLE?: 'true'
+    readonly REACT_APP_VARIANT?: 'Payployees'
   }
   namespace React {
     interface HTMLAttributes {

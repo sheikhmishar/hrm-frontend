@@ -68,7 +68,7 @@ const CompanyLogo: React.FC<{ src: string }> = ({ src }) => {
         }
         height={100}
         width={100}
-        alt='skylane logo'
+        alt={'logo ' + import.meta.env.REACT_APP_VARIANT}
         onLoad={() => setImageStatus('SUCCESS')}
         onError={() => setImageStatus('ERROR')}
       />
@@ -82,7 +82,9 @@ const SidebarItems: React.FC = () => {
   return (
     <>
       <NavLink to={ROUTES.root} className='mb-3 navbar-brand text-center'>
-        <CompanyLogo src='/favicon.png' />
+        <CompanyLogo
+          src={`/favicon-${import.meta.env.REACT_APP_VARIANT}.png`}
+        />
       </NavLink>
 
       <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
@@ -128,7 +130,7 @@ const SidebarItems: React.FC = () => {
             <FaUsers className='me-2' /> Leave Assigned
           </NavItem>
           <NavItem to={ROUTES.leave.calender}>
-            <FaCalendar className='me-2' /> LV Calender
+            <FaCalendar className='me-2' /> Leave Calender
           </NavItem>
         </AccordionItem>
       </div>
@@ -146,8 +148,8 @@ const SidebarItems: React.FC = () => {
           <NavItem to={ROUTES.attendance.monthly}>
             <FaUsers className='me-2' /> Monthly Attendance
           </NavItem>
-          <NavItem to={ROUTES.attendance.history}>
-            <FaUsers className='me-2' /> Check In/Out History
+          <NavItem to={ROUTES.attendance.timesheet}>
+            <FaUsers className='me-2' /> Timesheet
           </NavItem>
           <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
             <NavItem to={ROUTES.attendance.import}>

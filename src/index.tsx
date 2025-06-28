@@ -5,6 +5,7 @@ import { HashRouter as Router } from 'react-router-dom'
 
 import App from './App'
 import AuthProvider from './contexts/auth'
+import SettingProvider from './contexts/setting'
 import ToastProvider from './contexts/toast'
 import ErrorBoundary from './pages/error'
 import reportWebVitals from './reportWebVitals'
@@ -43,19 +44,27 @@ const queryClient = new QueryClient({
   }
 })
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-root.render(
-  <ErrorBoundary>
-    <React.StrictMode>
-      <Router>
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </ToastProvider>
-        </QueryClientProvider>
-      </Router>
-    </React.StrictMode>
-  </ErrorBoundary>
-)
+const rootElement = document.getElementById('root')
+if (!rootElement) alert('Application Error')
+else {
+  if (import.meta.env.REACT_APP_VARIANT)
+    rootElement.classList.add(import.meta.env.REACT_APP_VARIANT)
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(
+    <ErrorBoundary>
+      <React.StrictMode>
+        <Router>
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+              <AuthProvider>
+                <SettingProvider>
+                  <App />
+                </SettingProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </QueryClientProvider>
+        </Router>
+      </React.StrictMode>
+    </ErrorBoundary>
+  )
+}

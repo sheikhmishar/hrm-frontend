@@ -199,7 +199,7 @@ const Routes = () => (
         }
       />
       <Route
-        path={ROUTES.attendance.history}
+        path={ROUTES.attendance.timesheet}
         element={
           <ProtectedRoute authenticatedOnly>
             <AttendanceHistoryLazy />
