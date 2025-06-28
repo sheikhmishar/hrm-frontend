@@ -44,6 +44,10 @@ Chart.register(
   ArcElement
 )
 
+const CSSFilter = 'hue-rotate(66deg)' 
+
+const rootElement = document.getElementById('root')!
+
 const Dashboard: React.FC = () => {
   const { onErrorDisplayToast } = useContext(ToastContext)
 
@@ -207,6 +211,7 @@ const Dashboard: React.FC = () => {
             <div className='align-items-center col-6 col-md-3 d-flex gap-3 text-muted'>
               <img
                 className='img-fluid'
+                style={{ filter: CSSFilter }}
                 src={iconTotalEmployee}
                 width='42'
                 alt='totalEmployees'
@@ -219,6 +224,7 @@ const Dashboard: React.FC = () => {
             <div className='align-items-center col-6 col-md-3 d-flex gap-3 text-muted'>
               <img
                 className='img-fluid'
+                style={{ filter: CSSFilter }}
                 src={iconPresentEmployee}
                 width='42'
                 alt='presentEmployees'
@@ -231,6 +237,7 @@ const Dashboard: React.FC = () => {
             <div className='align-items-center col-6 col-md-3 d-flex gap-3 text-muted'>
               <img
                 className='img-fluid'
+                style={{ filter: CSSFilter }}
                 src={iconAbsentEmployee}
                 width='42'
                 alt='absentEmployees'
@@ -245,6 +252,7 @@ const Dashboard: React.FC = () => {
             <div className='align-items-center col-6 col-md-3 d-flex gap-3 text-muted'>
               <img
                 className='img-fluid'
+                style={{ filter: CSSFilter }}
                 src={iconLeaveEmployee}
                 width='42'
                 alt='leaveEmployees'
@@ -300,7 +308,9 @@ const Dashboard: React.FC = () => {
                               0
                             )
                           ),
-                          backgroundColor: '#116384'
+                          backgroundColor: `rgb(${getComputedStyle(
+                            rootElement
+                          ).getPropertyValue('--bs-primary-rgb')})`
                         },
                         {
                           label: 'Absent',
@@ -313,7 +323,9 @@ const Dashboard: React.FC = () => {
                                 0
                               )
                           ),
-                          backgroundColor: '#54C5D0'
+                          backgroundColor: `rgb(${getComputedStyle(
+                            rootElement
+                          ).getPropertyValue('--bs-primary-rgb-dark')})`
                         },
                         {
                           label: 'Leave',
@@ -323,7 +335,9 @@ const Dashboard: React.FC = () => {
                               0
                             )
                           ),
-                          backgroundColor: '#F47426'
+                          backgroundColor: `rgb(${getComputedStyle(
+                            rootElement
+                          ).getPropertyValue('--bs-secondary-rgb')})`
                         }
                       ]
                     }}
@@ -400,12 +414,27 @@ const Dashboard: React.FC = () => {
                             paid || unpaid ? unpaid : 1
                           ],
                           backgroundColor: [
-                            paid ? '#116384' : '#000',
-                            unpaid ? '#54C5D0' : '#000'
+                            paid
+                              ? `rgb(${getComputedStyle(
+                                  rootElement
+                                ).getPropertyValue('--bs-primary-rgb')})`
+                              : '#000',
+                            unpaid
+                              ? `rgb(${getComputedStyle(
+                                  rootElement
+                                ).getPropertyValue('--bs-secondary-rgb')})`
+                              : '#000'
                           ],
                           borderColor:
                             paid || unpaid
-                              ? ['#116384', '#116384']
+                              ? [
+                                  `rgb(${getComputedStyle(
+                                    rootElement
+                                  ).getPropertyValue('--bs-primary-rgb')})`,
+                                  `rgb(${getComputedStyle(
+                                    rootElement
+                                  ).getPropertyValue('--bs-primary-rgb')})`
+                                ]
                               : ['#000', '#000'],
                           borderWidth: 1
                         }
