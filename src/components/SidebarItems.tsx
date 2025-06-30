@@ -220,6 +220,12 @@ const SidebarItems: React.FC = () => {
             <NavItem to={ROUTES.organization.salaryType}>
               <FaMoneyBills className='me-2' /> Salary Type
             </NavItem>
+            <NavItem to={ROUTES.organization.bonusType}>
+              <FaMoneyBills className='me-2' /> Bonus Type
+            </NavItem>
+            <NavItem to={ROUTES.organization.deductionType}>
+              <FaMoneyBills className='me-2' /> Deduction Type
+            </NavItem>
             <NavItem to={ROUTES.organization.settings}>
               <FaWrench className='me-2' /> Settings
             </NavItem>
@@ -257,6 +263,12 @@ const SidebarItems: React.FC = () => {
             </NavItem>
             <NavItem to={ROUTES.approval.salaryType}>
               <FaMoneyBills className='me-2' /> Salary Type
+            </NavItem>
+            <NavItem to={ROUTES.approval.bonusType}>
+              <FaMoneyBills className='me-2' /> Bonus Type
+            </NavItem>
+            <NavItem to={ROUTES.approval.deductionType}>
+              <FaMoneyBills className='me-2' /> Deduction Type
             </NavItem>
             <NavItem to={ROUTES.approval.employee}>
               <FaWrench className='me-2' /> Employee

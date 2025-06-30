@@ -61,6 +61,8 @@ export const ROUTES = {
     branch: `${organizationRoot}/branch`,
     dutyType: `${organizationRoot}/duty-type`,
     salaryType: `${organizationRoot}/salary-type`,
+    bonusType: `${organizationRoot}/bonus-type`,
+    deductionType: `${organizationRoot}/deduction-type`,
     designation: `${organizationRoot}/designation`,
     settings: `${organizationRoot}/settings`
   },
@@ -71,6 +73,8 @@ export const ROUTES = {
     branch: `${approvalRoot}/branch`,
     dutyType: `${approvalRoot}/duty-type`,
     salaryType: `${approvalRoot}/salary-type`,
+    bonusType: `${approvalRoot}/bonus-type`,
+    deductionType: `${approvalRoot}/deduction-type`,
     designation: `${approvalRoot}/designation`,
     employee: `${approvalRoot}/employee`
   },

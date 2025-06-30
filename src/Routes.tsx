@@ -71,6 +71,12 @@ const DutyTypeLazy = delayedLazy(() => import('./pages/organization/duty-type'))
 const SalaryTypeLazy = delayedLazy(
   () => import('./pages/organization/salary-type')
 )
+const BonusTypeLazy = delayedLazy(
+  () => import('./pages/organization/bonus-type')
+)
+const DeductionTypeLazy = delayedLazy(
+  () => import('./pages/organization/deduction-type')
+)
 const SettingsLazy = delayedLazy(() => import('./pages/organization/settings'))
 const ReportLazy = delayedLazy(() => import('./pages/report'))
 
@@ -343,6 +349,22 @@ const Routes = () => (
         }
       />
       <Route
+        path={ROUTES.organization.bonusType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
+            <BonusTypeLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.organization.deductionType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
+            <DeductionTypeLazy />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.organization.settings}
         element={
           <ProtectedRoute rolesAllowed={['SuperAdmin', 'HR']}>
@@ -395,6 +417,22 @@ const Routes = () => (
         element={
           <ProtectedRoute rolesAllowed={['SuperAdmin']}>
             <SalaryTypeLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.bonusType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <BonusTypeLazy approval />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.approval.deductionType}
+        element={
+          <ProtectedRoute rolesAllowed={['SuperAdmin']}>
+            <DeductionTypeLazy approval />
           </ProtectedRoute>
         }
       />

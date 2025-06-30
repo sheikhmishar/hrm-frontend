@@ -16,6 +16,8 @@ const root = '/api' as const,
   branchesRoot = `${root}/branches` as const,
   dutyTypesRoot = `${root}/duty-types` as const,
   salaryTypesRoot = `${root}/salary-types` as const,
+  bonusTypesRoot = `${root}/bonus-types` as const,
+  deductionTypesRoot = `${root}/deduction-types` as const,
   designationsRoot = `${root}/designations` as const
 
 const rootParams = { id: ':id' } as const
@@ -148,6 +150,22 @@ const ServerSITEMAP = {
     get: salaryTypesRoot,
     getById: `${salaryTypesRoot}/:id`,
     put: `${salaryTypesRoot}/:id`
+  },
+  bonusTypes: {
+    _params: rootParams,
+    _: bonusTypesRoot,
+    post: bonusTypesRoot,
+    get: bonusTypesRoot,
+    getById: `${bonusTypesRoot}/:id`,
+    put: `${bonusTypesRoot}/:id`
+  },
+  deductionTypes: {
+    _params: rootParams,
+    _: deductionTypesRoot,
+    post: deductionTypesRoot,
+    get: deductionTypesRoot,
+    getById: `${deductionTypesRoot}/:id`,
+    put: `${deductionTypesRoot}/:id`
   },
   designations: {
     _params: rootParams,
