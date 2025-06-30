@@ -5,10 +5,12 @@ import Navbar from './components/Navbar'
 import SidebarItems from './components/SidebarItems'
 import ToastContainer from './components/ToastContainer'
 import { AuthContext } from './contexts/auth'
+import { SettingContext } from './contexts/setting'
 import ErrorBoundary from './pages/error'
 
 export default function App() {
   const { self } = useContext(AuthContext)
+  const { settings } = useContext(SettingContext)
 
   const mainContent = (
     <main className='p-3'>
@@ -18,7 +20,7 @@ export default function App() {
     </main>
   )
 
-  if (!self)
+  if (!self || !settings.length)
     return (
       <>
         <ToastContainer />

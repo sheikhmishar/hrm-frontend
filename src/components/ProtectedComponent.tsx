@@ -1,8 +1,9 @@
 import React, { PropsWithChildren, useContext } from 'react'
 
 import { AuthContext } from '../contexts/auth'
+import { SettingContext } from '../contexts/setting'
 
-import User from 'backend/Entities/User'
+import type User from 'backend/Entities/User'
 
 type Props = {
   authenticatedOnly?: boolean
@@ -15,7 +16,9 @@ const ProtectedComponent: React.FC<Props> = props => {
     props
 
   const { self, token } = useContext(AuthContext)
+  const { settings } = useContext(SettingContext)
 
+  if (!settings.length) return <></>
   if (authenticatedOnly || rolesAllowed) {
     if (
       !(self?.status === 'active' && token) ||

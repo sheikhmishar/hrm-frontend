@@ -14,6 +14,7 @@ import modifiedFetch from '../libs/modifiedFetch'
 
 import { GetReqBodyType, GetResponseType } from 'backend/@types/response'
 import { loginUser } from 'backend/controllers/users'
+import { SettingContext } from '../contexts/setting'
 
 type Creds = Required<GetReqBodyType<typeof loginUser>>
 
@@ -22,6 +23,7 @@ const defaultLoginCreds: Creds = { inputData: '', password: '' }
 const Login: React.FC = () => {
   const { onErrorDisplayToast } = useContext(ToastContext)
   const { setToken, fetchingAuth } = useContext(AuthContext)
+  const { fetchingSettings } = useContext(SettingContext)
 
   const [loginCreds, setLoginCreds] = useState({ ...defaultLoginCreds })
   const onCredsChange: ChangeEventHandler<HTMLInputElement> = ({
@@ -40,6 +42,8 @@ const Login: React.FC = () => {
     retry: false
   })
 
+  const isFetching = isLoading || fetchingAuth || fetchingSettings
+
   return (
     <>
       <div className='d-flex justify-content-center py-5'>
@@ -54,10 +58,12 @@ const Login: React.FC = () => {
             ).map(k => (
               <Input
                 key={k}
-                disabled={isLoading || fetchingAuth}
+                disabled={isFetching}
                 id={k}
                 // TODO: capitalizeDelim for camelCase
-                label={capitalizeDelim(k === 'inputData' ? 'usernameOrEmail' : k)}
+                label={capitalizeDelim(
+                  k === 'inputData' ? 'usernameOrEmail' : k
+                )}
                 containerClass='my-3'
                 placeholder={'Enter ' + capitalizeDelim(k)}
                 value={loginCreds[k]}
@@ -76,13 +82,13 @@ const Login: React.FC = () => {
 
             <div className='mt-4 text-center'>
               <Button
-                disabled={isLoading || fetchingAuth}
+                disabled={isFetching}
                 onClick={() => mutate()}
                 className='btn-primary'
               >
                 <span className='align-items-center d-flex'>
                   Login
-                  {(isLoading || fetchingAuth) && (
+                  {isFetching && (
                     <div
                       className='ms-2 spinner-border spinner-border-sm text-light'
                       role='status'
