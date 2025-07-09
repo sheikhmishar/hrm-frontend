@@ -32,15 +32,15 @@ export const SettingContext = createContext<SettingContext>({
 
 const SettingProvider: FC<PropsWithChildren> = ({ children }) => {
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
-  const { token } = useContext(AuthContext)
+  const { self } = useContext(AuthContext)
 
   const {
     data: settings = BLANK_ARRAY,
     isFetching: fetchingSettings,
     refetch: refetchSettings
   } = useQuery({
-    enabled: !!token,
-    queryKey: ['settings', ServerSITEMAP.settings.get, token],
+    enabled: !!self,
+    queryKey: ['settings', ServerSITEMAP.settings.get, self],
     queryFn: () =>
       modifiedFetch<GetResponseType<typeof allSettings>>(
         ServerSITEMAP.settings.get
@@ -64,8 +64,8 @@ const SettingProvider: FC<PropsWithChildren> = ({ children }) => {
   })
 
   const value = useMemo(
-    () => ({ token, fetchingSettings, refetchSettings, settings }),
-    [token, fetchingSettings, refetchSettings, settings]
+    () => ({ fetchingSettings, refetchSettings, settings }),
+    [fetchingSettings, refetchSettings, settings]
   )
 
   return (

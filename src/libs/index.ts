@@ -20,6 +20,7 @@ export const mToHM = (minutes: number) => {
   }`
 }
 
+export const timeToDate = (time: string) => new Date('2021-01-01T' + time)
 export const stringToDate = (str: string) => new Date(str.replace(/-/g, '/'))
 
 export const dateToString = (date: Date) =>
@@ -75,10 +76,18 @@ export const dayDifference = (date1: Date, date2: Date, absolute = true) => {
   )
 }
 
-const nameOfDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const rotate = <T>(arr: Array<T>, count = 1) => [
+  ...arr.slice(-count, arr.length),
+  ...arr.slice(0, -count)
+]
+
+export const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+const dayShiftBy = 1
+export const nameOfDays = dayShiftBy ? rotate([...days], dayShiftBy) : days
 
 export default function generateCalender(from: Date, to: Date) {
-  const firstDay = from.getDay()
+  const firstDay = (from.getDay() + dayShiftBy) % 7
 
   const date = new Date(from)
   date.setDate(date.getDate() - 1)
@@ -114,7 +123,7 @@ export const getWeekData = (
   from: Date,
   monthlyCalender: ReturnType<typeof generateCalender>
 ): MonthDay[][] => {
-  const firstDay = from.getDay()
+  const firstDay = (from.getDay() + dayShiftBy) % 7
   const totalDays = monthlyCalender.length
   const data: MonthDay[][] = []
 

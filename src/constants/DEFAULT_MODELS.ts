@@ -8,6 +8,7 @@ import DutyType from 'backend/Entities/DutyType'
 import Employee from 'backend/Entities/Employee'
 import EmployeeAsset from 'backend/Entities/EmployeeAsset'
 import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
+import EmployeeAttendanceSession from 'backend/Entities/EmployeeAttendanceSessions'
 import EmployeeContact from 'backend/Entities/EmployeeContacts'
 import EmployeeDocument from 'backend/Entities/EmployeeDocument'
 import EmployeeFinancial from 'backend/Entities/EmployeeFinancial'
@@ -138,13 +139,21 @@ export const defaultLoan: Loan = {
 
 export const defaultAttendance: EmployeeAttendance = {
   id: -1,
-  arrivalTime: '',
   date: '',
-  leaveTime: '',
   late: 0,
   overtime: 0,
   totalTime: 0,
-  employee: defaultEmployee
+  employee: defaultEmployee,
+  tasks: undefined,
+  sessions: []
+}
+
+export const defaultAttendanceSession: EmployeeAttendanceSession = {
+  id: -1,
+  arrivalTime: '',
+  leaveTime: undefined,
+  sessionTime: 0,
+  attendance: defaultAttendance
 }
 
 export const defaultMonthlySalary: MonthlySalary = {
