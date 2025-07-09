@@ -85,11 +85,18 @@ function usePagination(totalElements: number, elementsPerPage: number) {
 
 type TableD = Omit<JSX.IntrinsicElements['table'], 'className'> & {
   columns: string[]
+  headers?: JSX.Element[][]
   rows: JSX.Element[][]
   contCls?: string
 }
 
-const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
+const Table: React.FC<TableD> = ({
+  columns,
+  rows,
+  headers,
+  contCls,
+  ...props
+}) => {
   const paginationRef = useRef<HTMLDivElement>(null)
   const pageNumberInputRef = useRef<HTMLInputElement>(null)
 
@@ -141,6 +148,19 @@ const Table: React.FC<TableD> = ({ columns, rows, contCls, ...props }) => {
                 </th>
               ))}
             </tr>
+            {headers?.map((header, i) => (
+              <tr>
+                {header.map((column, j) => (
+                  <th
+                    key={i + '_' + j}
+                    scope='col'
+                    className='align-middle text-muted text-nowrap'
+                  >
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            ))}
           </thead>
           <tbody>
             {currentRows.map((row, i) => (
