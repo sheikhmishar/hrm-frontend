@@ -18,7 +18,10 @@ import Modal from '../../components/Modal'
 import ProtectedComponent from '../../components/ProtectedComponent'
 import Table from '../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../constants/CONSTANTS'
-import { defaultAttendance } from '../../constants/DEFAULT_MODELS'
+import {
+  defaultAttendance,
+  defaultAttendanceSession
+} from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../contexts/auth'
 import { ToastContext } from '../../contexts/toast'
@@ -30,6 +33,7 @@ import {
   getEmployeeId,
   mToHM,
   stringToDate,
+  timeToDate,
   timeToLocaleString
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
@@ -49,21 +53,20 @@ const getCsvFromAttendaces = (employees: Employee[]) =>
       (prev, employee) =>
         prev.concat(
           employee.attendances.map(
-            ({
-              date,
-              arrivalTime,
-              leaveTime,
-              overtime,
-              late,
-              totalTime,
-              tasks
-            }) => ({
+            ({ date, sessions, overtime, late, totalTime, tasks }) => ({
               date,
               id: getEmployeeId(employee),
               employee: employee.name,
               designation: employee.designation.name,
-              checkIn: arrivalTime, // TODO: fix
-              checkOut: leaveTime,
+              sessions: sessions
+                .map(
+                  session =>
+                    timeToLocaleString(session.arrivalTime) +
+                    (session.leaveTime
+                      ? ' -> ' + timeToLocaleString(session.leaveTime)
+                      : '')
+                )
+                .join(', '),
               late: late === -1 ? 'N/A' : Math.max(0, late) + ' minutes',
               overtime:
                 overtime === -1 ? 'N/A' : Math.max(0, overtime) + ' minutes',
@@ -80,8 +83,7 @@ const getCsvFromAttendaces = (employees: Employee[]) =>
         'id',
         'employee',
         'designation',
-        'checkIn',
-        'checkOut',
+        'sessions',
         'late',
         'overtime',
         'tasks',
@@ -90,7 +92,7 @@ const getCsvFromAttendaces = (employees: Employee[]) =>
     }
   )
 
-const AttendanceHistory = () => {
+const AttendanceTimesheet = () => {
   const { self } = useContext(AuthContext)
   const { addToast, onErrorDisplayToast } = useContext(ToastContext)
 
@@ -203,9 +205,14 @@ const AttendanceHistory = () => {
   const isFetching =
     _isFetching || updateAttendanceLoading || deleteAttendanceLoading
 
+  useEffect(() => {
+    const interval = setInterval(refetch, 3000)
+    return () => clearInterval(interval)
+  }, [refetch])
+
   return (
     <>
-      <div className='align-items-center d-flex flex-wrap gap-2 justify-content-between mb-3'>
+      <div className='align-items-center d-flex flex-wrap gap-2 mb-3'>
         <ProtectedComponent rolesAllowed={['SuperAdmin', 'HR']}>
           <Button
             onClick={() =>
@@ -215,36 +222,33 @@ const AttendanceHistory = () => {
                 { type: 'text/csv' }
               )
             }
-            className='btn-primary'
+            className='btn-primary mx-3'
           >
             Export CSV
           </Button>
         </ProtectedComponent>
 
         {_isFetching && (
-          <div
-            className='me-auto ms-3 spinner-border text-primary'
-            role='status'
-          >
+          <div className='mx-3 spinner-border text-primary' role='status'>
             <span className='visually-hidden'>Loading...</span>
           </div>
         )}
-
-        <CalenderSlider
-          monthly
-          currentDate={currentDate}
-          setCurrentDate={setCurrentDate}
-        />
+        <div className='ms-auto'>
+          <CalenderSlider
+            monthly
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+          />
+        </div>
       </div>
       <Table
         columns={[
           'Date',
           'Employee',
-          'Check In',
+          'Sessions',
           'Office Start',
           'Late',
           'Early In',
-          'Check Out',
           'Office End',
           'Overtime',
           'Early Out',
@@ -280,7 +284,16 @@ const AttendanceHistory = () => {
                   >
                     <EmployeeName employee={employee} />
                   </Link>,
-                  <>{timeToLocaleString(attendance.arrivalTime)}</>,
+                  <>
+                    {attendance.sessions.map(session => (
+                      <div key={session.id} className='text-nowrap'>
+                        {timeToLocaleString(session.arrivalTime) +
+                          (session.leaveTime
+                            ? ' -> ' + timeToLocaleString(session.leaveTime)
+                            : '')}
+                      </div>
+                    ))}
+                  </>,
                   <>{timeToLocaleString(employee.officeStartTime)}</>,
                   <>
                     {attendance.late === -1
@@ -292,7 +305,6 @@ const AttendanceHistory = () => {
                       ? 'N/A'
                       : mToHM(Math.abs(Math.min(0, attendance.late)))}
                   </>,
-                  <>{timeToLocaleString(attendance.leaveTime)}</>,
                   <>{timeToLocaleString(employee.officeEndTime)}</>,
                   <>
                     {attendance.overtime === -1
@@ -400,24 +412,113 @@ const AttendanceHistory = () => {
               onChange={onAttendanceChange}
             />
           ))}
-          {(
-            ['arrivalTime', 'leaveTime'] satisfies KeysOfObjectOfType<
-              EmployeeAttendance,
-              string
-            >[]
-          ).map(k => (
-            <Input
-              key={k}
+          <h5 className='my-4' id='session-details'>
+            Sessions
+          </h5>
+          <div className='col-12'>
+            <Button
               disabled={isFetching}
-              id={k}
-              label={capitalizeDelim(k)}
-              containerClass='my-3'
-              type='time'
-              placeholder={'Enter ' + capitalizeDelim(k)}
-              value={attendance[k]}
-              onChange={onAttendanceChange}
-            />
-          ))}
+              className='btn-primary'
+              onClick={() =>
+                setAttendance(attendance => ({
+                  ...attendance,
+                  sessions: [
+                    ...attendance.sessions,
+                    { ...defaultAttendanceSession }
+                  ]
+                }))
+              }
+            >
+              Add New
+            </Button>
+          </div>
+          <Table
+            contCls='table-responsive'
+            columns={['#', 'Arrival', 'Leave', 'Total Minutes', 'Action']}
+            rows={attendance.sessions.map((session, idx) => [
+              <>{idx + 1}</>,
+              <input
+                disabled={isFetching}
+                type='time'
+                className='form-control'
+                value={session.arrivalTime}
+                onChange={({ target: { value } }) =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.map((session, i) =>
+                      i === idx
+                        ? {
+                            ...session,
+                            arrivalTime: value,
+                            sessionTime:
+                              session.arrivalTime && session.leaveTime
+                                ? Math.ceil(
+                                    (timeToDate(session.leaveTime).getTime() -
+                                      timeToDate(
+                                        session.arrivalTime
+                                      ).getTime()) /
+                                      60000
+                                  )
+                                : 0
+                          }
+                        : session
+                    )
+                  }))
+                }
+              />,
+              <input
+                disabled={isFetching}
+                type='time'
+                className='form-control'
+                value={session.leaveTime || ''}
+                onChange={({ target: { value } }) =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.map((session, i) =>
+                      i === idx
+                        ? { ...session, leaveTime: value, sessionTime: 1 }
+                        : session
+                    )
+                  }))
+                }
+              />,
+              <input
+                disabled={isFetching}
+                type='number'
+                className='form-control'
+                value={session.sessionTime}
+                onChange={({ target: { valueAsNumber } }) =>
+                  setAttendance(attendance => {
+                    const newAttendance = {
+                      ...attendance,
+                      sessions: attendance.sessions.map((session, i) =>
+                        i === idx
+                          ? { ...session, sessionTime: valueAsNumber }
+                          : session
+                      )
+                    } satisfies EmployeeAttendance
+                    newAttendance.totalTime = newAttendance.sessions.reduce(
+                      (total, session) => total + session.sessionTime,
+                      0
+                    )
+                    return newAttendance
+                  })
+                }
+              />,
+              <Button
+                className='link-primary'
+                disabled={isFetching}
+                onClick={() =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.filter(s => s !== session)
+                  }))
+                }
+              >
+                <FaTrash />
+              </Button>
+            ])}
+          />
           {(
             ['late', 'overtime', 'totalTime'] satisfies KeysOfObjectOfType<
               EmployeeAttendance,
@@ -483,4 +584,4 @@ const AttendanceHistory = () => {
   )
 }
 
-export default AttendanceHistory
+export default AttendanceTimesheet
