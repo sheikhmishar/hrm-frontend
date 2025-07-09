@@ -18,7 +18,10 @@ import Modal from '../../../components/Modal'
 import ProtectedComponent from '../../../components/ProtectedComponent'
 import Table from '../../../components/Table'
 import { BLANK_ARRAY, ROUTES } from '../../../constants/CONSTANTS'
-import { defaultAttendance } from '../../../constants/DEFAULT_MODELS'
+import {
+  defaultAttendance,
+  defaultAttendanceSession
+} from '../../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../../constants/SERVER_SITEMAP'
 import { AuthContext } from '../../../contexts/auth'
 import { ToastContext } from '../../../contexts/toast'
@@ -65,11 +68,10 @@ const getCsvFromAttendaces = (
         'employee',
         'designation',
         'attendance',
-        'checkIn',
+        'sessions',
         'officeStart',
         'late',
         'earlyIn',
-        'checkOut',
         'officeEnd',
         'overtime',
         'earlyOut',
@@ -90,7 +92,15 @@ const getCsvFromAttendaces = (
         )
         const attendanceRow = attendance
           ? [
-              timeToLocaleString(attendance.arrivalTime),
+              attendance.sessions
+                .map(
+                  session =>
+                    timeToLocaleString(session.arrivalTime) +
+                    (session.leaveTime
+                      ? ' -> ' + timeToLocaleString(session.leaveTime)
+                      : '')
+                )
+                .join(', '),
               timeToLocaleString(employee.officeStartTime),
 
               attendance.late === -1
@@ -99,7 +109,7 @@ const getCsvFromAttendaces = (
               attendance.late === -1
                 ? 'N/A'
                 : mToHM(Math.abs(Math.min(0, attendance.late))),
-              timeToLocaleString(attendance.leaveTime),
+
               timeToLocaleString(employee.officeEndTime),
 
               attendance.overtime === -1
@@ -441,11 +451,10 @@ const AttendanceDetails = () => {
         columns={[
           'Date',
           'Attendance',
-          'Check In',
+          'Sessions',
           'Office Start',
           'Late',
           'Early In',
-          'Check Out',
           'Office End',
           'Overtime',
           'Early Out',
@@ -468,7 +477,16 @@ const AttendanceDetails = () => {
                 )
                 const attendanceRow = attendance
                   ? [
-                      <>{timeToLocaleString(attendance.arrivalTime)}</>,
+                      <>
+                        {attendance.sessions.map(session => (
+                          <div key={session.id} className='text-nowrap'>
+                            {timeToLocaleString(session.arrivalTime) +
+                              (session.leaveTime
+                                ? ' -> ' + timeToLocaleString(session.leaveTime)
+                                : '')}
+                          </div>
+                        ))}
+                      </>,
                       <>
                         {timeToLocaleString(attendanceDetails.officeStartTime)}
                       </>,
@@ -482,7 +500,6 @@ const AttendanceDetails = () => {
                           ? 'N/A'
                           : mToHM(Math.abs(Math.min(0, attendance.late)))}
                       </>,
-                      <>{timeToLocaleString(attendance.leaveTime)}</>,
                       <>
                         {timeToLocaleString(attendanceDetails.officeEndTime)}
                       </>,
@@ -626,20 +643,7 @@ const AttendanceDetails = () => {
                             {fullDate > runningDate ? '-' : 'A'}
                           </strong>
                         )
-                      ].concat([
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>,
-                        <></>
-                      ])
+                      ].concat(new Array(12).fill(<></>))
                 )
               })
             : []
@@ -667,24 +671,90 @@ const AttendanceDetails = () => {
               onChange={onAttendanceChange}
             />
           ))}
-          {(
-            ['arrivalTime', 'leaveTime'] satisfies KeysOfObjectOfType<
-              EmployeeAttendance,
-              string
-            >[]
-          ).map(k => (
-            <Input
-              key={k}
+
+          <h5 className='my-4' id='session-details'>
+            Sessions
+          </h5>
+          <div className='col-12'>
+            <Button
               disabled={isFetching}
-              id={k}
-              label={capitalizeDelim(k)}
-              containerClass='my-3'
-              type='time'
-              placeholder={'Enter ' + capitalizeDelim(k)}
-              value={attendance[k]}
-              onChange={onAttendanceChange}
-            />
-          ))}
+              className='btn-primary'
+              onClick={() =>
+                setAttendance(attendance => ({
+                  ...attendance,
+                  sessions: [
+                    ...attendance.sessions,
+                    { ...defaultAttendanceSession }
+                  ]
+                }))
+              }
+            >
+              Add New
+            </Button>
+          </div>
+          <Table
+            contCls='table-responsive'
+            columns={['#', 'Arrival', 'Leave', 'Total Minutes', 'Action']}
+            rows={attendance.sessions.map((session, idx) => [
+              <>{idx + 1}</>,
+              <input
+                disabled={isFetching}
+                type='time'
+                className='form-control'
+                value={session.arrivalTime}
+                onChange={({ target: { value } }) =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.map((session, i) =>
+                      i === idx ? { ...session, arrivalTime: value } : session
+                    )
+                  }))
+                }
+              />,
+              <input
+                disabled={isFetching}
+                type='time'
+                className='form-control'
+                value={session.leaveTime || ''}
+                onChange={({ target: { value } }) =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.map((session, i) =>
+                      i === idx ? { ...session, leaveTime: value } : session
+                    )
+                  }))
+                }
+              />,
+              <input
+                disabled={isFetching}
+                type='number'
+                className='form-control'
+                value={session.sessionTime}
+                onChange={({ target: { valueAsNumber } }) =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.map((session, i) =>
+                      i === idx
+                        ? { ...session, sessionTime: valueAsNumber }
+                        : session
+                    )
+                  }))
+                }
+              />,
+              <Button
+                className='link-primary'
+                disabled={isFetching}
+                onClick={() =>
+                  setAttendance(attendance => ({
+                    ...attendance,
+                    sessions: attendance.sessions.filter(s => s !== session)
+                  }))
+                }
+              >
+                <FaTrash />
+              </Button>
+            ])}
+          />
           {(
             ['late', 'overtime', 'totalTime'] satisfies KeysOfObjectOfType<
               EmployeeAttendance,

@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Papa from 'papaparse'
 import {
-  type ChangeEventHandler,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState
+  useState,
+  type ChangeEventHandler
 } from 'react'
 import { FaArrowLeft, FaRotateLeft } from 'react-icons/fa6'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -34,6 +34,7 @@ import generateCalender, {
   getDateRange,
   getEmployeeId,
   getWeekData,
+  nameOfDays,
   stringToDate
 } from '../../../libs'
 import modifiedFetch from '../../../libs/modifiedFetch'
@@ -410,13 +411,9 @@ const LeaveDetails = () => {
                 <table className='mt-3 table text-center w-75'>
                   <thead>
                     <tr>
-                      <th>Sun</th>
-                      <th>Mon</th>
-                      <th>Tue</th>
-                      <th>Wed</th>
-                      <th>Thu</th>
-                      <th>Fri</th>
-                      <th>Sat</th>
+                      {nameOfDays.map(name => (
+                        <th key={name}>{name}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>

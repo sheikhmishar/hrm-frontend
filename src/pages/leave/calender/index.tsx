@@ -55,7 +55,7 @@ const LeaveCalender = () => {
   const onSearchInputChange: ChangeEventHandler<HTMLInputElement> = e =>
     setSearch(e.target.value)
 
-  const { data: employeeLeaves = BLANK_ARRAY, isFetching } = useQuery({
+  const { data: _employeeLeaves = BLANK_ARRAY, isFetching } = useQuery({
     queryKey: [
       'employeeLeaves',
       ServerSITEMAP.leaves.get,
@@ -84,6 +84,26 @@ const LeaveCalender = () => {
       onError: onErrorDisplayToast
     })
 
+  const employeeLeaves = useMemo(
+    () =>
+      _employeeLeaves.filter(
+        employee =>
+          ((['name', 'email', 'phoneNumber'] satisfies (keyof Employee)[]).find(
+            key =>
+              employee[key]
+                .toString()
+                .toLowerCase()
+                .includes(search.toLowerCase())
+          ) ||
+            getEmployeeId(employee).includes(search)) &&
+          (companyId < 1 || employee.company.id === companyId) &&
+          (self?.type === 'Employee' && self.employeeId
+            ? employee.id === self.employeeId
+            : true)
+      ),
+    [_employeeLeaves, companyId, self, search]
+  )
+
   const calender = useMemo(
     () => generateCalender(fromDate, toDate),
     [fromDate, toDate]
@@ -92,7 +112,7 @@ const LeaveCalender = () => {
   const monthMarker = useMemo(() => {
     const midIndex = calender.findIndex(({ date }) => date === '01')
 
-    const leftMidIndex = Math.floor(midIndex / 2)
+    const leftMidIndex = midIndex ? Math.floor(midIndex / 2) : -1
     const rightMidIndex = Math.floor(
       midIndex - 1 + (calender.length - midIndex) / 2
     )
@@ -174,107 +194,85 @@ const LeaveCalender = () => {
             )
           ])
           .concat(
-            employeeLeaves
-              .filter(employee =>
-                self?.type === 'Employee' && self.employeeId
-                  ? employee.id === self.employeeId
-                  : (
-                      [
-                        'name',
-                        'email',
-                        'phoneNumber',
-                        'altPhoneNumber'
-                      ] satisfies KeysOfObjectOfType<
-                        Employee,
-                        string | undefined
-                      >[]
-                    ).find(key =>
-                      employee[key]
-                        ?.toLowerCase()
-                        .includes(search.toLowerCase())
-                    ) || getEmployeeId(employee).includes(search.toLowerCase())
-              )
-              .map(employee =>
-                [
-                  <Link
-                    role='button'
-                    to={
-                      ROUTES.leave.details.replace(
-                        ROUTES.leave._params.id,
-                        employee.id.toString()
-                      ) +
-                      '?' +
-                      new URLSearchParams({
-                        month: fromDateString
-                      } satisfies typeof ROUTES.leave._queries)
-                    }
-                    className='text-decoration-none'
-                  >
-                    <EmployeeName employee={employee} />
-                  </Link>
-                ].concat(
-                  calender.map(({ month, date }) => {
-                    const year =
-                      month === '01'
-                        ? toDate.getFullYear()
-                        : fromDate.getFullYear()
-                    const targetDate = stringToDate(`${year}-${month}-${date}`)
+            employeeLeaves.map(employee =>
+              [
+                <Link
+                  role='button'
+                  to={
+                    ROUTES.leave.details.replace(
+                      ROUTES.leave._params.id,
+                      employee.id.toString()
+                    ) +
+                    '?' +
+                    new URLSearchParams({
+                      month: fromDateString
+                    } satisfies typeof ROUTES.leave._queries)
+                  }
+                  className='text-decoration-none'
+                >
+                  <EmployeeName employee={employee} />
+                </Link>
+              ].concat(
+                calender.map(({ month, date }) => {
+                  const year =
+                    month === '01'
+                      ? toDate.getFullYear()
+                      : fromDate.getFullYear()
+                  const targetDate = stringToDate(`${year}-${month}-${date}`)
 
-                    // FIXME: undefined sometimes
-                    const leave = employee.leaves.find(
-                      leave =>
-                        stringToDate(leave.from) <= targetDate &&
-                        stringToDate(leave.to) >= targetDate
+                  // FIXME: undefined sometimes
+                  const leave = employee.leaves.find(
+                    leave =>
+                      stringToDate(leave.from) <= targetDate &&
+                      stringToDate(leave.to) >= targetDate
+                  )
+                  if (leave?.duration === 'fullday')
+                    return (
+                      <div
+                        className={
+                          leave.type === 'paid' ? 'bg-primary' : 'bg-secondary'
+                        }
+                        style={{ height: 50, width: 20 }}
+                      />
                     )
-                    if (leave?.duration === 'fullday')
-                      return (
+                  if (leave?.duration === 'first_halfday')
+                    return (
+                      <>
                         <div
                           className={
                             leave.type === 'paid'
                               ? 'bg-primary'
                               : 'bg-secondary'
                           }
-                          style={{ height: 50, width: 20 }}
+                          style={{ height: 25, width: 20 }}
                         />
-                      )
-                    if (leave?.duration === 'first_halfday')
-                      return (
-                        <>
-                          <div
-                            className={
-                              leave.type === 'paid'
-                                ? 'bg-primary'
-                                : 'bg-secondary'
-                            }
-                            style={{ height: 25, width: 20 }}
-                          />
-                          <div
-                            className='bg-transparent'
-                            style={{ height: 25, width: 20 }}
-                          />
-                        </>
-                      )
-                    if (leave?.duration === 'second_halfday')
-                      return (
-                        <>
-                          <div
-                            className='bg-transparent'
-                            style={{ height: 25, width: 20 }}
-                          />
-                          <div
-                            className={
-                              leave.type === 'paid'
-                                ? 'bg-primary'
-                                : 'bg-secondary'
-                            }
-                            style={{ height: 25, width: 20 }}
-                          />
-                        </>
-                      )
-                    return <></>
-                  })
-                )
+                        <div
+                          className='bg-transparent'
+                          style={{ height: 25, width: 20 }}
+                        />
+                      </>
+                    )
+                  if (leave?.duration === 'second_halfday')
+                    return (
+                      <>
+                        <div
+                          className='bg-transparent'
+                          style={{ height: 25, width: 20 }}
+                        />
+                        <div
+                          className={
+                            leave.type === 'paid'
+                              ? 'bg-primary'
+                              : 'bg-secondary'
+                          }
+                          style={{ height: 25, width: 20 }}
+                        />
+                      </>
+                    )
+                  return <></>
+                })
               )
+            )
           )}
       />
     </>

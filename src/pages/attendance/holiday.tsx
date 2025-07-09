@@ -10,6 +10,7 @@ import generateCalender, {
   dateToString,
   getDateRange,
   getWeekData,
+  nameOfDays,
   SETTINGS,
   stringToDate
 } from '../../libs'
@@ -131,13 +132,9 @@ const HolidayManagement = () => {
         <table className='mt-3 table table-hover text-center w-75'>
           <thead>
             <tr>
-              <th>Sun</th>
-              <th>Mon</th>
-              <th>Tue</th>
-              <th>Wed</th>
-              <th>Thu</th>
-              <th>Fri</th>
-              <th>Sat</th>
+              {nameOfDays.map(name => (
+                <th key={name}>{name}</th>
+              ))}
             </tr>
           </thead>
           <tbody>

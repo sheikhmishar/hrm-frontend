@@ -7,6 +7,7 @@ import Select from '../../components/Select'
 import { BLANK_ARRAY } from '../../constants/CONSTANTS'
 import {
   defaultAttendance,
+  defaultAttendanceSession,
   defaultEmployee
 } from '../../constants/DEFAULT_MODELS'
 import ServerSITEMAP from '../../constants/SERVER_SITEMAP'
@@ -18,13 +19,15 @@ import {
 } from '../../libs'
 import modifiedFetch from '../../libs/modifiedFetch'
 
-import { GetResponseType } from 'backend/@types/response'
-import EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
-import { addEmployeeAttendance } from 'backend/controllers/attendances'
-import { allEmployees } from 'backend/controllers/employees'
+import type { GetResponseType } from 'backend/@types/response'
+import type EmployeeAttendance from 'backend/Entities/EmployeeAttendance'
+import type EmployeeAttendanceSession from 'backend/Entities/EmployeeAttendanceSessions'
+import type { addEmployeeAttendance } from 'backend/controllers/attendances'
+import type { allEmployees } from 'backend/controllers/employees'
 
 type CSVColumns =
-  | keyof Pick<EmployeeAttendance, 'arrivalTime' | 'leaveTime' | 'date'>
+  | keyof Pick<EmployeeAttendance, 'date'>
+  | keyof Pick<EmployeeAttendanceSession, 'arrivalTime' | 'leaveTime'>
   | 'employeeId'
 type CSVResult = { [x in CSVColumns]?: string }
 const csvHeaders = (
@@ -117,8 +120,8 @@ const ImportAttendance = () => {
 
               const data = result.data.map(row => {
                 const {
-                  arrivalTime = defaultAttendance.arrivalTime,
-                  leaveTime = defaultAttendance.leaveTime,
+                  arrivalTime = defaultAttendanceSession.arrivalTime,
+                  leaveTime = defaultAttendanceSession.leaveTime,
                   date = defaultAttendance.date,
                   employeeId = defaultAttendance.id.toString()
                 } = row
@@ -153,8 +156,9 @@ const ImportAttendance = () => {
 
                 return {
                   ...defaultAttendance,
-                  arrivalTime,
-                  leaveTime,
+                  sessions: [
+                    { ...defaultAttendanceSession, arrivalTime, leaveTime }
+                  ],
                   date,
                   employee: {
                     ...defaultAttendance.employee,
@@ -180,12 +184,12 @@ const ImportAttendance = () => {
                   </th>
                   <th scope='col'>
                     {capitalizeDelim(
-                      'arrivalTime' satisfies keyof EmployeeAttendance
+                      'arrivalTime' satisfies keyof EmployeeAttendanceSession
                     )}
                   </th>
                   <th scope='col'>
                     {capitalizeDelim(
-                      'leaveTime' satisfies keyof EmployeeAttendance
+                      'leaveTime' satisfies keyof EmployeeAttendanceSession
                     )}
                   </th>
                   <th scope='col'>ID</th>
@@ -219,13 +223,14 @@ const ImportAttendance = () => {
                           className='form-control'
                           type='time'
                           name={
-                            'arrivalTime' satisfies keyof EmployeeAttendance
+                            'arrivalTime' satisfies keyof EmployeeAttendanceSession
                           }
-                          value={attendance.arrivalTime}
+                          value={attendance.sessions[0]?.arrivalTime || ''}
                           onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
                             if (newAttendances[i])
-                              newAttendances[i]!.arrivalTime = value
+                              newAttendances[i]!.sessions[0]!.arrivalTime =
+                                value
                             setAttendances(newAttendances)
                           }}
                         />
@@ -235,12 +240,14 @@ const ImportAttendance = () => {
                           disabled={isLoading}
                           className='form-control'
                           type='time'
-                          name={'leaveTime' satisfies keyof EmployeeAttendance}
-                          value={attendance.leaveTime}
+                          name={
+                            'leaveTime' satisfies keyof EmployeeAttendanceSession
+                          }
+                          value={attendance.sessions[0]?.leaveTime || ''}
                           onChange={({ target: { value } }) => {
                             const newAttendances = [...attendances]
                             if (newAttendances[i])
-                              newAttendances[i]!.leaveTime = value
+                              newAttendances[i]!.sessions[0]!.leaveTime = value
                             setAttendances(newAttendances)
                           }}
                         />
@@ -320,7 +327,11 @@ const ImportAttendance = () => {
                 onClick={() =>
                   setAttendances(attendances => [
                     ...attendances,
-                    { ...defaultAttendance, employee: { ...defaultEmployee } }
+                    {
+                      ...defaultAttendance,
+                      sessions: [{ ...defaultAttendanceSession }],
+                      employee: { ...defaultEmployee }
+                    }
                   ])
                 }
               >

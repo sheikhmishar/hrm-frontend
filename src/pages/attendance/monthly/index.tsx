@@ -299,7 +299,7 @@ const MonthlyAttendance = () => {
   const monthMarker = useMemo(() => {
     const midIndex = calender.findIndex(({ date }) => date === '01')
 
-    const leftMidIndex = Math.floor(midIndex / 2)
+    const leftMidIndex = midIndex ? Math.floor(midIndex / 2) : -1
     const rightMidIndex = Math.floor(
       midIndex - 1 + (calender.length - midIndex) / 2
     )
@@ -423,216 +423,216 @@ const MonthlyAttendance = () => {
         </div>
       </div>
 
+      {/* TODO: multi row header */}
       <Table
         columns={['Employee']
-          .concat(calender.map(({ date }) => (date === '01' ? ' |  01' : date)))
+          .concat(
+            calender.map(({ date }, i) =>
+              calender[i + 1]?.date === '01' ? date + ' | ' : date
+            )
+          )
           .concat(['Total P', 'Total L', 'Total A', 'Total OA', 'Total O'])}
-        rows={[
+        headers={[
           [<></>]
             .concat(
-              calender.map(({ date, month }, i) => (
+              calender.map(({ month }, i) => (
                 <strong className='text-primary'>
                   {monthMarker.includes(i)
                     ? stringToDate(`2011-${month}-01`)
                         .toDateString()
                         .substring(4, 7)
                     : ''}
-                  {date.endsWith('01') ? '|' : ''}
+                  {calender[i + 1]?.date === '01' ? (
+                    <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| </>
+                  ) : (
+                    ''
+                  )}
                 </strong>
               ))
             )
-            .concat([<></>, <></>, <></>, <></>, <></>])
-        ]
-          .concat([
-            [<></>]
-              .concat(
-                calender.map(({ dayName }) => (
-                  <span style={{ fontSize: 12 }} className='text-info'>
-                    {dayName}
-                  </span>
-                ))
+            .concat(new Array(5).fill(<></>))
+        ].concat([
+          [<></>]
+            .concat(
+              calender.map(({ dayName }) => (
+                <span style={{ fontSize: 12 }} className='fw-lighter text-info'>
+                  {dayName}
+                </span>
+              ))
+            )
+            .concat(new Array(5).fill(<></>))
+        ])}
+        rows={employeeAttendances.map(employee => {
+          const currentDate = new Date()
+
+          const paidLeaves = (
+            employeeLeaves.find(({ id }) => employee.id === id)?.leaves || []
+          ).filter(({ type }) => type === 'paid')
+
+          const daysTillToday = calender.filter(
+            ({ month, date }) =>
+              stringToDate(
+                `${
+                  month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+                }-${month}-${date}`
+              ) <= currentDate
+          ).length // TODO: math
+
+          const holidaysAfterToday = holidays.filter(
+            ({ date }) => stringToDate(date) > currentDate
+          ).length
+
+          const paidLeavesAfterToday = paidLeaves.reduce(
+            (total, { from, to, duration }) => {
+              const fromDate = new Date(from)
+              const toDate = new Date(to)
+
+              return (
+                total +
+                (currentDate < fromDate && currentDate < toDate
+                  ? dayDifference(fromDate, toDate)
+                  : currentDate > toDate
+                  ? 0
+                  : dayDifference(currentDate, toDate)) *
+                  (duration === 'fullday' ? 1 : 0.5)
               )
-              .concat([<></>, <></>, <></>, <></>, <></>])
-          ])
-          .concat(
-            employeeAttendances.map(employee => {
-              const currentDate = new Date()
+            },
+            0
+          )
 
-              const paidLeaves = (
-                employeeLeaves.find(({ id }) => employee.id === id)?.leaves ||
-                []
-              ).filter(({ type }) => type === 'paid')
+          const totalDays =
+            daysTillToday + holidaysAfterToday + paidLeavesAfterToday
 
-              const daysTillToday = calender.filter(
-                ({ month, date }) =>
-                  stringToDate(
-                    `${
-                      month === '01'
-                        ? toDate.getFullYear()
-                        : fromDate.getFullYear()
-                    }-${month}-${date}`
-                  ) <= currentDate
-              ).length // TODO: math
+          // TODO: half day attendance backend
+          const presentWithNoHolidayOrFullPaidLeave =
+            employee.attendances.reduce((total, attendance) => {
+              const date = stringToDate(attendance.date)
 
-              const holidaysAfterToday = holidays.filter(
-                ({ date }) => stringToDate(date) > currentDate
-              ).length
-
-              const paidLeavesAfterToday = paidLeaves.reduce(
-                (total, { from, to, duration }) => {
-                  const fromDate = new Date(from)
-                  const toDate = new Date(to)
-
-                  return (
-                    total +
-                    (currentDate < fromDate && currentDate < toDate
-                      ? dayDifference(fromDate, toDate)
-                      : currentDate > toDate
-                      ? 0
-                      : dayDifference(currentDate, toDate)) *
-                      (duration === 'fullday' ? 1 : 0.5)
-                  )
-                },
-                0
+              const paidLeave = paidLeaves.find(
+                ({ from, to }) =>
+                  date >= stringToDate(from) && date <= stringToDate(to)
               )
-
-              const totalDays =
-                daysTillToday + holidaysAfterToday + paidLeavesAfterToday
-
-              // TODO: half day attendance backend
-              const presentWithNoHolidayOrFullPaidLeave =
-                employee.attendances.reduce((total, attendance) => {
-                  const date = stringToDate(attendance.date)
-
-                  const paidLeave = paidLeaves.find(
-                    ({ from, to }) =>
-                      date >= stringToDate(from) && date <= stringToDate(to)
-                  )
-                  return (
-                    total +
-                    (holidays.find(({ date }) => date === attendance.date)
-                      ? 0
-                      : paidLeave
-                      ? paidLeave.duration === 'fullday'
-                        ? 0
-                        : 0.5
-                      : 1)
-                  )
-                }, 0)
-
-              const paidLeavesTotal = paidLeaves.reduce(
-                (total, { totalDays }) => total + totalDays,
-                0
+              return (
+                total +
+                (holidays.find(({ date }) => date === attendance.date)
+                  ? 0
+                  : paidLeave
+                  ? paidLeave.duration === 'fullday'
+                    ? 0
+                    : 0.5
+                  : 1)
               )
+            }, 0)
 
-              const holidayAttendances = employee.attendances.filter(
-                attendance =>
-                  holidays.find(({ date }) => date === attendance.date)
-              ).length
+          const paidLeavesTotal = paidLeaves.reduce(
+            (total, { totalDays }) => total + totalDays,
+            0
+          )
 
-              return [
-                <Link
-                  to={
-                    ROUTES.attendance.details.replace(
-                      ROUTES.attendance._params.id,
-                      employee.id.toString()
-                    ) +
-                    '?' +
-                    new URLSearchParams({
-                      month: fromDateString
-                    } satisfies typeof ROUTES.attendance._queries)
-                  }
-                  className='text-decoration-none'
-                >
-                  <EmployeeName employee={employee} />
-                </Link>
-              ]
-                .concat(
-                  calender.map(({ month, date }) => {
-                    const year =
-                      month === '01'
-                        ? toDate.getFullYear()
-                        : fromDate.getFullYear()
-                    const dateString = `${month}-${date}`
-                    const fullDate = stringToDate(`${year}-${dateString}`)
+          const holidayAttendances = employee.attendances.filter(attendance =>
+            holidays.find(({ date }) => date === attendance.date)
+          ).length
 
-                    // FIXME; undefined ?
-                    // TODO: update csv
-                    return employee.attendances?.find(
-                      attendance => attendance.date.substring(5) === dateString
+          return [
+            <Link
+              to={
+                ROUTES.attendance.details.replace(
+                  ROUTES.attendance._params.id,
+                  employee.id.toString()
+                ) +
+                '?' +
+                new URLSearchParams({
+                  month: fromDateString
+                } satisfies typeof ROUTES.attendance._queries)
+              }
+              className='text-decoration-none'
+            >
+              <EmployeeName employee={employee} />
+            </Link>
+          ]
+            .concat(
+              calender.map(({ month, date }) => {
+                const year =
+                  month === '01' ? toDate.getFullYear() : fromDate.getFullYear()
+                const dateString = `${month}-${date}`
+                const fullDate = stringToDate(`${year}-${dateString}`)
+
+                // FIXME; undefined ?
+                // TODO: update csv
+                return employee.attendances?.find(
+                  attendance => attendance.date.substring(5) === dateString
+                ) ? (
+                  holidays.find(
+                    ({ date: d }) => dateString === d.substring(5)
+                  ) ? (
+                    <strong className='text-success'>OA</strong>
+                  ) : paidLeaves.find(
+                      ({ from, to, duration }) =>
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration === 'first_halfday'
                     ) ? (
-                      holidays.find(
-                        ({ date: d }) => dateString === d.substring(5)
-                      ) ? (
-                        <strong className='text-success'>OA</strong>
-                      ) : paidLeaves.find(
-                          ({ from, to, duration }) =>
-                            stringToDate(from) <= fullDate &&
-                            stringToDate(to) >= fullDate &&
-                            duration === 'first_halfday'
-                        ) ? (
-                        <strong className='text-success'>L/1</strong>
-                      ) : paidLeaves.find(
-                          ({ from, to, duration }) =>
-                            stringToDate(from) <= fullDate &&
-                            stringToDate(to) >= fullDate &&
-                            duration === 'second_halfday'
-                        ) ? (
-                        <strong className='text-success'>L/2</strong>
-                      ) : (
-                        <strong className='text-primary'>P</strong>
-                      )
-                    ) : holidays.find(
-                        ({ date: d }) => dateString === d.substring(5)
-                      ) ? (
-                      <strong className='text-black-50'>O</strong>
-                    ) : paidLeaves.find(
-                        // TODO: precompute
-                        ({ from, to, duration }) =>
-                          stringToDate(from) <= fullDate &&
-                          stringToDate(to) >= fullDate &&
-                          duration === 'fullday'
-                      ) ? (
-                      <strong className='text-black-50'>L</strong>
-                    ) : paidLeaves.find(
-                        ({ from, to, duration }) =>
-                          stringToDate(from) <= fullDate &&
-                          stringToDate(to) >= fullDate &&
-                          duration === 'first_halfday'
-                      ) ? (
-                      <strong className='text-danger'>L/1</strong>
-                    ) : paidLeaves.find(
-                        ({ from, to, duration }) =>
-                          stringToDate(from) <= fullDate &&
-                          stringToDate(to) >= fullDate &&
-                          duration === 'second_halfday'
-                      ) ? (
-                      <strong className='text-danger'>L/2</strong>
-                    ) : (
-                      <strong className='text-danger'>
-                        {fullDate > currentDate ? '-' : 'A'}
-                      </strong>
-                      // TODO: add - after lastWorkingDay
-                    )
-                  })
+                    <strong className='text-success'>L/1</strong>
+                  ) : paidLeaves.find(
+                      ({ from, to, duration }) =>
+                        stringToDate(from) <= fullDate &&
+                        stringToDate(to) >= fullDate &&
+                        duration === 'second_halfday'
+                    ) ? (
+                    <strong className='text-success'>L/2</strong>
+                  ) : (
+                    <strong className='text-primary'>P</strong>
+                  )
+                ) : holidays.find(
+                    ({ date: d }) => dateString === d.substring(5)
+                  ) ? (
+                  <strong className='text-black-50'>O</strong>
+                ) : paidLeaves.find(
+                    // TODO: precompute
+                    ({ from, to, duration }) =>
+                      stringToDate(from) <= fullDate &&
+                      stringToDate(to) >= fullDate &&
+                      duration === 'fullday'
+                  ) ? (
+                  <strong className='text-black-50'>L</strong>
+                ) : paidLeaves.find(
+                    ({ from, to, duration }) =>
+                      stringToDate(from) <= fullDate &&
+                      stringToDate(to) >= fullDate &&
+                      duration === 'first_halfday'
+                  ) ? (
+                  <strong className='text-danger'>L/1</strong>
+                ) : paidLeaves.find(
+                    ({ from, to, duration }) =>
+                      stringToDate(from) <= fullDate &&
+                      stringToDate(to) >= fullDate &&
+                      duration === 'second_halfday'
+                  ) ? (
+                  <strong className='text-danger'>L/2</strong>
+                ) : (
+                  <strong className='text-danger'>
+                    {fullDate > currentDate ? '-' : 'A'}
+                  </strong>
+                  // TODO: add - after lastWorkingDay
                 )
-                .concat([
-                  <>{presentWithNoHolidayOrFullPaidLeave}</>,
-                  <>{paidLeavesTotal}</>,
-                  <>
-                    {Math.max(
-                      0,
-                      totalDays -
-                        presentWithNoHolidayOrFullPaidLeave -
-                        holidays.length -
-                        paidLeavesTotal
-                    )}
-                  </>,
-                  <>{holidayAttendances}</>,
-                  <>{holidays.length}</>
-                ])
-            })
-          )}
+              })
+            )
+            .concat([
+              <>{presentWithNoHolidayOrFullPaidLeave}</>,
+              <>{paidLeavesTotal}</>,
+              <>
+                {Math.max(
+                  0,
+                  totalDays -
+                    presentWithNoHolidayOrFullPaidLeave -
+                    holidays.length -
+                    paidLeavesTotal
+                )}
+              </>,
+              <>{holidayAttendances}</>,
+              <>{holidays.length}</>
+            ])
+        })}
       />
     </>
   )

@@ -657,7 +657,7 @@ const MonthlyPaysheetById = () => {
                   ))}
                   <br />
                   {/* TODO: info icon hover */}
-                  [Employee Basic Salary / TotalDays] 
+                  [Employee Basic Salary / TotalDays]
                 </div>
                 <div className='col-6 col-lg-2 my-1'>
                   <h6>
@@ -882,11 +882,10 @@ const MonthlyPaysheetById = () => {
           columns={[
             'Date',
             'Attendance',
-            'Check In',
+            'Sessions',
             'Office Start',
             'Late',
             'Early In',
-            'Check Out',
             'Office End',
             'Overtime',
             'Early Out',
@@ -906,7 +905,16 @@ const MonthlyPaysheetById = () => {
             )
             const attendanceRow = attendance
               ? [
-                  <>{timeToLocaleString(attendance.arrivalTime)}</>,
+                  <>
+                    {attendance.sessions.map(session => (
+                      <div key={session.id} className='text-nowrap'>
+                        {timeToLocaleString(session.arrivalTime) +
+                          (session.leaveTime
+                            ? ' -> ' + timeToLocaleString(session.leaveTime)
+                            : '')}
+                      </div>
+                    ))}
+                  </>,
                   <>{timeToLocaleString(employee.officeStartTime)}</>,
                   <>
                     {attendance.late === -1
@@ -918,7 +926,6 @@ const MonthlyPaysheetById = () => {
                       ? 'N/A'
                       : mToHM(Math.abs(Math.min(0, attendance.late)))}
                   </>,
-                  <>{timeToLocaleString(attendance.leaveTime)}</>,
                   <>{timeToLocaleString(employee.officeEndTime)}</>,
                   <>
                     {attendance.overtime === -1

@@ -78,6 +78,8 @@ const OrganizationSettings = () => {
       }
     })
 
+  // FIXME: cannot refetch
+
   return (
     <>
       <div className='mb-4 mt-2 row'>
